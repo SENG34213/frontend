@@ -1,0 +1,36 @@
+<div class="auth-page">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
+    <h1>Create your account</h1>
+
+    <label>
+      Full name
+      <input type="text" formControlName="fullName" placeholder="Jane Silva" />
+    </label>
+
+    <label>
+      Email
+      <input type="email" formControlName="email" placeholder="you@example.com" />
+    </label>
+
+    <label>
+      Phone number (optional)
+      <input type="tel" formControlName="phoneNumber" placeholder="07XXXXXXXX" />
+    </label>
+
+    <label>
+      Password
+      <input type="password" formControlName="password" placeholder="At least 8 characters" />
+    </label>
+    <div class="field-error" *ngIf="form.get('password')?.touched && form.get('password')?.invalid">
+      Password must be at least 8 characters.
+    </div>
+
+    <div class="form-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+    <button type="submit" [disabled]="isSubmitting">
+      {{ isSubmitting ? 'Creating account…' : 'Register' }}
+    </button>
+
+    <p class="switch-link">Already have an account? <a routerLink="/login">Sign in</a></p>
+  </form>
+</div>
