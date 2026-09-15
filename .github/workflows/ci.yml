@@ -1,0 +1,61 @@
+name: Frontend CI Pipeline
+
+on:
+  push:
+    branches: [develop, main, 'feature/**', 'fix/**']
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  lint-build-test:
+    name: Lint, Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build (production configuration)
+        run: npx ng build --configuration production
+
+      - name: Unit tests (headless Chrome)
+        run: npx ng test --watch=false --browsers=ChromeHeadless
+        env:
+          CHROME_BIN: /usr/bin/google-chrome-stable
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: coverage/
+          if-no-files-found: ignore
+
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high || true
