@@ -1,0 +1,98 @@
+/* ==========================================================================
+   Gaming Castle Design System — Variables & Tokens
+   Adheres to SRS/SDS dark gaming theme, WCAG 2.1 AA contrast
+   ========================================================================== */
+
+:root {
+  /* Surface / Background Colors */
+  --gc-bg-base: #080b11;
+  --gc-bg-surface: #0f1523;
+  --gc-bg-card: #131a2c;
+  --gc-bg-card-hover: #19233c;
+  --gc-bg-elevated: #1e2a47;
+  --gc-bg-overlay: rgba(8, 11, 17, 0.82);
+
+  /* Border Colors */
+  --gc-border-subtle: #1c263c;
+  --gc-border-default: #263554;
+  --gc-border-focus: #3b82f6;
+  --gc-border-glow: rgba(59, 130, 246, 0.4);
+
+  /* Primary Accent — Cyber Blue */
+  --gc-primary: #2563eb;
+  --gc-primary-hover: #1d4ed8;
+  --gc-primary-active: #1e40af;
+  --gc-primary-light: #60a5fa;
+  --gc-primary-glow: rgba(37, 99, 235, 0.4);
+
+  /* Secondary Accent — Neon Purple */
+  --gc-accent: #8b5cf6;
+  --gc-accent-hover: #7c3aed;
+  --gc-accent-active: #6d28d9;
+  --gc-accent-light: #c084fc;
+  --gc-accent-glow: rgba(139, 92, 246, 0.4);
+
+  /* Status Colors (per SRS wireframe requirements) */
+  /* Green = Available */
+  --gc-status-available: #10b981;
+  --gc-status-available-hover: #059669;
+  --gc-status-available-glow: rgba(16, 185, 129, 0.35);
+
+  /* Red = Occupied / Danger */
+  --gc-status-occupied: #ef4444;
+  --gc-status-occupied-hover: #dc2626;
+  --gc-status-occupied-glow: rgba(239, 68, 68, 0.35);
+
+  /* Warning / Pending */
+  --gc-status-warning: #f59e0b;
+  --gc-status-warning-glow: rgba(245, 158, 11, 0.35);
+
+  /* Info / Neutral */
+  --gc-status-info: #06b6d4;
+  --gc-status-info-glow: rgba(6, 182, 212, 0.35);
+
+  /* Typography Colors */
+  --gc-text-primary: #f8fafc;
+  --gc-text-secondary: #cbd5e1;
+  --gc-text-muted: #94a3b8;
+  --gc-text-disabled: #475569;
+  --gc-text-inverse: #080b11;
+
+  /* Gradients */
+  --gc-gradient-primary: linear-gradient(135deg, #2563eb 0%, #8b5cf6 100%);
+  --gc-gradient-card: linear-gradient(180deg, rgba(25, 35, 60, 0.5) 0%, rgba(15, 21, 35, 0.9) 100%);
+  --gc-gradient-surface: linear-gradient(135deg, #131a2c 0%, #0d121f 100%);
+  --gc-gradient-glow: radial-gradient(circle at top, rgba(37, 99, 235, 0.18) 0%, transparent 70%);
+
+  /* Shadows & Glassmorphism */
+  --gc-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --gc-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --gc-shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.65);
+  --gc-shadow-glow-blue: 0 0 20px rgba(37, 99, 235, 0.35);
+  --gc-shadow-glow-purple: 0 0 20px rgba(139, 92, 246, 0.35);
+  --gc-backdrop-blur: blur(12px);
+
+  /* Radii */
+  --gc-radius-sm: 6px;
+  --gc-radius-md: 10px;
+  --gc-radius-lg: 16px;
+  --gc-radius-full: 9999px;
+
+  /* Typography */
+  --gc-font-display: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --gc-font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --gc-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Transitions */
+  --gc-transition-fast: 150ms ease;
+  --gc-transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --gc-transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Spacing */
+  --gc-spacing-xs: 0.25rem;
+  --gc-spacing-sm: 0.5rem;
+  --gc-spacing-md: 1rem;
+  --gc-spacing-lg: 1.5rem;
+  --gc-spacing-xl: 2rem;
+  --gc-spacing-2xl: 3rem;
+}

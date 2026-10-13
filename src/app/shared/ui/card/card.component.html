@@ -1,0 +1,29 @@
+<article
+  class="gc-card"
+  [class.gc-card-interactive]="interactive"
+  [class.gc-card-glow-blue]="glow === 'blue'"
+  [class.gc-card-glow-purple]="glow === 'purple'">
+  @if (title || hasHeaderContent) {
+    <header class="gc-card-header">
+      <div class="gc-card-title-group">
+        @if (title) {
+          <h3 class="gc-card-title">{{ title }}</h3>
+        }
+        @if (subtitle) {
+          <p class="gc-card-subtitle">{{ subtitle }}</p>
+        }
+      </div>
+      <div class="gc-card-header-actions">
+        <ng-content select="[card-header-actions]"></ng-content>
+      </div>
+    </header>
+  }
+
+  <div class="gc-card-body">
+    <ng-content></ng-content>
+  </div>
+
+  <div class="gc-card-footer">
+    <ng-content select="[card-footer]"></ng-content>
+  </div>
+</article>

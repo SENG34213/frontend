@@ -1,0 +1,62 @@
+/* ==========================================================================
+   Typography System — Outfit (Headings) + Inter (Body)
+   ========================================================================== */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--gc-font-display);
+  color: var(--gc-text-primary);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw + 1rem, 3.25rem);
+  font-weight: 800;
+}
+
+h2 {
+  font-size: clamp(1.5rem, 2.5vw + 0.5rem, 2.25rem);
+}
+
+h3 {
+  font-size: clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem);
+}
+
+h4 {
+  font-size: 1.25rem;
+}
+
+h5 {
+  font-size: 1.1rem;
+}
+
+h6 {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gc-text-muted);
+}
+
+p {
+  color: var(--gc-text-secondary);
+  line-height: 1.6;
+}
+
+.text-gradient {
+  background: var(--gc-gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.text-primary { color: var(--gc-primary-light) !important; }
+.text-accent { color: var(--gc-accent-light) !important; }
+.text-available { color: var(--gc-status-available) !important; }
+.text-occupied { color: var(--gc-status-occupied) !important; }
+.text-warning { color: var(--gc-status-warning) !important; }
+.text-muted { color: var(--gc-text-muted) !important; }
+
+.font-mono {
+  font-family: var(--gc-font-mono);
+}

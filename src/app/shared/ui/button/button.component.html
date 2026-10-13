@@ -1,0 +1,14 @@
+<button
+  [type]="type"
+  [disabled]="disabled || loading"
+  [class]="buttonClasses"
+  [attr.aria-busy]="loading"
+  [attr.aria-disabled]="disabled || loading"
+  (click)="onClick($event)">
+  @if (loading) {
+    <span class="gc-btn-spinner" aria-hidden="true"></span>
+  }
+  <span class="gc-btn-content" [class.invisible]="loading">
+    <ng-content></ng-content>
+  </span>
+</button>

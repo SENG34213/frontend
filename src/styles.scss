@@ -1,1 +1,28 @@
-/* You can add global styles to this file, and also import other style files */
+/* ==========================================================================
+   Gaming Castle Global Styles
+   ========================================================================== */
+
+@use './styles/variables';
+@use './styles/reset';
+@use './styles/typography';
+@use './styles/utilities';
+
+/* Responsive base styling */
+html, body {
+  min-height: 100vh;
+  min-width: 320px; /* NFR-07 responsive guarantee down to 320px */
+}
+
+/* Slot status styling reference for wireframes */
+.slot-available {
+  background: var(--gc-status-available) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px var(--gc-status-available-glow);
+}
+
+.slot-occupied {
+  background: var(--gc-status-occupied) !important;
+  color: #ffffff !important;
+  cursor: not-allowed !important;
+  opacity: 0.65;
+}

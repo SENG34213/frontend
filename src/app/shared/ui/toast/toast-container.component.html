@@ -1,0 +1,36 @@
+<div
+  class="gc-toast-container"
+  role="region"
+  aria-live="polite"
+  aria-label="Notifications">
+  @for (toast of toastService.toasts(); track toast.id) {
+    <div
+      class="gc-toast"
+      [class]="'gc-toast-' + toast.type"
+      role="status">
+      <div class="gc-toast-icon" aria-hidden="true">
+        @switch (toast.type) {
+          @case ('success') { ✓ }
+          @case ('error') { ⚠ }
+          @case ('warning') { ! }
+          @default { ℹ }
+        }
+      </div>
+
+      <div class="gc-toast-body">
+        @if (toast.title) {
+          <strong class="gc-toast-title">{{ toast.title }}</strong>
+        }
+        <p class="gc-toast-message">{{ toast.message }}</p>
+      </div>
+
+      <button
+        type="button"
+        class="gc-toast-close"
+        aria-label="Dismiss notification"
+        (click)="dismiss(toast.id)">
+        ✕
+      </button>
+    </div>
+  }
+</div>
