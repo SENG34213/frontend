@@ -1,0 +1,26 @@
+<div class="public-shell">
+  <header class="public-header">
+    <div class="container header-inner">
+      <a routerLink="/" class="brand-link">
+        <span class="logo-icon">🏰</span>
+        <span class="logo-text">GAMING <span class="text-gradient">CASTLE</span></span>
+      </a>
+
+      <div class="auth-links">
+        <a routerLink="/styleguide" class="nav-link">UI Kit</a>
+        <a routerLink="/login" class="nav-link">Sign In</a>
+        <a routerLink="/register" class="btn-register">Get Started</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="public-main">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="public-footer">
+    <div class="container footer-inner">
+      <p>© 2026 Gaming Castle Colombo. All rights reserved. SENG 34213 Foundation.</p>
+    </div>
+  </footer>
+</div>

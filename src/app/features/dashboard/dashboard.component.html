@@ -1,5 +1,46 @@
-<div style="padding: 2rem; font-family: sans-serif;">
-  <h1>Gaming Castle Dashboard</h1>
-  <p>Role: {{ authService.role() }}</p>
-  <button (click)="logout()">Log out</button>
+<div class="dashboard-page container">
+  <header class="dashboard-welcome">
+    <div>
+      <span class="welcome-badge">Active Session</span>
+      <h1>Welcome back, <span class="text-gradient">{{ authService.currentUser()?.email || 'Player' }}</span></h1>
+      <p class="subtitle">Reserve game consoles, compete in tournament brackets, and manage your Gaming Castle experience.</p>
+    </div>
+    <div class="welcome-status">
+      <gc-badge [variant]="authService.isAdmin() ? 'accent' : 'available'">
+        Role: {{ authService.role() }}
+      </gc-badge>
+    </div>
+  </header>
+
+  <div class="grid grid-cols-3 gap-lg">
+    <gc-card title="Game Stations & Slots" subtitle="PS5 Pro • Xbox Series X • PC Arena" [interactive]="true" glow="blue">
+      <p>Browse live availability, reserve high-performance consoles, and enjoy seamless lounge gaming.</p>
+      <div card-footer class="flex justify-between items-center">
+        <span class="text-available font-mono">Real-time availability</span>
+        <a routerLink="/styleguide">
+          <gc-button size="sm" variant="primary">View Stations</gc-button>
+        </a>
+      </div>
+    </gc-card>
+
+    <gc-card title="Tournament Arena" subtitle="Weekly Knockouts & Cash Prizes" [interactive]="true" glow="purple">
+      <p>Join EA FC 25, Tekken 8, and Valorant brackets. Track real-time knockout progression.</p>
+      <div card-footer class="flex justify-between items-center">
+        <span class="text-accent font-mono">Registration Open</span>
+        <a routerLink="/styleguide">
+          <gc-button size="sm" variant="secondary">View Brackets</gc-button>
+        </a>
+      </div>
+    </gc-card>
+
+    <gc-card title="UI Kit & Styleguide" subtitle="FE-01 Design System" [interactive]="true">
+      <p>Explore all dark cyber theme tokens, form controls, modals, and responsive layout components.</p>
+      <div card-footer class="flex justify-between items-center">
+        <span class="text-muted font-mono">Dev Preview</span>
+        <a routerLink="/styleguide">
+          <gc-button size="sm" variant="outline">Open UI Kit</gc-button>
+        </a>
+      </div>
+    </gc-card>
+  </div>
 </div>

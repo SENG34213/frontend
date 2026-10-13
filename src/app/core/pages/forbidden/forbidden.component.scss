@@ -1,0 +1,48 @@
+.error-page {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.error-card {
+  max-width: 540px;
+  width: 100%;
+  text-align: center;
+  padding: 3.5rem 2rem;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  box-shadow: var(--gc-shadow-lg), 0 0 30px rgba(239, 68, 68, 0.15);
+}
+
+.error-badge {
+  display: inline-block;
+  font-family: var(--gc-font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gc-status-occupied);
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 0.35rem 1rem;
+  border-radius: var(--gc-radius-full);
+  margin-bottom: 1.5rem;
+}
+
+.error-title {
+  font-size: clamp(2rem, 3vw, 2.75rem);
+  color: var(--gc-text-primary);
+  margin-bottom: 1rem;
+}
+
+.error-desc {
+  font-size: 1.05rem;
+  color: var(--gc-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.error-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
