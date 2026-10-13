@@ -29,8 +29,8 @@ jobs:
       - name: Build (production configuration)
         run: npx ng build --configuration production
 
-      - name: Unit tests (headless Chrome)
-        run: npx ng test --watch=false --browsers=ChromeHeadless
+      - name: Unit tests & Coverage Gate (80% threshold)
+        run: npx ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage
         env:
           CHROME_BIN: /usr/bin/google-chrome-stable
 
