@@ -1,0 +1,227 @@
+<div class="styleguide-page container">
+  <header class="styleguide-header">
+    <span class="badge-tag">Gaming Castle UI Kit</span>
+    <h1>Design System & Component Showcase</h1>
+    <p class="subtitle">Living styleguide for FE-01 matching the SRS/SDS wireframes, dark aesthetic tokens, and WCAG 2.1 AA standards.</p>
+  </header>
+
+  <!-- Color Tokens -->
+  <section class="section">
+    <h2>1. Design Tokens & Palette</h2>
+    <div class="palette-grid">
+      <div class="swatch bg-base"><span>Base Background<br>#080b11</span></div>
+      <div class="swatch bg-card"><span>Card Surface<br>#131a2c</span></div>
+      <div class="swatch bg-primary"><span>Primary (Cyber Blue)<br>#2563eb</span></div>
+      <div class="swatch bg-accent"><span>Accent (Neon Purple)<br>#8b5cf6</span></div>
+      <div class="swatch bg-available"><span>Available (Green)<br>#10b981</span></div>
+      <div class="swatch bg-occupied"><span>Occupied (Red)<br>#ef4444</span></div>
+      <div class="swatch bg-warning"><span>Warning (Amber)<br>#f59e0b</span></div>
+    </div>
+  </section>
+
+  <!-- Buttons -->
+  <section class="section">
+    <h2>2. Buttons (<code>&lt;gc-button&gt;</code>)</h2>
+    <div class="demo-row">
+      <gc-button variant="primary" (btnClick)="triggerToast('Primary button clicked!')">Primary</gc-button>
+      <gc-button variant="secondary" (btnClick)="triggerToast('Secondary button clicked!')">Secondary</gc-button>
+      <gc-button variant="outline">Outline</gc-button>
+      <gc-button variant="danger">Danger</gc-button>
+      <gc-button variant="success">Success</gc-button>
+      <gc-button variant="ghost">Ghost</gc-button>
+    </div>
+    <div class="demo-row" style="margin-top: 1rem;">
+      <gc-button variant="primary" size="sm">Small</gc-button>
+      <gc-button variant="primary" size="md">Medium</gc-button>
+      <gc-button variant="primary" size="lg">Large</gc-button>
+      <gc-button variant="primary" [loading]="true">Loading</gc-button>
+      <gc-button variant="primary" [disabled]="true">Disabled</gc-button>
+    </div>
+  </section>
+
+  <!-- Badges -->
+  <section class="section">
+    <h2>3. Status Badges (<code>&lt;gc-badge&gt;</code>)</h2>
+    <div class="demo-row">
+      <gc-badge variant="available">Available (PS5 #01)</gc-badge>
+      <gc-badge variant="occupied">Occupied (PC #04)</gc-badge>
+      <gc-badge variant="primary">Active Tournament</gc-badge>
+      <gc-badge variant="accent">VIP Elite Tier</gc-badge>
+      <gc-badge variant="warning">Expiring Soon</gc-badge>
+      <gc-badge variant="info">Upcoming</gc-badge>
+      <gc-badge variant="neutral">Draft</gc-badge>
+    </div>
+  </section>
+
+  <!-- Form Inputs & Select -->
+  <section class="section">
+    <h2>4. Form Controls (<code>&lt;gc-input&gt;</code>, <code>&lt;gc-select&gt;</code>)</h2>
+    <div class="grid grid-cols-2 gap-lg">
+      <div>
+        <gc-input
+          label="Gamer Tag / Username"
+          placeholder="e.g. ShadowBlade"
+          hint="Must be between 3 and 20 characters."
+          [(ngModel)]="demoText">
+        </gc-input>
+        <gc-input
+          label="Password (with error state)"
+          type="password"
+          placeholder="••••••••"
+          errorMessage="Password must contain at least 8 characters and 1 symbol."
+          [(ngModel)]="demoPass">
+        </gc-input>
+      </div>
+      <div>
+        <gc-select
+          label="Select Gaming Console"
+          placeholder="-- Choose a Station --"
+          [options]="stationOptions"
+          [(ngModel)]="selectedStation">
+        </gc-select>
+        <gc-select
+          label="Tournament Bracket (Error State)"
+          placeholder="-- Choose Bracket --"
+          [options]="stationOptions"
+          errorMessage="Please choose a valid active bracket.">
+        </gc-select>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cards & Glass Panels -->
+  <section class="section">
+    <h2>5. Cards & Glass Panels (<code>&lt;gc-card&gt;</code>)</h2>
+    <div class="grid grid-cols-3 gap-lg">
+      <gc-card title="PlayStation 5 Pro" subtitle="Station #03 • Ultra 4K 120Hz" [interactive]="true" glow="blue">
+        <p>Loaded with EA FC 25, Tekken 8, and Marvel's Spider-Man 2. DualSense Edge controllers connected.</p>
+        <div card-footer class="flex justify-between items-center">
+          <span class="text-available font-mono">LKR 650 / hr</span>
+          <gc-badge variant="available">Available</gc-badge>
+        </div>
+      </gc-card>
+
+      <gc-card title="Cyber Lounge PC #08" subtitle="RTX 4090 • 240Hz OLED" [interactive]="true" glow="purple">
+        <p>Esports tournament configuration. Valorant, CS2, Dota 2, and Apex Legends pre-installed.</p>
+        <div card-footer class="flex justify-between items-center">
+          <span class="text-occupied font-mono">LKR 800 / hr</span>
+          <gc-badge variant="occupied">Occupied</gc-badge>
+        </div>
+      </gc-card>
+
+      <gc-card title="VIP Racing Rig" subtitle="Fanatec Direct Drive Wheel" [interactive]="true">
+        <p>Gran Turismo 7 and F1 24 motion simulation cockpit with VR2 headset support.</p>
+        <div card-footer class="flex justify-between items-center">
+          <span class="text-primary font-mono">LKR 1,200 / hr</span>
+          <gc-badge variant="warning">Maintenance</gc-badge>
+        </div>
+      </gc-card>
+    </div>
+  </section>
+
+  <!-- Modal & Toasts -->
+  <section class="section">
+    <h2>6. Modal & Toast Notifications</h2>
+    <div class="demo-row">
+      <gc-button variant="primary" (btnClick)="isModalOpen.set(true)">Open Interactive Modal</gc-button>
+      <gc-button variant="success" (btnClick)="toastService.success('Slot reserved successfully!')">Trigger Success Toast</gc-button>
+      <gc-button variant="danger" (btnClick)="toastService.error('Slot already taken. Pick another time.')">Trigger Error Toast</gc-button>
+      <gc-button variant="secondary" (btnClick)="toastService.warning('Your session will expire in 2 minutes.')">Trigger Warning Toast</gc-button>
+    </div>
+
+    <gc-modal
+      [isOpen]="isModalOpen()"
+      (isOpenChange)="isModalOpen.set($event)"
+      title="Confirm Slot Reservation">
+      <p>You are about to book <strong>PlayStation 5 Pro #03</strong> on <strong>Today at 18:00 - 20:00</strong>.</p>
+      <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(8,11,17,0.5); border-radius: 6px;">
+        <p class="font-mono text-gradient">Total: LKR 1,300 (2 hrs &#64; LKR 650/hr)</p>
+      </div>
+      <div modal-actions class="flex gap-sm">
+        <gc-button variant="ghost" (btnClick)="isModalOpen.set(false)">Cancel</gc-button>
+        <gc-button variant="primary" (btnClick)="onConfirmBooking()">Confirm & Pay</gc-button>
+      </div>
+    </gc-modal>
+  </section>
+
+  <!-- Skeleton Loading & Empty State -->
+  <section class="section">
+    <h2>7. Loading States & Empty State</h2>
+    <div class="grid grid-cols-2 gap-lg">
+      <div class="glass-panel" style="padding: 1.5rem;">
+        <h4 style="margin-bottom: 1rem;">Skeleton Shimmer (NFR-03 loading state)</h4>
+        <gc-skeleton shape="circle"></gc-skeleton>
+        <div style="height: 0.75rem;"></div>
+        <gc-skeleton shape="text" width="60%"></gc-skeleton>
+        <gc-skeleton shape="text" width="90%"></gc-skeleton>
+        <gc-skeleton shape="rect" height="80px"></gc-skeleton>
+      </div>
+
+      <gc-empty-state
+        icon="🏆"
+        title="No Tournaments Scheduled"
+        description="There are currently no active tournament brackets for this season. Check back soon!"
+        actionLabel="View Past Results"
+        (actionClick)="triggerToast('Viewing past results...')">
+      </gc-empty-state>
+    </div>
+  </section>
+
+  <!-- Tabs & Pagination -->
+  <section class="section">
+    <h2>8. Tabs & Pagination (<code>&lt;gc-tabs&gt;</code>, <code>&lt;gc-pagination&gt;</code>)</h2>
+    <gc-tabs
+      [tabs]="demoTabs"
+      [activeTab]="activeTab()"
+      (tabChange)="activeTab.set($event)">
+    </gc-tabs>
+    <p style="margin-bottom: 1rem;">Selected Tab Content: <strong>{{ activeTab() | uppercase }}</strong></p>
+
+    <gc-pagination
+      [currentPage]="currentPage()"
+      [totalPages]="8"
+      (pageChange)="currentPage.set($event)">
+    </gc-pagination>
+  </section>
+
+  <!-- Table Component -->
+  <section class="section">
+    <h2>9. Responsive Data Table</h2>
+    <div class="table-container glass-panel">
+      <table class="gc-table">
+        <thead>
+          <tr>
+            <th>Station</th>
+            <th>Console Type</th>
+            <th>Hourly Rate</th>
+            <th>Status</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Station #01</strong></td>
+            <td>PlayStation 5 Slim</td>
+            <td class="font-mono">LKR 600</td>
+            <td><gc-badge variant="available">Available</gc-badge></td>
+            <td style="text-align: right;"><gc-button size="sm" variant="outline">Book Slot</gc-button></td>
+          </tr>
+          <tr>
+            <td><strong>Station #02</strong></td>
+            <td>Xbox Series X</td>
+            <td class="font-mono">LKR 600</td>
+            <td><gc-badge variant="available">Available</gc-badge></td>
+            <td style="text-align: right;"><gc-button size="sm" variant="outline">Book Slot</gc-button></td>
+          </tr>
+          <tr>
+            <td><strong>Station #03</strong></td>
+            <td>Esports PC Rig</td>
+            <td class="font-mono">LKR 800</td>
+            <td><gc-badge variant="occupied">Occupied</gc-badge></td>
+            <td style="text-align: right;"><gc-button size="sm" variant="ghost" [disabled]="true">Reserved</gc-button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

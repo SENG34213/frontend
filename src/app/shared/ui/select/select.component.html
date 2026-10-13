@@ -1,0 +1,36 @@
+<div class="gc-select-group" [class.has-error]="!!errorMessage" [class.is-disabled]="disabled">
+  @if (label) {
+    <label [for]="selectId" class="gc-select-label">
+      {{ label }}
+      @if (required) {
+        <span class="required-mark" aria-hidden="true">*</span>
+      }
+    </label>
+  }
+
+  <div class="gc-select-wrapper">
+    <select
+      [id]="selectId"
+      [disabled]="disabled"
+      [value]="value"
+      [attr.aria-invalid]="!!errorMessage"
+      [attr.aria-describedby]="errorMessage ? selectId + '-error' : null"
+      (change)="onSelectionChange($event)"
+      (blur)="onBlur()"
+      class="gc-select-field">
+      @if (placeholder) {
+        <option value="" disabled [selected]="!value">{{ placeholder }}</option>
+      }
+      @for (opt of options; track opt.value) {
+        <option [value]="opt.value" [selected]="opt.value === value">{{ opt.label }}</option>
+      }
+    </select>
+    <span class="select-chevron" aria-hidden="true">▼</span>
+  </div>
+
+  @if (errorMessage) {
+    <p [id]="selectId + '-error'" class="gc-select-error" role="alert">
+      {{ errorMessage }}
+    </p>
+  }
+</div>

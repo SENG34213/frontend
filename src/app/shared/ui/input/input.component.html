@@ -1,0 +1,34 @@
+<div class="gc-input-group" [class.has-error]="!!errorMessage" [class.is-disabled]="disabled">
+  @if (label) {
+    <label [for]="inputId" class="gc-input-label">
+      {{ label }}
+      @if (required) {
+        <span class="required-mark" aria-hidden="true">*</span>
+      }
+    </label>
+  }
+
+  <div class="gc-input-wrapper">
+    <input
+      [id]="inputId"
+      [type]="type"
+      [placeholder]="placeholder"
+      [disabled]="disabled"
+      [value]="value"
+      [attr.aria-invalid]="!!errorMessage"
+      [attr.aria-describedby]="errorMessage ? inputId + '-error' : (hint ? inputId + '-hint' : null)"
+      (input)="onInputChange($event)"
+      (blur)="onBlur()"
+      class="gc-input-field" />
+  </div>
+
+  @if (errorMessage) {
+    <p [id]="inputId + '-error'" class="gc-input-error" role="alert">
+      {{ errorMessage }}
+    </p>
+  } @else if (hint) {
+    <p [id]="inputId + '-hint'" class="gc-input-hint">
+      {{ hint }}
+    </p>
+  }
+</div>

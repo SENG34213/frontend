@@ -1,0 +1,35 @@
+@if (isOpen) {
+  <div
+    class="gc-modal-backdrop"
+    (click)="onBackdropClick($event)"
+    aria-hidden="true">
+  </div>
+
+  <div
+    class="gc-modal-dialog"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="modalId + '-title'"
+    #dialogRef>
+    <div class="gc-modal-content">
+      <header class="gc-modal-header">
+        <h2 [id]="modalId + '-title'" class="gc-modal-title">{{ title }}</h2>
+        <button
+          type="button"
+          class="gc-modal-close"
+          aria-label="Close dialog"
+          (click)="close()">
+          ✕
+        </button>
+      </header>
+
+      <div class="gc-modal-body">
+        <ng-content></ng-content>
+      </div>
+
+      <footer class="gc-modal-footer">
+        <ng-content select="[modal-actions]"></ng-content>
+      </footer>
+    </div>
+  </div>
+}

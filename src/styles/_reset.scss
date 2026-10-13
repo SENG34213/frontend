@@ -1,0 +1,81 @@
+/* ==========================================================================
+   CSS Reset & Base Element Styling
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--gc-bg-base);
+  color: var(--gc-text-primary);
+  font-family: var(--gc-font-body);
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--gc-bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gc-border-default);
+  border-radius: var(--gc-radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gc-primary);
+}
+
+/* Selection */
+::selection {
+  background-color: var(--gc-primary);
+  color: #ffffff;
+}
+
+/* Images & Media */
+img, svg, video, canvas, audio, iframe, embed, object {
+  display: block;
+  max-width: 100%;
+}
+
+/* Anchor tags */
+a {
+  color: var(--gc-primary-light);
+  text-decoration: none;
+  transition: color var(--gc-transition-fast);
+
+  &:hover {
+    color: var(--gc-accent-light);
+    text-decoration: underline;
+  }
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input, button, textarea, select {
+  font: inherit;
+}

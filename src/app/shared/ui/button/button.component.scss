@@ -1,0 +1,136 @@
+:host {
+  display: inline-block;
+}
+
+button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--gc-radius-md);
+  font-family: var(--gc-font-display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: all var(--gc-transition-fast);
+  border: 1px solid transparent;
+  outline: none;
+  white-space: nowrap;
+  user-select: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--gc-border-focus);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+/* Sizes */
+.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+}
+.btn-md {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.95rem;
+}
+.btn-lg {
+  padding: 0.85rem 1.75rem;
+  font-size: 1.05rem;
+}
+.btn-full {
+  width: 100%;
+}
+
+/* Variants */
+.btn-primary {
+  background: var(--gc-primary);
+  color: #ffffff;
+  box-shadow: 0 0 14px var(--gc-primary-glow);
+
+  &:hover:not(:disabled) {
+    background: var(--gc-primary-hover);
+    box-shadow: 0 0 20px var(--gc-primary-glow);
+    transform: translateY(-1px);
+  }
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+.btn-secondary {
+  background: var(--gc-accent);
+  color: #ffffff;
+  box-shadow: 0 0 14px var(--gc-accent-glow);
+
+  &:hover:not(:disabled) {
+    background: var(--gc-accent-hover);
+    transform: translateY(-1px);
+  }
+}
+
+.btn-outline {
+  background: transparent;
+  border-color: var(--gc-border-default);
+  color: var(--gc-text-primary);
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--gc-primary-light);
+    color: var(--gc-primary-light);
+  }
+}
+
+.btn-danger {
+  background: var(--gc-status-occupied);
+  color: #ffffff;
+  box-shadow: 0 0 14px var(--gc-status-occupied-glow);
+
+  &:hover:not(:disabled) {
+    background: var(--gc-status-occupied-hover);
+  }
+}
+
+.btn-success {
+  background: var(--gc-status-available);
+  color: #ffffff;
+  box-shadow: 0 0 14px var(--gc-status-available-glow);
+
+  &:hover:not(:disabled) {
+    background: var(--gc-status-available-hover);
+  }
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--gc-text-secondary);
+
+  &:hover:not(:disabled) {
+    color: var(--gc-text-primary);
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+.gc-btn-spinner {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.invisible {
+  visibility: hidden;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -1,0 +1,102 @@
+.gc-toast-container {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: min(90vw, 380px);
+  pointer-events: none;
+}
+
+.gc-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: var(--gc-bg-card);
+  border: 1px solid var(--gc-border-default);
+  border-radius: var(--gc-radius-md);
+  box-shadow: var(--gc-shadow-lg);
+  backdrop-filter: blur(10px);
+  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all var(--gc-transition-fast);
+}
+
+.gc-toast-icon {
+  font-size: 1.1rem;
+  font-weight: bold;
+  line-height: 1;
+  margin-top: 0.15rem;
+}
+
+.gc-toast-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.gc-toast-title {
+  font-size: 0.9rem;
+  color: var(--gc-text-primary);
+}
+
+.gc-toast-message {
+  font-size: 0.85rem;
+  color: var(--gc-text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.gc-toast-close {
+  background: none;
+  border: none;
+  color: var(--gc-text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.1rem;
+  line-height: 1;
+
+  &:hover {
+    color: var(--gc-text-primary);
+  }
+}
+
+/* Types */
+.gc-toast-success {
+  border-color: var(--gc-status-available);
+  .gc-toast-icon { color: var(--gc-status-available); }
+  box-shadow: var(--gc-shadow-md), 0 0 15px var(--gc-status-available-glow);
+}
+
+.gc-toast-error {
+  border-color: var(--gc-status-occupied);
+  .gc-toast-icon { color: var(--gc-status-occupied); }
+  box-shadow: var(--gc-shadow-md), 0 0 15px var(--gc-status-occupied-glow);
+}
+
+.gc-toast-warning {
+  border-color: var(--gc-status-warning);
+  .gc-toast-icon { color: var(--gc-status-warning); }
+  box-shadow: var(--gc-shadow-md), 0 0 15px var(--gc-status-warning-glow);
+}
+
+.gc-toast-info {
+  border-color: var(--gc-primary);
+  .gc-toast-icon { color: var(--gc-primary-light); }
+  box-shadow: var(--gc-shadow-md), 0 0 15px var(--gc-primary-glow);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

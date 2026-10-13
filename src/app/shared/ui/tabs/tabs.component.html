@@ -1,0 +1,24 @@
+<div class="gc-tab-list" role="tablist">
+  @for (tab of tabs; track tab.id) {
+    <button
+      type="button"
+      role="tab"
+      [id]="'tab-' + tab.id"
+      [attr.aria-selected]="activeTab === tab.id"
+      [attr.aria-controls]="'panel-' + tab.id"
+      [class.active]="activeTab === tab.id"
+      (click)="selectTab(tab.id)"
+      class="gc-tab-item">
+      @if (tab.icon) {
+        <span class="tab-icon" aria-hidden="true">{{ tab.icon }}</span>
+      }
+      <span class="tab-label">{{ tab.label }}</span>
+      @if (tab.badge !== undefined) {
+        <span class="tab-badge">{{ tab.badge }}</span>
+      }
+      @if (activeTab === tab.id) {
+        <span class="tab-indicator" aria-hidden="true"></span>
+      }
+    </button>
+  }
+</div>
