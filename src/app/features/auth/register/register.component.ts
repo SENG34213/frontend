@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService, RegisterRequest } from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { RegisterRequest } from '../../../shared/models/auth.model';
 
 @Component({
   selector: 'app-register',
@@ -12,22 +13,19 @@ import { AuthService, RegisterRequest } from '../../../core/services/auth.servic
   styleUrl: './register.component.scss'
 })
 export class RegisterComponent {
+  private readonly fb = inject(FormBuilder);
+  readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+
   errorMessage = '';
   isSubmitting = false;
-  form;
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router
-  ) {
-    this.form = this.fb.group({
-      fullName: ['', [Validators.required]],
-      email: ['', [Validators.required, Validators.email]],
-      phoneNumber: [''],
-      password: ['', [Validators.required, Validators.minLength(8)]]
-    });
-  }
+  form = this.fb.group({
+    fullName: ['', [Validators.required]],
+    email: ['', [Validators.required, Validators.email]],
+    phoneNumber: [''],
+    password: ['', [Validators.required, Validators.minLength(8)]]
+  });
 
   onSubmit(): void {
     if (this.form.invalid) {
@@ -38,14 +36,16 @@ export class RegisterComponent {
     this.isSubmitting = true;
     this.errorMessage = '';
 
-    this.authService.register(this.form.getRawValue() as RegisterRequest).subscribe({
+    const req = this.form.getRawValue() as RegisterRequest;
+
+    this.authService.register(req).subscribe({
       next: () => {
         this.isSubmitting = false;
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
         this.isSubmitting = false;
-        this.errorMessage = err?.error?.message ?? 'Registration failed. Please try again.';
+        this.errorMessage = err?.message || err?.error?.message || 'Registration failed. Please try again.';
       }
     });
   }

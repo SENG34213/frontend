@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -12,20 +12,18 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrl: './login.component.scss'
 })
 export class LoginComponent {
+  private readonly fb = inject(FormBuilder);
+  readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
   errorMessage = '';
   isSubmitting = false;
-  form;
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router
-  ) {
-    this.form = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required]]
-    });
-  }
+  form = this.fb.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required]]
+  });
 
   onSubmit(): void {
     if (this.form.invalid) {
@@ -36,14 +34,23 @@ export class LoginComponent {
     this.isSubmitting = true;
     this.errorMessage = '';
 
-    this.authService.login(this.form.getRawValue() as { email: string; password: string }).subscribe({
+    const { email, password } = this.form.getRawValue();
+
+    this.authService.login({ email: email!, password: password! }).subscribe({
       next: () => {
         this.isSubmitting = false;
-        this.router.navigate(['/dashboard']);
+        const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+        if (returnUrl) {
+          this.router.navigateByUrl(returnUrl);
+        } else if (this.authService.isAdmin()) {
+          this.router.navigate(['/admin']);
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
       },
       error: (err) => {
         this.isSubmitting = false;
-        this.errorMessage = err?.error?.message ?? 'Login failed. Please check your credentials.';
+        this.errorMessage = err?.message || err?.error?.message || 'Login failed. Please check your credentials.';
       }
     });
   }
