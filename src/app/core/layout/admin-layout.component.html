@@ -1,0 +1,75 @@
+<div class="admin-shell">
+  <!-- Admin Sidebar -->
+  <aside class="admin-sidebar" [class.collapsed]="sidebarCollapsed()">
+    <div class="sidebar-header">
+      <a routerLink="/admin" class="brand-link">
+        <span class="logo-icon">👑</span>
+        @if (!sidebarCollapsed()) {
+          <span class="logo-text">ADMIN <span class="text-gradient">PORTAL</span></span>
+        }
+      </a>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+        <span class="nav-icon">📊</span>
+        @if (!sidebarCollapsed()) { <span>Dashboard</span> }
+      </a>
+      <a routerLink="/admin/bookings" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📅</span>
+        @if (!sidebarCollapsed()) { <span>Bookings</span> }
+      </a>
+      <a routerLink="/admin/stations" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">🎮</span>
+        @if (!sidebarCollapsed()) { <span>Stations</span> }
+      </a>
+      <a routerLink="/admin/tournaments" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">🏆</span>
+        @if (!sidebarCollapsed()) { <span>Tournaments</span> }
+      </a>
+      <a routerLink="/admin/users" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">👥</span>
+        @if (!sidebarCollapsed()) { <span>Users</span> }
+      </a>
+      <a routerLink="/admin/payments" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">💳</span>
+        @if (!sidebarCollapsed()) { <span>Payments</span> }
+      </a>
+      <a routerLink="/admin/reports" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📈</span>
+        @if (!sidebarCollapsed()) { <span>Reports</span> }
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button
+        type="button"
+        class="collapse-btn"
+        (click)="sidebarCollapsed.set(!sidebarCollapsed())"
+        [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'">
+        {{ sidebarCollapsed() ? '▶' : '◀ Collapse' }}
+      </button>
+    </div>
+  </aside>
+
+  <!-- Admin Main Area -->
+  <div class="admin-main-wrap">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <gc-badge variant="accent">Administrator Access</gc-badge>
+        <span class="topbar-env">Environment: Staging (v0.2.0)</span>
+      </div>
+
+      <div class="topbar-right">
+        <span class="admin-user">{{ authService.currentUser()?.email || 'Admin' }}</span>
+        <gc-button variant="outline" size="sm" (btnClick)="onLogout()">
+          Logout
+        </gc-button>
+      </div>
+    </header>
+
+    <main class="admin-content" id="admin-main">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

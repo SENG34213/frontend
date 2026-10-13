@@ -3,23 +3,17 @@ import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 /**
- * Route guard for FR-02 role-based routing. Use the `data: { role: 'ADMIN' }`
- * route config to additionally restrict a route to Admins only.
+ * Ensures user is authenticated. If not, captures returnUrl
+ * and navigates to /login.
  */
-export const authGuard: CanActivateFn = (route) => {
+export const authGuard: CanActivateFn = (_route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (!authService.isAuthenticated()) {
-    router.navigate(['/login']);
-    return false;
+  if (authService.isAuthenticated()) {
+    return true;
   }
 
-  const requiredRole = route.data?.['role'];
-  if (requiredRole && authService.role() !== requiredRole) {
-    router.navigate(['/dashboard']);
-    return false;
-  }
-
-  return true;
+  router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
+  return false;
 };

@@ -1,0 +1,64 @@
+<div class="shell-container">
+  <header class="app-header">
+    <div class="header-inner container">
+      <a routerLink="/dashboard" class="brand-logo" aria-label="Gaming Castle Dashboard">
+        <span class="logo-icon">🏰</span>
+        <span class="logo-text">GAMING <span class="text-gradient">CASTLE</span></span>
+      </a>
+
+      <!-- Mobile Menu Button -->
+      <button
+        type="button"
+        class="mobile-toggle"
+        [attr.aria-expanded]="mobileMenuOpen()"
+        (click)="mobileMenuOpen.set(!mobileMenuOpen())"
+        aria-label="Toggle navigation menu">
+        {{ mobileMenuOpen() ? '✕' : '☰' }}
+      </button>
+
+      <!-- Navigation Links -->
+      <nav class="nav-links" [class.mobile-open]="mobileMenuOpen()">
+        <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">Dashboard</a>
+        <a routerLink="/styleguide" routerLinkActive="active" (click)="closeMobileMenu()">UI Kit</a>
+      </nav>
+
+      <!-- User Controls -->
+      <div class="user-actions">
+        @if (authService.currentUser(); as user) {
+          <div class="user-badge-wrapper">
+            <span class="user-name">{{ user.email || user.sub }}</span>
+            <gc-badge [variant]="authService.isAdmin() ? 'accent' : 'primary'">
+              {{ user.role }}
+            </gc-badge>
+          </div>
+        }
+
+        <gc-button variant="outline" size="sm" (btnClick)="onLogout()">
+          Sign Out
+        </gc-button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Session Expiring Warning Banner -->
+  @if (authService.isSessionExpiring()) {
+    <aside class="session-warning-banner" role="alert">
+      <div class="container flex justify-between items-center">
+        <span>⚠ Your session is about to expire within 2 minutes. Please save any active reservations.</span>
+      </div>
+    </aside>
+  }
+
+  <main class="main-content" id="main-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="app-footer">
+    <div class="container footer-inner">
+      <p class="copyright">© 2026 Gaming Castle. All rights reserved. SENG 34213 Software Architecture & Design.</p>
+      <div class="footer-meta">
+        <span class="status-indicator">● Staging Active</span>
+      </div>
+    </div>
+  </footer>
+</div>
