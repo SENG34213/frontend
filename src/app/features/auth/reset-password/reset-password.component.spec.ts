@@ -154,6 +154,11 @@ describe('ResetPasswordComponent', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('That code is incorrect or has expired.');
     expect(text).toContain('You have up to 5 attempts');
+    expect(toastServiceSpy.error).toHaveBeenCalledWith(
+      'The 6-digit verification code is invalid or has expired. Please check your messages for the latest code or request a new one.',
+      'Password reset failed'
+    );
+    expect(fixture.nativeElement.querySelector('.auth-error-banner')).toBeNull();
   });
 
   it('should toggle password visibilities', () => {

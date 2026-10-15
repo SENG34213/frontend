@@ -46,7 +46,6 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
   readonly showConfirmPassword = signal<boolean>(false);
   readonly isSubmitting = signal<boolean>(false);
   readonly isResending = signal<boolean>(false);
-  readonly apiError = signal<ApiError | null>(null);
 
   private readonly cdr = inject(ChangeDetectorRef);
   private cooldownDeadline = 0;
@@ -128,15 +127,14 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
   }
 
   get invalidCodeMessage(): string | null {
-    const codeErrors = this.form.controls.code.errors;
-    if (this.apiError()?.code === 'INVALID_RESET_CODE' || codeErrors?.['invalidCode']) {
+    if (this.form.controls.code.hasError('invalidCode')) {
       return 'That code is incorrect or has expired.';
     }
     return null;
   }
 
   get invalidCodeActionMessage(): string | null {
-    if (this.apiError()?.code === 'INVALID_RESET_CODE' || this.form.controls.code.hasError('invalidCode')) {
+    if (this.form.controls.code.hasError('invalidCode')) {
       return 'You have up to 5 attempts before requesting a new code.';
     }
     return null;
@@ -249,17 +247,21 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
     }
 
     this.isResending.set(true);
-    this.apiError.set(null);
-
     this.authService.forgotPassword(identifier).subscribe({
       next: () => {
         this.isResending.set(false);
         this.toastService.info('A new 6-digit code is on its way. It expires in 15 minutes. Check your spam folder too.');
         this.startCooldown();
       },
-      error: () => {
+      error: (err) => {
         this.isResending.set(false);
-        this.toastService.info('A new 6-digit code is on its way. It expires in 15 minutes. Check your spam folder too.');
+        const mappedError = err?.status !== undefined && err?.message && err?.action
+          ? (err as ApiError)
+          : ErrorMapper.map(err);
+        this.toastService.error(
+          `${mappedError.message} ${mappedError.action}`,
+          'Code request failed'
+        );
         this.startCooldown();
       }
     });
@@ -296,8 +298,6 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
     }
 
     this.isSubmitting.set(true);
-    this.apiError.set(null);
-
     const val = this.form.getRawValue();
     const resetReq: ResetPasswordRequest = {
       identifier: (val.identifier || '').trim(),
@@ -318,7 +318,10 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
           ? (err as ApiError)
           : ErrorMapper.map(err);
 
-        this.apiError.set(mapped);
+        this.toastService.error(
+          `${mapped.message} ${mapped.action}`,
+          'Password reset failed'
+        );
 
         if (mapped.code === 'INVALID_RESET_CODE') {
           this.form.controls.code.setErrors({ invalidCode: true });
