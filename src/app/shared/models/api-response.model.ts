@@ -3,6 +3,7 @@ export interface ApiError {
   error?: string;
   message: string;
   action?: string; // Corrective action per NFR-08
+  code?: string; // Backend error code (e.g. EMAIL_TAKEN, ACCOUNT_LOCKED)
   timestamp?: string;
   path?: string;
   fieldErrors?: Record<string, string>;

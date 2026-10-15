@@ -18,8 +18,15 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       if (error instanceof HttpErrorResponse) {
         if (error.status === 401) {
           const currentUrl = router.url;
-          // Only redirect if not already on an auth page
-          if (!currentUrl.includes('/login') && !currentUrl.includes('/register')) {
+          const isAuthFlow =
+            currentUrl.includes('/login') ||
+            currentUrl.includes('/register') ||
+            currentUrl.includes('/forgot-password') ||
+            currentUrl.includes('/reset-password') ||
+            req.url.includes('/auth/');
+
+          // Only redirect if not already on an auth page or performing auth action
+          if (!isAuthFlow) {
             authService.logout(currentUrl);
             toastService.warning(mappedError.message, 'Session Expired');
             router.navigate(['/login'], { queryParams: { returnUrl: currentUrl } });

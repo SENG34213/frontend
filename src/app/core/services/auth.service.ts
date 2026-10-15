@@ -6,10 +6,12 @@ import {
   LoginRequest,
   PhoneLoginRequest,
   RegisterRequest,
+  ResetPasswordRequest,
   TokenPayload,
   UserRole
 } from '../../shared/models/auth.model';
 import { environment } from '../../../environments/environment';
+import { MockDataService } from './mock/mock-data.service';
 
 export const TOKEN_KEY = 'gc_access_token';
 export const ROLE_KEY = 'gc_role';
@@ -17,6 +19,7 @@ export const ROLE_KEY = 'gc_role';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly mockData = inject(MockDataService);
   private readonly baseUrl = `${environment.apiUrl}/auth`;
 
   // State signals
@@ -37,21 +40,50 @@ export class AuthService {
   }
 
   register(request: RegisterRequest): Observable<AuthResponse> {
+    if (environment.useMocks) {
+      return this.mockData.mockRegister(request).pipe(
+        tap((res) => this.storeSession(res))
+      );
+    }
     return this.http.post<AuthResponse>(`${this.baseUrl}/register`, request).pipe(
       tap((res) => this.storeSession(res))
     );
   }
 
   login(request: LoginRequest): Observable<AuthResponse> {
+    if (environment.useMocks) {
+      return this.mockData.mockLogin(request).pipe(
+        tap((res) => this.storeSession(res))
+      );
+    }
     return this.http.post<AuthResponse>(`${this.baseUrl}/login`, request).pipe(
       tap((res) => this.storeSession(res))
     );
   }
 
   phoneLogin(request: PhoneLoginRequest): Observable<AuthResponse> {
+    if (environment.useMocks) {
+      return this.mockData.mockPhoneLogin(request).pipe(
+        tap((res) => this.storeSession(res))
+      );
+    }
     return this.http.post<AuthResponse>(`${this.baseUrl}/login/phone`, request).pipe(
       tap((res) => this.storeSession(res))
     );
+  }
+
+  forgotPassword(identifier: string): Observable<void> {
+    if (environment.useMocks) {
+      return this.mockData.mockForgotPassword(identifier);
+    }
+    return this.http.post<void>(`${this.baseUrl}/password/forgot`, { identifier });
+  }
+
+  resetPassword(request: ResetPasswordRequest): Observable<void> {
+    if (environment.useMocks) {
+      return this.mockData.mockResetPassword(request);
+    }
+    return this.http.post<void>(`${this.baseUrl}/password/reset`, request);
   }
 
   logout(_returnUrl?: string): void {

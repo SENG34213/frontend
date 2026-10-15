@@ -6,6 +6,7 @@ export interface AuthResponse {
   userId: string;
   email: string;
   role: UserRole;
+  notificationSent?: boolean;
 }
 
 export interface LoginRequest {
@@ -30,7 +31,8 @@ export interface ForgotPasswordRequest {
 }
 
 export interface ResetPasswordRequest {
-  token: string;
+  identifier: string;
+  code: string;
   newPassword: string;
 }
 
