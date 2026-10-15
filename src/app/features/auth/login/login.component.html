@@ -1,4 +1,4 @@
-<app-auth-shell>
+<app-auth-shell position="right">
   <div class="auth-card-container">
     <header class="auth-title-section">
       <h1 class="auth-title">Welcome Back, <span class="soldier-highlight">SOLDIER</span></h1>
@@ -6,27 +6,6 @@
     </header>
 
     <gc-card [glow]="'blue'" class="auth-glass-card">
-      @if (apiError(); as error) {
-        <div class="auth-error-banner" role="alert" aria-live="assertive">
-          <div class="error-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-          </div>
-          <div class="error-content">
-            <p class="error-message">{{ error.message }}</p>
-            @if (error.action) {
-              <p class="error-action">{{ error.action }}</p>
-            }
-            @if (error.code === 'ACCOUNT_LOCKED') {
-              <a routerLink="/forgot-password" class="error-link">Reset your password now &rarr;</a>
-            }
-          </div>
-        </div>
-      }
-
       <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="auth-form">
         <!-- Identifier Field: Email or Phone -->
         <div class="form-field-group">
