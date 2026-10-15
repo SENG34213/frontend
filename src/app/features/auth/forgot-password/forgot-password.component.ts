@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -27,7 +27,7 @@ const RESET_IDENTIFIER_STORAGE_KEY = 'gc_reset_identifier';
   templateUrl: './forgot-password.component.html',
   styleUrl: './forgot-password.component.scss'
 })
-export class ForgotPasswordComponent {
+export class ForgotPasswordComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   readonly authService = inject(AuthService);
   private readonly router = inject(Router);

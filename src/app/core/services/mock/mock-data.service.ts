@@ -23,14 +23,14 @@ function createMockJwt(payload: Record<string, unknown>): string {
 
 @Injectable({ providedIn: 'root' })
 export class MockDataService {
-  private readonly mockUsers: Array<{
+  private readonly mockUsers: {
     id: string;
     email: string;
     phoneNumber?: string;
     password: string;
     fullName: string;
     role: UserRole;
-  }> = [
+  }[] = [
     {
       id: 'usr-customer-1',
       email: 'player@gamingcastle.lk',

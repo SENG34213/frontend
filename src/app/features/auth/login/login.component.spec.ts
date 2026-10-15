@@ -5,6 +5,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Router, ActivatedRoute, RouterLink, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { AuthResponse } from '../../../shared/models/auth.model';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
@@ -221,7 +222,14 @@ describe('LoginComponent', () => {
       password: 'password123'
     });
 
-    authServiceSpy.login.and.returnValue(of({} as any));
+    const mockAuthResponse: AuthResponse = {
+      accessToken: 'mock-token',
+      tokenType: 'Bearer',
+      userId: 'u1',
+      email: 'soldier@gamingcastle.lk',
+      role: 'CUSTOMER'
+    };
+    authServiceSpy.login.and.returnValue(of(mockAuthResponse));
     component.isSubmitting.set(true);
 
     component.onSubmit();

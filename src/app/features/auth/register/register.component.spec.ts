@@ -5,6 +5,7 @@ import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { AuthResponse } from '../../../shared/models/auth.model';
 
 describe('RegisterComponent', () => {
   let component: RegisterComponent;
@@ -157,7 +158,14 @@ describe('RegisterComponent', () => {
       confirmPassword: 'CitadelPassword123!'
     });
 
-    authServiceSpy.register.and.returnValue(of({} as any));
+    const mockAuthResponse: AuthResponse = {
+      accessToken: 'mock-token',
+      tokenType: 'Bearer',
+      userId: 'u1',
+      email: 'commander@citadel.com',
+      role: 'CUSTOMER'
+    };
+    authServiceSpy.register.and.returnValue(of(mockAuthResponse));
     component.isSubmitting.set(true);
 
     component.onSubmit();
