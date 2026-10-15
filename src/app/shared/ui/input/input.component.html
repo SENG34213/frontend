@@ -1,4 +1,4 @@
-<div class="gc-input-group" [class.has-error]="!!errorMessage" [class.is-disabled]="disabled">
+<div class="gc-input-group" [class.has-error]="!!errorMessage" [class.is-disabled]="disabled" [class.has-prefix]="hasPrefix" [class.has-suffix]="hasSuffix">
   @if (label) {
     <label [for]="inputId" class="gc-input-label">
       {{ label }}
@@ -9,6 +9,11 @@
   }
 
   <div class="gc-input-wrapper">
+    @if (hasPrefix) {
+      <div class="gc-input-prefix" aria-hidden="true">
+        <ng-content select="[input-prefix]"></ng-content>
+      </div>
+    }
     <input
       [id]="inputId"
       [type]="type"
@@ -20,6 +25,11 @@
       (input)="onInputChange($event)"
       (blur)="onBlur()"
       class="gc-input-field" />
+    @if (hasSuffix) {
+      <div class="gc-input-suffix">
+        <ng-content select="[input-suffix]"></ng-content>
+      </div>
+    }
   </div>
 
   @if (errorMessage) {

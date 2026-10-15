@@ -78,4 +78,18 @@ describe('errorInterceptor', () => {
     const req = httpMock.expectOne('/api/stations');
     req.flush({ message: 'Internal Server Error' }, { status: 500, statusText: 'Server Error' });
   });
+
+  it('should not redirect on 401 for auth endpoints', () => {
+    httpClient.post('/api/auth/login', {}).subscribe({
+      next: () => fail('Should have failed with 401'),
+      error: (err) => {
+        expect(err.status).toBe(401);
+        expect(authServiceSpy.logout).not.toHaveBeenCalled();
+        expect(routerSpy.navigate).not.toHaveBeenCalled();
+      }
+    });
+
+    const req = httpMock.expectOne('/api/auth/login');
+    req.flush({ error: 'INVALID_CREDENTIALS', message: 'Bad credentials' }, { status: 401, statusText: 'Unauthorized' });
+  });
 });

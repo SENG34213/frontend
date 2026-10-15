@@ -1,0 +1,122 @@
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--gc-bg-base);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(37, 99, 235, 0.22) 0%, rgba(139, 92, 246, 0.12) 40%, transparent 80%),
+    radial-gradient(circle at 50% 50%, rgba(15, 21, 35, 0.8) 0%, var(--gc-bg-base) 100%);
+  color: var(--gc-text-primary);
+  position: relative;
+  overflow-x: hidden;
+}
+
+.auth-header {
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  z-index: 10;
+
+  @media (max-width: 640px) {
+    padding: 1.25rem 1rem;
+    justify-content: center;
+  }
+}
+
+.brand-link {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: opacity var(--gc-transition-fast);
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gc-border-focus);
+    outline-offset: 4px;
+    border-radius: var(--gc-radius-sm);
+  }
+}
+
+.brand-wordmark {
+  font-family: var(--gc-font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--gc-primary-light);
+  text-transform: uppercase;
+}
+
+.auth-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem 2.5rem;
+  z-index: 5;
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.auth-footer {
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--gc-text-muted);
+  letter-spacing: 0.05em;
+  border-top: 1px solid var(--gc-border-subtle);
+  background-color: rgba(8, 11, 17, 0.6);
+  backdrop-filter: var(--gc-backdrop-blur);
+  z-index: 10;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+    padding: 1.25rem 1rem;
+  }
+}
+
+.copyright {
+  font-weight: 500;
+}
+
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    justify-content: center;
+    gap: 1rem;
+  }
+}
+
+.footer-link {
+  color: var(--gc-text-muted);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--gc-transition-fast);
+
+  &:hover {
+    color: var(--gc-text-secondary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gc-border-focus);
+    outline-offset: 2px;
+    border-radius: var(--gc-radius-sm);
+  }
+}

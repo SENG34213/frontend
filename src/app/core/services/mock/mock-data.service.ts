@@ -1,15 +1,54 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, delay } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, of, delay, throwError } from 'rxjs';
 import {
   Station,
   SlotAvailability,
   TournamentDto,
   LoyaltyBalanceDto,
-  BookingResponse
+  BookingResponse,
+  AuthResponse,
+  LoginRequest,
+  PhoneLoginRequest,
+  RegisterRequest,
+  ResetPasswordRequest,
+  UserRole
 } from '../../../shared/models';
+
+function createMockJwt(payload: Record<string, unknown>): string {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const body = btoa(JSON.stringify(payload));
+  return `${header}.${body}.mock-signature`;
+}
 
 @Injectable({ providedIn: 'root' })
 export class MockDataService {
+  private readonly mockUsers: Array<{
+    id: string;
+    email: string;
+    phoneNumber?: string;
+    password: string;
+    fullName: string;
+    role: UserRole;
+  }> = [
+    {
+      id: 'usr-customer-1',
+      email: 'player@gamingcastle.lk',
+      phoneNumber: '0771234567',
+      password: 'password123',
+      fullName: 'Kasun Perera',
+      role: 'CUSTOMER'
+    },
+    {
+      id: 'usr-admin-1',
+      email: 'admin@gamingcastle.lk',
+      phoneNumber: '0779876543',
+      password: 'adminPassword123',
+      fullName: 'Admin User',
+      role: 'ADMIN'
+    }
+  ];
+
   private readonly stations: Station[] = [
     {
       id: 'st-01',
@@ -76,8 +115,189 @@ export class MockDataService {
     }
   ];
 
+  mockLogin(request: LoginRequest): Observable<AuthResponse> {
+    const email = request.email.trim().toLowerCase();
+    const user = this.mockUsers.find((u) => u.email.toLowerCase() === email);
+
+    if (!user || user.password !== request.password) {
+      return throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 401,
+            error: {
+              error: 'INVALID_CREDENTIALS',
+              message: 'Invalid email or password'
+            }
+          })
+      );
+    }
+
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const token = createMockJwt({
+      sub: user.id,
+      userId: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+      iat: nowSeconds,
+      exp: nowSeconds + 86400
+    });
+
+    return of<AuthResponse>({
+      accessToken: token,
+      tokenType: 'Bearer',
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    }).pipe(delay(200));
+  }
+
+  mockPhoneLogin(request: PhoneLoginRequest): Observable<AuthResponse> {
+    const cleanPhone = request.phoneNumber.trim().replace(/[\s-]/g, '');
+    const user = this.mockUsers.find(
+      (u) => u.phoneNumber?.replace(/[\s-]/g, '') === cleanPhone
+    );
+
+    if (!user || user.password !== request.password) {
+      return throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 401,
+            error: {
+              error: 'INVALID_CREDENTIALS',
+              message: 'Invalid phone number or password'
+            }
+          })
+      );
+    }
+
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const token = createMockJwt({
+      sub: user.id,
+      userId: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+      iat: nowSeconds,
+      exp: nowSeconds + 86400
+    });
+
+    return of<AuthResponse>({
+      accessToken: token,
+      tokenType: 'Bearer',
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    }).pipe(delay(200));
+  }
+
+  mockRegister(request: RegisterRequest): Observable<AuthResponse> {
+    const email = request.email.trim().toLowerCase();
+    if (this.mockUsers.some((u) => u.email.toLowerCase() === email)) {
+      return throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: {
+              error: 'EMAIL_TAKEN',
+              message: 'Email already exists'
+            }
+          })
+      );
+    }
+
+    if (request.phoneNumber) {
+      const cleanPhone = request.phoneNumber.trim().replace(/[\s-]/g, '');
+      if (
+        this.mockUsers.some(
+          (u) => u.phoneNumber && u.phoneNumber.replace(/[\s-]/g, '') === cleanPhone
+        )
+      ) {
+        return throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 409,
+              error: {
+                error: 'PHONE_TAKEN',
+                message: 'Phone number already exists'
+              }
+            })
+        );
+      }
+    }
+
+    const newUser = {
+      id: 'usr-' + Date.now(),
+      email,
+      phoneNumber: request.phoneNumber?.trim(),
+      password: request.password,
+      fullName: request.fullName.trim(),
+      role: 'CUSTOMER' as UserRole
+    };
+    this.mockUsers.push(newUser);
+
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const token = createMockJwt({
+      sub: newUser.id,
+      userId: newUser.id,
+      email: newUser.email,
+      fullName: newUser.fullName,
+      role: newUser.role,
+      iat: nowSeconds,
+      exp: nowSeconds + 86400
+    });
+
+    return of<AuthResponse>({
+      accessToken: token,
+      tokenType: 'Bearer',
+      userId: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+      notificationSent: true
+    }).pipe(delay(200));
+  }
+
+  mockForgotPassword(identifier: string): Observable<void> {
+    void identifier;
+    // Per backend API contract (FR-04/FR-05): always responds 202 to avoid user enumeration
+    return of(void 0).pipe(delay(200));
+  }
+
+  mockResetPassword(request: ResetPasswordRequest): Observable<void> {
+    if (request.code !== '123456') {
+      return throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 400,
+            error: {
+              error: 'INVALID_RESET_CODE',
+              message: 'The reset code is invalid or has expired'
+            }
+          })
+      );
+    }
+
+    const rawId = request.identifier.trim().toLowerCase();
+    const cleanPhone = request.identifier.trim().replace(/[\s-]/g, '');
+    const user = this.mockUsers.find(
+      (u) =>
+        u.email.toLowerCase() === rawId ||
+        (u.phoneNumber && u.phoneNumber.replace(/[\s-]/g, '') === cleanPhone)
+    );
+
+    if (user) {
+      user.password = request.newPassword;
+    }
+
+    return of(void 0).pipe(delay(200));
+  }
+
   getStations(): Observable<Station[]> {
     return of(this.stations).pipe(delay(200));
+  }
+
+  getAvailableStations(): Observable<Station[]> {
+    return of(this.stations.filter((s) => s.active)).pipe(delay(150));
   }
 
   getStationAvailability(stationId: string, date: string): Observable<SlotAvailability[]> {
@@ -116,7 +336,7 @@ export class MockDataService {
   }
 
   getLoyaltyBalance(userId: string): Observable<LoyaltyBalanceDto> {
-    return of({
+    return of<LoyaltyBalanceDto>({
       userId,
       pointsBalance: 1250,
       tier: 'GOLD',

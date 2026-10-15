@@ -26,6 +26,35 @@
   align-items: center;
 }
 
+.gc-input-prefix,
+.gc-input-suffix {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gc-text-muted);
+  z-index: 2;
+}
+
+.gc-input-prefix {
+  left: 0.85rem;
+  pointer-events: none;
+}
+
+.gc-input-suffix {
+  right: 0.85rem;
+}
+
+.has-prefix .gc-input-field {
+  padding-left: 2.5rem;
+}
+
+.has-suffix .gc-input-field {
+  padding-right: 2.5rem;
+}
+
 .gc-input-field {
   width: 100%;
   padding: 0.65rem 0.9rem;

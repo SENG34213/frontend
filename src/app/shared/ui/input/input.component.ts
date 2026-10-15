@@ -28,6 +28,8 @@ export class InputComponent implements ControlValueAccessor {
   @Input() errorMessage: string | null = null;
   @Input() required = false;
   @Input() disabled = false;
+  @Input() hasPrefix = false;
+  @Input() hasSuffix = false;
 
   value = '';
 

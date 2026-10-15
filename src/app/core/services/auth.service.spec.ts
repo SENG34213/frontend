@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AuthService, TOKEN_KEY, ROLE_KEY } from './auth.service';
 import { AuthResponse, LoginRequest, RegisterRequest } from '../../shared/models/auth.model';
+import { environment } from '../../../environments/environment';
 
 function createMockJwt(payload: Record<string, unknown>): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
@@ -163,5 +164,126 @@ describe('AuthService', () => {
 
   it('should return null when decoding an invalid token format', () => {
     expect(service.decodeToken('invalid-token-string')).toBeNull();
+  });
+
+  describe('forgotPassword and resetPassword HTTP flow', () => {
+    it('should send POST request to /api/auth/password/forgot', () => {
+      service.forgotPassword('player@gamingcastle.lk').subscribe();
+      const req = httpMock.expectOne('/api/auth/password/forgot');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ identifier: 'player@gamingcastle.lk' });
+      req.flush(null, { status: 202, statusText: 'Accepted' });
+    });
+
+    it('should send POST request to /api/auth/password/reset', () => {
+      const resetReq = {
+        identifier: 'player@gamingcastle.lk',
+        code: '123456',
+        newPassword: 'NewPassword123!'
+      };
+      service.resetPassword(resetReq).subscribe();
+      const req = httpMock.expectOne('/api/auth/password/reset');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(resetReq);
+      req.flush(null, { status: 200, statusText: 'OK' });
+    });
+
+    it('should never call notification endpoints for password recovery', () => {
+      const forgotReq = service.forgotPassword('player@gamingcastle.lk').subscribe();
+      const forgotRequest = httpMock.expectOne('/api/auth/password/forgot');
+      expect(forgotRequest.request.url).not.toContain('/api/notifications');
+      forgotRequest.flush(null, { status: 202, statusText: 'Accepted' });
+
+      const resetReq = {
+        identifier: 'player@gamingcastle.lk',
+        code: '123456',
+        newPassword: 'NewPassword123!'
+      };
+      service.resetPassword(resetReq).subscribe();
+      const resetRequest = httpMock.expectOne('/api/auth/password/reset');
+      expect(resetRequest.request.url).not.toContain('/api/notifications');
+      resetRequest.flush(null, { status: 200, statusText: 'OK' });
+      expect(forgotReq).toBeDefined();
+    });
+  });
+
+  describe('mock mode (useMocks: true)', () => {
+    const originalUseMocks = environment.useMocks;
+
+    beforeEach(() => {
+      environment.useMocks = true;
+    });
+
+    afterEach(() => {
+      environment.useMocks = originalUseMocks;
+    });
+
+    it('should perform mock login with valid mock credentials', (done) => {
+      service.login({ email: 'player@gamingcastle.lk', password: 'password123' }).subscribe({
+        next: (res) => {
+          expect(res.email).toBe('player@gamingcastle.lk');
+          expect(service.isAuthenticated()).toBeTrue();
+          expect(service.role()).toBe('CUSTOMER');
+          done();
+        }
+      });
+      // No HTTP request expected in mock mode
+    });
+
+    it('should fail mock login with invalid credentials', (done) => {
+      service.login({ email: 'player@gamingcastle.lk', password: 'wrongPassword' }).subscribe({
+        error: (err) => {
+          expect(err.status).toBe(401);
+          expect(err.error?.error).toBe('INVALID_CREDENTIALS');
+          done();
+        }
+      });
+    });
+
+    it('should perform mock phone login with valid mock credentials', (done) => {
+      service.phoneLogin({ phoneNumber: '0771234567', password: 'password123' }).subscribe({
+        next: (res) => {
+          expect(res.role).toBe('CUSTOMER');
+          expect(service.isAuthenticated()).toBeTrue();
+          done();
+        }
+      });
+    });
+
+    it('should perform mock forgot password successfully', (done) => {
+      service.forgotPassword('player@gamingcastle.lk').subscribe({
+        next: (res) => {
+          expect(res).toBeUndefined();
+          done();
+        }
+      });
+    });
+
+    it('should accept code 123456 for mock reset password', (done) => {
+      service.resetPassword({
+        identifier: 'player@gamingcastle.lk',
+        code: '123456',
+        newPassword: 'BrandNewPassword123'
+      }).subscribe({
+        next: (res) => {
+          expect(res).toBeUndefined();
+          done();
+        }
+      });
+    });
+
+    it('should reject code other than 123456 for mock reset password', (done) => {
+      service.resetPassword({
+        identifier: 'player@gamingcastle.lk',
+        code: '999999',
+        newPassword: 'BrandNewPassword123'
+      }).subscribe({
+        error: (err) => {
+          expect(err.status).toBe(400);
+          expect(err.error?.error).toBe('INVALID_RESET_CODE');
+          done();
+        }
+      });
+    });
   });
 });
