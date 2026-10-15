@@ -1,0 +1,19 @@
+<div class="gc-empty-state" role="status">
+  <div class="gc-empty-icon" aria-hidden="true">
+    {{ icon }}
+  </div>
+  <h3 class="gc-empty-title">{{ title }}</h3>
+  <p class="gc-empty-description">{{ description }}</p>
+
+  @if (actionLabel) {
+    <div class="gc-empty-action">
+      <gc-button variant="primary" (btnClick)="onActionClick()">
+        {{ actionLabel }}
+      </gc-button>
+    </div>
+  }
+
+  <div class="gc-empty-custom-action">
+    <ng-content select="[empty-action]"></ng-content>
+  </div>
+</div>
