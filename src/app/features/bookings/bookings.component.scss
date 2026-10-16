@@ -1,0 +1,985 @@
+/* ==========================================================================
+   Gaming Castle — Slot Booking Page Styles
+   Strict adherence to approved wireframe UI and WCAG 2.1 AA standards
+   ========================================================================== */
+
+.booking-page-container {
+  padding: 2rem 1rem 4rem;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.booking-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 2.5rem;
+  align-items: flex-start;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+/* ── Content Column ──────────────────────────────────────────────────────── */
+
+.booking-content-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.section-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.section-title {
+  font-family: var(--gc-font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--gc-text-primary);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* ── 1. SELECT YOUR SESSION (Calendar & Slots Grid) ───────────────────────── */
+
+.session-picker-grid {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 1.25rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Calendar Card - Sleek and compact outer box */
+.calendar-card {
+  background: var(--gc-bg-card);
+  border: 1px solid var(--gc-border-default);
+  border-radius: var(--gc-radius-md);
+  padding: 0.85rem 0.95rem;
+  box-shadow: var(--gc-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-width: 250px;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.month-label {
+  font-family: var(--gc-font-display);
+  font-size: 0.775rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--gc-text-primary);
+  text-transform: uppercase;
+}
+
+.calendar-nav-buttons {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.calendar-nav-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--gc-border-subtle);
+  color: var(--gc-text-secondary);
+  width: 24px;
+  height: 24px;
+  border-radius: var(--gc-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all var(--gc-transition-fast);
+
+  &:hover:not(:disabled) {
+    background: var(--gc-bg-card-hover);
+    color: var(--gc-text-primary);
+    border-color: var(--gc-primary);
+  }
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+/* Weekday row (Mo Tu We Th Fr Sa Su) */
+.weekdays-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--gc-text-muted);
+  padding-bottom: 0.15rem;
+}
+
+.weekday.weekend {
+  color: var(--gc-accent); /* Purple color matching wireframe */
+}
+
+/* Days grid */
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.day-btn {
+  aspect-ratio: 1;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--gc-text-primary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--gc-transition-fast);
+
+  &:hover:not(.other-month):not(.selected):not(.past):not(.deactive) {
+    background: rgba(37, 99, 235, 0.15);
+    color: var(--gc-primary-light);
+  }
+
+  &.other-month {
+    color: rgba(255, 255, 255, 0.2);
+    cursor: default;
+  }
+
+  &.past,
+  &.deactive,
+  &:disabled {
+    color: rgba(255, 255, 255, 0.2) !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    opacity: 0.35 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-decoration: line-through;
+  }
+
+  &.today:not(.selected) {
+    border: 1px solid var(--gc-primary);
+    color: var(--gc-primary-light);
+    font-weight: 700;
+  }
+
+  &.weekend:not(.other-month):not(.selected):not(.past):not(.deactive) {
+    color: var(--gc-accent-light);
+  }
+
+  /* Selected day: Solid blue rounded pill matching wireframe */
+  &.selected {
+    background: var(--gc-primary);
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 0 8px var(--gc-primary-glow);
+  }
+}
+
+/* Time Slots Card */
+.time-slots-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.slot-btn {
+  background: var(--gc-bg-card);
+  border: 1px solid var(--gc-border-default);
+  border-radius: var(--gc-radius-md);
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--gc-transition-fast);
+  color: var(--gc-text-primary);
+  position: relative;
+
+  .slot-start {
+    font-size: 0.75rem;
+    color: var(--gc-text-muted);
+    font-weight: 500;
+  }
+
+  .slot-end {
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    margin-top: 0.1rem;
+  }
+
+  &:hover:not(:disabled):not(.selected) {
+    border-color: var(--gc-border-focus);
+    background: var(--gc-bg-card-hover);
+    transform: translateY(-1px);
+  }
+
+  /* Active/selected slot with blue border and glow */
+  &.selected {
+    background: rgba(37, 99, 235, 0.18);
+    border: 2px solid var(--gc-primary);
+    box-shadow: 0 0 14px var(--gc-primary-glow);
+
+    .slot-start {
+      color: var(--gc-primary-light);
+    }
+
+    .slot-end {
+      color: #ffffff;
+    }
+  }
+
+  &:disabled,
+  &.occupied,
+  &.booked,
+  &.deactive {
+    opacity: 0.35;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    background: rgba(8, 11, 17, 0.7);
+    border-color: rgba(255, 255, 255, 0.05);
+
+    .slot-start {
+      color: var(--gc-text-disabled);
+    }
+
+    .slot-end {
+      color: var(--gc-text-disabled);
+      text-decoration: line-through;
+    }
+  }
+
+  .occupied-badge,
+  .booked-badge {
+    position: absolute;
+    bottom: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.12);
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+  }
+}
+
+/* ── 2. CHOOSE CONSOLE ───────────────────────────────────────────────────── */
+
+.consoles-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.console-card {
+  background: var(--gc-bg-card);
+  border: 1px solid var(--gc-border-default);
+  border-radius: var(--gc-radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all var(--gc-transition-normal);
+  display: flex;
+  flex-direction: column;
+
+  &:hover {
+    border-color: var(--gc-border-focus);
+    transform: translateY(-2px);
+    box-shadow: var(--gc-shadow-md);
+  }
+
+  /* Selected console active border and glow matching wireframe */
+  &.selected {
+    border: 2px solid var(--gc-primary);
+    box-shadow: 0 0 16px var(--gc-primary-glow);
+  }
+}
+
+.console-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  background: #000000;
+  overflow: hidden;
+
+  .console-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform var(--gc-transition-slow);
+  }
+
+  &:hover .console-img {
+    transform: scale(1.03);
+  }
+
+  .selected-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--gc-primary);
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.3rem 0.65rem;
+    border-radius: var(--gc-radius-sm);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.console-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.console-name {
+  font-family: var(--gc-font-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--gc-text-primary);
+  letter-spacing: 0.03em;
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+}
+
+.console-specs {
+  font-size: 0.8rem;
+  color: var(--gc-text-muted);
+  line-height: 1.4;
+  margin: 0 0 1.25rem;
+  flex: 1;
+}
+
+.console-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--gc-border-subtle);
+  font-size: 0.78rem;
+}
+
+.console-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--gc-status-info);
+    box-shadow: 0 0 8px var(--gc-status-info-glow);
+  }
+
+  .status-text {
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--gc-status-info);
+  }
+}
+
+.controller-count {
+  color: var(--gc-text-muted);
+}
+
+/* ── 3. AVAILABLE GAMES ──────────────────────────────────────────────────── */
+
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 420px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.game-card {
+  background: var(--gc-bg-card);
+  border: 1px solid var(--gc-border-default);
+  border-radius: var(--gc-radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all var(--gc-transition-fast);
+
+  &:hover {
+    border-color: var(--gc-primary-light);
+    transform: translateY(-3px);
+    box-shadow: var(--gc-shadow-md);
+  }
+
+  &.selected {
+    border: 2px solid var(--gc-primary);
+    box-shadow: 0 0 14px var(--gc-primary-glow);
+  }
+}
+
+.game-cover-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: #000000;
+
+  .game-cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--gc-transition-normal);
+  }
+
+  &:hover .game-cover-img {
+    transform: scale(1.05);
+  }
+
+  .game-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(8, 11, 17, 0.95) 0%, rgba(8, 11, 17, 0.3) 40%, transparent 70%);
+    display: flex;
+    align-items: flex-end;
+    padding: 0.85rem;
+  }
+
+  .game-title {
+    font-family: var(--gc-font-display);
+    font-size: 0.825rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  }
+
+  .game-selected-indicator {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--gc-primary);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    box-shadow: 0 0 8px var(--gc-primary-glow);
+  }
+}
+
+/* ── RIGHT COLUMN: BOOKING SUMMARY ───────────────────────────────────────── */
+
+.booking-summary-col {
+  position: sticky;
+  top: 90px;
+}
+
+.summary-panel {
+  background: var(--gc-bg-card);
+  border: 1px solid var(--gc-border-default);
+  border-radius: var(--gc-radius-md);
+  padding: 1.5rem;
+  box-shadow: var(--gc-shadow-md);
+}
+
+.summary-title {
+  font-family: var(--gc-font-display);
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--gc-text-primary);
+  text-transform: uppercase;
+  margin: 0 0 1.5rem;
+}
+
+.summary-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.summary-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.3rem;
+}
+
+.section-meta-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--gc-text-muted);
+  text-transform: uppercase;
+}
+
+.edit-icon-btn {
+  background: none;
+  border: none;
+  color: var(--gc-text-muted);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--gc-transition-fast);
+
+  &:hover {
+    color: var(--gc-primary-light);
+  }
+}
+
+.summary-highlight-text {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gc-primary-light); /* Blue/cyan text matching wireframe */
+  margin: 0;
+}
+
+.summary-subtext {
+  font-size: 0.85rem;
+  color: var(--gc-text-secondary);
+  margin: 0.2rem 0 0;
+}
+
+.summary-game-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gc-accent-light);
+  margin: 0;
+}
+
+/* Loyalty Reward Switch */
+.loyalty-discount-card {
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: var(--gc-radius-sm);
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.loyalty-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  .loyalty-icon {
+    font-size: 1.25rem;
+  }
+
+  .loyalty-title {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--gc-text-primary);
+  }
+
+  .loyalty-balance {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--gc-accent-light);
+  }
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+
+  input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: var(--gc-border-default);
+    border-radius: 22px;
+    transition: var(--gc-transition-fast);
+
+    &:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      border-radius: 50%;
+      transition: var(--gc-transition-fast);
+    }
+  }
+
+  input:checked + .slider {
+    background-color: var(--gc-accent);
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(18px);
+  }
+
+  &.disabled,
+  input:disabled + .slider {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+}
+
+.summary-divider {
+  height: 1px;
+  background: var(--gc-border-subtle);
+  margin: 0.25rem 0;
+}
+
+.pricing-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--gc-text-secondary);
+
+  &.discount-row {
+    color: var(--gc-status-available);
+    font-weight: 600;
+  }
+}
+
+.pricing-label {
+  font-size: 0.825rem;
+}
+
+.pricing-val {
+  font-family: var(--gc-font-mono);
+  font-weight: 600;
+}
+
+.total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--gc-border-default);
+  margin-top: 0.25rem;
+}
+
+.total-label {
+  font-family: var(--gc-font-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--gc-text-primary);
+}
+
+.total-val {
+  font-family: var(--gc-font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--gc-primary-light); /* Cyan/Blue total matching wireframe */
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 10px var(--gc-primary-glow);
+}
+
+/* Proceed Button */
+.proceed-btn {
+  width: 100%;
+  background: var(--gc-primary);
+  border: none;
+  border-radius: var(--gc-radius-md);
+  padding: 0.95rem 1.25rem;
+  color: #ffffff;
+  font-family: var(--gc-font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  transition: all var(--gc-transition-fast);
+  box-shadow: 0 4px 14px var(--gc-primary-glow);
+  margin-top: 0.5rem;
+
+  .arrow-icon {
+    font-size: 1.1rem;
+    transition: transform var(--gc-transition-fast);
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--gc-primary-hover);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+    transform: translateY(-1px);
+
+    .arrow-icon {
+      transform: translateX(4px);
+    }
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    box-shadow: none !important;
+    background: var(--gc-bg-card);
+    border: 1px solid var(--gc-border-default);
+    color: var(--gc-text-disabled);
+  }
+}
+
+.security-note {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--gc-text-disabled);
+  text-align: center;
+  text-transform: uppercase;
+  margin: 0.5rem 0 0;
+  line-height: 1.4;
+}
+
+/* ── Checkout / Payment Modal Styles ─────────────────────────────────────── */
+
+.payment-modal-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-order-summary {
+  background: var(--gc-bg-surface);
+  border: 1px solid var(--gc-border-default);
+  border-radius: var(--gc-radius-sm);
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.single-payment-method {
+  width: 100%;
+}
+
+.method-card-active {
+  background: rgba(37, 99, 235, 0.12);
+  border: 1.5px solid var(--gc-primary);
+  border-radius: var(--gc-radius-sm);
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 0 12px var(--gc-primary-glow);
+}
+
+.method-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .method-icon {
+    font-size: 1.35rem;
+  }
+
+  .method-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+
+    .method-name {
+      font-size: 0.9rem;
+      color: var(--gc-text-primary);
+    }
+
+    .method-desc {
+      font-size: 0.75rem;
+      color: var(--gc-text-muted);
+    }
+  }
+}
+
+.card-only-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gc-primary-light);
+  background: rgba(37, 99, 235, 0.2);
+  border: 1px solid var(--gc-primary);
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gc-text-muted);
+}
+
+.form-input {
+  background: var(--gc-bg-surface);
+  border: 1px solid var(--gc-border-default);
+  border-radius: var(--gc-radius-sm);
+  padding: 0.65rem 0.85rem;
+  color: var(--gc-text-primary);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color var(--gc-transition-fast);
+
+  &:focus {
+    border-color: var(--gc-primary);
+    box-shadow: 0 0 0 2px var(--gc-border-glow);
+  }
+}
+
+.cash-notice-box {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--gc-radius-sm);
+  padding: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+/* Receipt confirmation */
+.receipt-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.receipt-success-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--gc-status-available);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 0 20px var(--gc-status-available-glow);
+}
+
+.receipt-title {
+  font-family: var(--gc-font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--gc-text-primary);
+  margin: 0 0 0.4rem;
+}
+
+.receipt-subtitle {
+  font-size: 0.85rem;
+  color: var(--gc-text-muted);
+  margin: 0 0 1.5rem;
+}
+
+.receipt-details-box {
+  width: 100%;
+  background: var(--gc-bg-surface);
+  border: 1px solid var(--gc-border-default);
+  border-radius: var(--gc-radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+
+  &.total-highlight {
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--gc-border-default);
+    font-size: 1rem;
+  }
+}
+
+.booking-error-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  padding: 0.75rem 1rem;
+  border-radius: var(--gc-radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.1);
+}
+

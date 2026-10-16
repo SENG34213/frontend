@@ -4,6 +4,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 describe('ForgotPasswordComponent', () => {
   let component: ForgotPasswordComponent;
@@ -18,7 +19,7 @@ describe('ForgotPasswordComponent', () => {
     sessionStorage.clear();
     history.replaceState(null, '');
     authServiceSpy = jasmine.createSpyObj('AuthService', ['forgotPassword']);
-    toastServiceSpy = jasmine.createSpyObj('ToastService', ['info']);
+    toastServiceSpy = jasmine.createSpyObj('ToastService', ['info', 'error']);
 
     await TestBed.configureTestingModule({
       imports: [ForgotPasswordComponent],
@@ -115,12 +116,16 @@ describe('ForgotPasswordComponent', () => {
   });
 
   it('should still show the neutral message and navigate even when forgotPassword fails', () => {
-    authServiceSpy.forgotPassword.and.returnValue(throwError(() => new Error('network')));
+    authServiceSpy.forgotPassword.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
 
     component.identifierControl.setValue('0771234567');
     component.onSubmit();
 
-    expect(toastServiceSpy.info).toHaveBeenCalledWith('If an account exists for 0771234567, a code is on its way. It expires in 15 minutes. Check your spam folder too.');
+    expect(toastServiceSpy.error).toHaveBeenCalledWith(
+      'Unable to connect to the Gaming Castle server. Please check your internet connection or verify the server is running.',
+      'Code request failed'
+    );
+    expect(fixture.nativeElement.querySelector('.auth-error-banner')).toBeNull();
     expect(router.navigate).toHaveBeenCalledWith(['/reset-password'], {
       state: { identifier: '0771234567' }
     });

@@ -18,8 +18,11 @@
 
       <!-- Navigation Links -->
       <nav class="nav-links" [class.mobile-open]="mobileMenuOpen()">
-        <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">Dashboard</a>
-        <a routerLink="/styleguide" routerLinkActive="active" (click)="closeMobileMenu()">UI Kit</a>
+        <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">HOME</a>
+        <a routerLink="/bookings" routerLinkActive="active" (click)="closeMobileMenu()">BOOKINGS</a>
+        <a routerLink="/dashboard" (click)="closeMobileMenu()">TOURNAMENTS</a>
+        <a routerLink="/dashboard" (click)="closeMobileMenu()">PROFILE</a>
+        <a routerLink="/styleguide" routerLinkActive="active" class="dev-nav-link" (click)="closeMobileMenu()">UI KIT</a>
       </nav>
 
       <!-- User Controls -->
@@ -33,8 +36,8 @@
           </div>
         }
 
-        <gc-button variant="outline" size="sm" (btnClick)="onLogout()">
-          Sign Out
+        <gc-button variant="primary" size="sm" (btnClick)="onLogout()">
+          LOG OUT
         </gc-button>
       </div>
     </div>
@@ -55,10 +58,16 @@
 
   <footer class="app-footer">
     <div class="container footer-inner">
-      <p class="copyright">© 2026 Gaming Castle. All rights reserved. SENG 34213 Software Architecture & Design.</p>
-      <div class="footer-meta">
-        <span class="status-indicator">● Staging Active</span>
+      <div class="footer-brand">
+        <span class="logo-text font-bold text-gradient">Gaming Castle</span>
       </div>
+      <div class="footer-links">
+        <a href="#location">Location</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#terms">Terms</a>
+        <a href="#support">Support</a>
+      </div>
+      <p class="copyright">© 2024 Gaming Castle Jaffna. Partnered with University of Kelaniya.</p>
     </div>
   </footer>
 </div>

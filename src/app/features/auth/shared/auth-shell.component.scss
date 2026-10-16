@@ -1,24 +1,28 @@
 .auth-shell {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   background-color: var(--gc-bg-base);
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(37, 99, 235, 0.22) 0%, rgba(139, 92, 246, 0.12) 40%, transparent 80%),
-    radial-gradient(circle at 50% 50%, rgba(15, 21, 35, 0.8) 0%, var(--gc-bg-base) 100%);
+    linear-gradient(180deg, rgba(8, 11, 17, 0.78) 0%, rgba(8, 11, 17, 0.62) 50%, rgba(8, 11, 17, 0.92) 100%),
+    url('/images/login-bg.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   color: var(--gc-text-primary);
   position: relative;
   overflow-x: hidden;
 }
 
 .auth-header {
-  padding: 1.5rem 2rem;
+  padding: 0.1rem clamp(1rem, 3vw, 2rem);
   display: flex;
   align-items: center;
   z-index: 10;
 
   @media (max-width: 640px) {
-    padding: 1.25rem 1rem;
+    padding: 0.75rem 1rem;
     justify-content: center;
   }
 }
@@ -42,7 +46,7 @@
 
 .brand-wordmark {
   font-family: var(--gc-font-display);
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: var(--gc-primary-light);
@@ -54,7 +58,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 1rem 2.5rem;
+  padding: 0 1rem;
   z-index: 5;
 }
 
@@ -64,14 +68,35 @@
   margin: 0 auto;
 }
 
+.auth-container-wide {
+  max-width: 900px;
+}
+
+@media (max-width: 767px) {
+  .auth-container-wide {
+    max-width: 480px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .auth-main-right {
+    justify-content: flex-end;
+    padding-right: clamp(2rem, 8vw, 8rem);
+
+    .auth-container {
+      margin: 0 0 0 auto;
+    }
+  }
+}
+
 .auth-footer {
-  padding: 1.5rem 2rem;
+  padding: 0.65rem clamp(1rem, 3vw, 2rem);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: var(--gc-text-muted);
   letter-spacing: 0.05em;
   border-top: 1px solid var(--gc-border-subtle);
@@ -83,9 +108,10 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 0.75rem;
-    padding: 1.25rem 1rem;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
   }
+
 }
 
 .copyright {
@@ -118,5 +144,11 @@
     outline: 2px solid var(--gc-border-focus);
     outline-offset: 2px;
     border-radius: var(--gc-radius-sm);
+  }
+}
+
+@media (min-width: 1024px) and (min-height: 700px) {
+  .auth-main {
+    padding-block: 0.5rem;
   }
 }
