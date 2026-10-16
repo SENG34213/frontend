@@ -1,0 +1,182 @@
+<!-- Floating Real-Time Notification Trigger Button (Bottom-Right) -->
+<aside class="floating-notification-anchor" aria-label="Real-time Admin Notifications">
+  <button
+    type="button"
+    class="notification-trigger-btn"
+    (click)="notifService.toggleDrawer()"
+    [attr.aria-expanded]="notifService.isDrawerOpen()"
+    aria-label="Open notifications center">
+    <span class="bell-icon" [class.ringing]="notifService.unreadCount() > 0">🔔</span>
+    
+    @if (notifService.unreadCount() > 0) {
+      <span class="unread-badge animate-pulse" aria-label="Unread notifications count">
+        {{ notifService.unreadCount() > 99 ? '99+' : notifService.unreadCount() }}
+      </span>
+    }
+  </button>
+
+  <!-- Flyout Notification Drawer / Window -->
+  @if (notifService.isDrawerOpen()) {
+    <div class="notification-panel glass-panel shadow-lg" role="region" aria-label="Live Notification Feed">
+      <!-- Panel Header -->
+      <header class="panel-header">
+        <div class="header-left">
+          <span class="panel-icon">🔔</span>
+          <div class="title-group">
+            <h3 class="panel-title">Notifications</h3>
+            <div class="socket-status" [class.connected]="notifService.isConnected()">
+              <span class="status-dot"></span>
+              <span class="status-text">{{ notifService.isConnected() ? 'Socket.IO Live' : 'Reconnecting...' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          @if (notifService.unreadCount() > 0) {
+            <button
+              type="button"
+              class="btn-text-action"
+              (click)="notifService.markAllAsRead()"
+              title="Mark all notifications as read">
+              ✓ Read All
+            </button>
+          }
+          <button
+            type="button"
+            class="btn-close"
+            (click)="notifService.closeDrawer()"
+            aria-label="Close notification drawer">
+            ✕
+          </button>
+        </div>
+      </header>
+
+      <!-- Filter Tabs & Quick Action Bar -->
+      <div class="panel-filter-bar">
+        <div class="filter-pills">
+          <button
+            type="button"
+            class="pill-btn"
+            [class.active]="notifService.activeFilter() === 'ALL'"
+            (click)="notifService.setFilter('ALL')">
+            All ({{ notifService.notifications().length }})
+          </button>
+          <button
+            type="button"
+            class="pill-btn"
+            [class.active]="notifService.activeFilter() === 'UNREAD'"
+            (click)="notifService.setFilter('UNREAD')">
+            Unread ({{ notifService.unreadCount() }})
+          </button>
+          <button
+            type="button"
+            class="pill-btn"
+            [class.active]="notifService.activeFilter() === 'BOOKING'"
+            (click)="notifService.setFilter('BOOKING')">
+            Bookings
+          </button>
+          <button
+            type="button"
+            class="pill-btn"
+            [class.active]="notifService.activeFilter() === 'TOURNAMENT'"
+            (click)="notifService.setFilter('TOURNAMENT')">
+            Tournaments
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="btn-test-alert"
+          (click)="notifService.sendTestAlert()"
+          title="Send a sample real-time notification to test socket broadcast">
+          ⚡ Test Alert
+        </button>
+      </div>
+
+      <!-- Notifications List -->
+      <div class="notifications-scroll-area">
+        @if (notifService.filteredNotifications().length === 0) {
+          <div class="empty-notifications">
+            <span class="empty-icon">🎉</span>
+            <p class="empty-title">All caught up!</p>
+            <p class="empty-desc">No new notifications in this category. Real-time booking and tournament events will appear here live.</p>
+          </div>
+        } @else {
+          <div class="notification-items-list">
+            @for (item of notifService.filteredNotifications(); track item.id) {
+              <article
+                class="notification-card"
+                [class.unread]="!item.read"
+                (click)="!item.read && notifService.markAsRead(item.id)">
+                <!-- Left Icon -->
+                <div class="item-icon-box" [ngClass]="getCategoryBadgeClass(item.category)">
+                  {{ getCategoryIcon(item.category) }}
+                </div>
+
+                <!-- Content Area -->
+                <div class="item-content">
+                  <div class="item-title-row">
+                    <span class="item-title">{{ item.title }}</span>
+                    <span class="item-time font-mono">{{ getTimeAgo(item.createdAt) }}</span>
+                  </div>
+
+                  <p class="item-message">{{ item.message }}</p>
+
+                  <div class="item-footer">
+                    @if (item.link) {
+                      <a
+                        [routerLink]="item.link"
+                        class="item-link-btn"
+                        (click)="notifService.closeDrawer()">
+                        View Page →
+                      </a>
+                    }
+
+                    <div class="item-action-btns">
+                      @if (!item.read) {
+                        <button
+                          type="button"
+                          class="btn-mark-read"
+                          (click)="$event.stopPropagation(); notifService.markAsRead(item.id)"
+                          title="Mark this notification as read">
+                          Mark read
+                        </button>
+                      }
+                      <button
+                        type="button"
+                        class="btn-item-dismiss"
+                        (click)="$event.stopPropagation(); notifService.removeNotification(item.id)"
+                        title="Dismiss notification">
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Unread status pill indicator -->
+                @if (!item.read) {
+                  <span class="unread-dot" aria-label="Unread"></span>
+                }
+              </article>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Panel Footer -->
+      <footer class="panel-footer">
+        <span class="footer-meta">
+          <span class="dot-online"></span> ws://localhost:5001
+        </span>
+        @if (notifService.notifications().length > 0) {
+          <button
+            type="button"
+            class="btn-clear-all"
+            (click)="notifService.clearAll()">
+            Clear History
+          </button>
+        }
+      </footer>
+    </div>
+  }
+</aside>

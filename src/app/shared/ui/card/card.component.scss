@@ -1,5 +1,6 @@
 :host {
   display: block;
+  height: 100%;
 }
 
 .gc-card {
@@ -11,6 +12,7 @@
   transition: all var(--gc-transition-fast);
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .gc-card-interactive {
