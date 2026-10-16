@@ -1,0 +1,266 @@
+<div class="reports-page-container">
+
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-left">
+      <div class="header-tags">
+        <gc-badge variant="accent">Analytics</gc-badge>
+      </div>
+      <h1 class="page-title">Reports <span class="text-gradient">& Analytics</span></h1>
+      <p class="page-subtitle">
+        Reconcile station revenues, monitor console occupancy floor, and audit booking channel performance.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <gc-button
+        variant="secondary"
+        size="md"
+        (click)="printReport()"
+        aria-label="Print current report view">
+        🖨 Print View
+      </gc-button>
+
+      <gc-button
+        variant="primary"
+        size="md"
+        [loading]="isExporting()"
+        (click)="exportCsv()"
+        aria-label="Download CSV report">
+        📥 Export CSV
+      </gc-button>
+    </div>
+  </header>
+
+  <!-- Category Selection Tabs -->
+  <nav class="report-tabs" aria-label="Report Categories">
+    @for (t of availableTypes; track t.id) {
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeType() === t.id"
+        (click)="selectType(t.id)">
+        <span class="tab-icon">{{ t.icon }}</span>
+        <span class="tab-label">{{ t.label }}</span>
+      </button>
+    }
+  </nav>
+
+  <!-- Date Preset Filter Bar -->
+  <div class="filter-toolbar">
+    <div class="preset-group">
+      <span class="filter-label">Timeframe:</span>
+      @for (p of presets; track p.id) {
+        <button
+          type="button"
+          class="preset-chip"
+          [class.active]="activePreset() === p.id"
+          (click)="selectPreset(p.id)">
+          {{ p.label }}
+        </button>
+      }
+    </div>
+
+    @if (activePreset() === 'custom') {
+      <div class="custom-range-inputs">
+        <label class="date-field">
+          <span>From</span>
+          <input
+            type="date"
+            class="gc-date-input"
+            [value]="customStart()"
+            (input)="customStart.set($any($event.target).value)" />
+        </label>
+        <label class="date-field">
+          <span>To</span>
+          <input
+            type="date"
+            class="gc-date-input"
+            [value]="customEnd()"
+            (input)="customEnd.set($any($event.target).value)" />
+        </label>
+        <gc-button size="sm" variant="primary" (click)="applyCustomRange()">
+          Apply
+        </gc-button>
+      </div>
+    }
+
+    <div class="meta-status">
+      @if (reportData(); as data) {
+        <span class="range-display">
+          📅 Period: {{ data.dateRange.startDate | date:'mediumDate' }} — {{ data.dateRange.endDate | date:'mediumDate' }}
+        </span>
+      }
+    </div>
+  </div>
+
+  <!-- NFR-08 Plain English Error Banner -->
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">
+      <div class="error-content">
+        <span class="error-icon">⚠️</span>
+        <div>
+          <strong>Unable to generate report:</strong>
+          <p>{{ errorMessage() }}</p>
+        </div>
+      </div>
+      <gc-button size="sm" variant="secondary" (click)="loadReport()">
+        Retry Generation
+      </gc-button>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="kpi-grid">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="kpi-card skeleton-card">
+            <gc-skeleton width="40%" height="16px"></gc-skeleton>
+            <gc-skeleton width="70%" height="32px" style="margin-top: 12px;"></gc-skeleton>
+            <gc-skeleton width="50%" height="14px" style="margin-top: 8px;"></gc-skeleton>
+          </div>
+        }
+      </div>
+
+      <div class="chart-skeleton">
+        <gc-skeleton width="100%" height="240px"></gc-skeleton>
+      </div>
+    </div>
+  }
+
+  <!-- Report Content -->
+  @if (!isLoading() && reportData(); as data) {
+
+    <!-- 1. KPI Cards Grid -->
+    <section class="kpi-grid" aria-label="Key Performance Indicators">
+      @for (kpi of data.kpis; track kpi.id) {
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">{{ kpi.label }}</span>
+            @if (kpi.icon) {
+              <span class="kpi-icon">{{ kpi.icon }}</span>
+            }
+          </div>
+          <div class="kpi-value">{{ kpi.value }}</div>
+          <div class="kpi-footer">
+            @if (kpi.changePct !== undefined) {
+              <span
+                class="kpi-trend"
+                [class.positive]="kpi.changeType === 'positive'"
+                [class.negative]="kpi.changeType === 'negative'">
+                {{ kpi.changePct > 0 ? '+' : '' }}{{ kpi.changePct }}%
+              </span>
+            }
+            @if (kpi.helper) {
+              <span class="kpi-helper">{{ kpi.helper }}</span>
+            }
+          </div>
+        </div>
+      }
+    </section>
+
+    <!-- 2. Interactive Trend Visualization -->
+    <section class="chart-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Timeline Performance Trend</h2>
+          <p class="section-subtitle">Proportional distribution across the active time window</p>
+        </div>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-dot primary"></span> Primary Metric</span>
+          <span class="legend-item"><span class="legend-dot secondary"></span> Secondary Channel</span>
+        </div>
+      </div>
+
+      <div class="trend-bars-container">
+        @for (pt of data.trend; track pt.date) {
+          <div class="bar-col" [title]="pt.date + ': ' + pt.primaryValue">
+            <div class="bar-track">
+              <div
+                class="bar-fill primary"
+                [style.height.%]="getBarHeightPct(pt.primaryValue)">
+                <span class="bar-tooltip">{{ pt.primaryValue }}</span>
+              </div>
+            </div>
+            <span class="bar-label">{{ pt.label }}</span>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- 3. Category Breakdown & Segment Analysis -->
+    @if (data.breakdowns.length > 0) {
+      <section class="breakdown-section">
+        <h2 class="section-title">Segment Breakdown</h2>
+        <div class="breakdown-grid">
+          @for (item of data.breakdowns; track item.category) {
+            <div class="breakdown-card">
+              <div class="breakdown-header">
+                <span class="category-name">{{ item.category }}</span>
+                <span class="category-val">{{ item.formattedValue }}</span>
+              </div>
+              <div class="progress-track">
+                <div
+                  class="progress-fill"
+                  [style.width.%]="item.percentage"
+                  [style.background-color]="item.color || '#3b82f6'"></div>
+              </div>
+              <div class="breakdown-footer">
+                <span>{{ item.percentage }}% of total</span>
+                @if (item.count !== undefined) {
+                  <span>{{ item.count }} events</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- 4. Detailed Tabular Audit Records -->
+    <section class="table-section">
+      <div class="table-header-wrap">
+        <h2 class="section-title">Granular Data Audit</h2>
+        <span class="records-count">{{ data.tableData.length }} records in period</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="report-table">
+          <thead>
+            <tr>
+              @for (col of data.tableColumns; track col.key) {
+                <th [style.text-align]="col.align || 'left'">{{ col.label }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of data.tableData; track $index) {
+              <tr>
+                @for (col of data.tableColumns; track col.key) {
+                  <td [style.text-align]="col.align || 'left'">
+                    @if (col.format === 'badge') {
+                      <gc-badge variant="success">{{ row[col.key] }}</gc-badge>
+                    } @else if (col.format === 'date') {
+                      {{ row[col.key] | date:'mediumDate' }}
+                    } @else {
+                      {{ formatCellValue(row[col.key], col.format) }}
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  } @else if (!isLoading() && !errorMessage()) {
+    <gc-empty-state
+      title="No Report Data Found"
+      description="No activity registered for this period. Try expanding the timeframe preset above."
+      icon="📊">
+    </gc-empty-state>
+  }
+
+</div>
