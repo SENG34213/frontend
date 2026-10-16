@@ -1,0 +1,475 @@
+<div class="games-page-container">
+
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-left">
+      <div class="header-tags">
+        <gc-badge variant="accent">Game Library</gc-badge>
+      </div>
+      <h1 class="page-title">Game Titles <span class="text-gradient">Catalog</span></h1>
+      <p class="page-subtitle">
+        Maintain available games, configure platform support across stations, and feature showcase titles.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <gc-button
+        variant="primary"
+        size="md"
+        (click)="openCreateModal()"
+        aria-label="Add new game title">
+        ➕ Add New Game
+      </gc-button>
+    </div>
+  </header>
+
+  <!-- Stat KPI Cards -->
+  @if (stats(); as st) {
+    <section class="stats-grid" aria-label="Catalog Overview Statistics">
+      <div class="stat-card">
+        <div class="stat-icon">🎮</div>
+        <div class="stat-info">
+          <span class="stat-label">Total Titles</span>
+          <span class="stat-value">{{ st.totalGames }}</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon text-success">🟢</div>
+        <div class="stat-info">
+          <span class="stat-label">Active & Playable</span>
+          <span class="stat-value">{{ st.activeGames }}</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon text-warning">⭐</div>
+        <div class="stat-info">
+          <span class="stat-label">Featured Showcase</span>
+          <span class="stat-value">{{ st.featuredGames }}</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon text-accent">👥</div>
+        <div class="stat-info">
+          <span class="stat-label">Multiplayer Titles</span>
+          <span class="stat-value">{{ st.multiplayerGamesCount }}</span>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- Filter & Search Toolbar -->
+  <div class="filter-toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search by title, genre, keyword..."
+        [value]="searchTerm()"
+        (input)="searchTerm.set($any($event.target).value); updateQueryParams()" />
+    </div>
+
+    <div class="filter-controls">
+      <select
+        class="select-control"
+        [value]="selectedPlatform()"
+        (change)="selectedPlatform.set($any($event.target).value); updateQueryParams()">
+        <option value="">All Platforms</option>
+        @for (p of availablePlatforms; track p) {
+          <option [value]="p">{{ getPlatformIcon(p) }}</option>
+        }
+      </select>
+
+      <select
+        class="select-control"
+        [value]="selectedGenre()"
+        (change)="selectedGenre.set($any($event.target).value); updateQueryParams()">
+        <option value="">All Genres</option>
+        @for (g of availableGenres; track g) {
+          <option [value]="g">{{ g }}</option>
+        }
+      </select>
+
+      <div class="status-pills">
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="selectedStatus() === 'ALL'"
+          (click)="selectedStatus.set('ALL'); updateQueryParams()">
+          All
+        </button>
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="selectedStatus() === 'ACTIVE'"
+          (click)="selectedStatus.set('ACTIVE'); updateQueryParams()">
+          Active
+        </button>
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="selectedStatus() === 'INACTIVE'"
+          (click)="selectedStatus.set('INACTIVE'); updateQueryParams()">
+          Inactive
+        </button>
+      </div>
+
+      @if (searchTerm() || selectedGenre() || selectedPlatform() || selectedStatus() !== 'ALL') {
+        <gc-button size="sm" variant="secondary" (click)="resetFilters()">
+          Clear
+        </gc-button>
+      }
+    </div>
+  </div>
+
+  <!-- NFR-08 Error Banner -->
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">
+      <span class="error-icon">⚠️</span>
+      <div class="error-text">
+        <strong>Error Loading Catalog:</strong>
+        <p>{{ errorMessage() }}</p>
+      </div>
+      <gc-button size="sm" variant="secondary" (click)="loadGames()">
+        Retry
+      </gc-button>
+    </div>
+  }
+
+  <!-- Loading Skeletons -->
+  @if (isLoading()) {
+    <div class="games-grid">
+      @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+        <div class="game-card skeleton-card">
+          <gc-skeleton width="100%" height="160px"></gc-skeleton>
+          <div class="card-body-skeleton">
+            <gc-skeleton width="60%" height="20px"></gc-skeleton>
+            <gc-skeleton width="40%" height="14px" style="margin-top: 8px;"></gc-skeleton>
+            <gc-skeleton width="90%" height="32px" style="margin-top: 12px;"></gc-skeleton>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Games Grid -->
+  @if (!isLoading() && filteredGames().length > 0) {
+    <div class="games-grid">
+      @for (game of filteredGames(); track game.id) {
+        <article class="game-card" [class.inactive]="!game.active">
+          <!-- Card Thumbnail / Cover -->
+          <div class="card-cover">
+            @if (game.coverUrl) {
+              <img [src]="game.coverUrl" [alt]="game.title" loading="lazy" />
+            } @else {
+              <div class="cover-placeholder">🎮 {{ game.title }}</div>
+            }
+            <div class="cover-badges">
+              @if (game.featured) {
+                <span class="featured-badge" title="Featured in Hero Banner">⭐ Featured</span>
+              }
+              <gc-badge [variant]="getAgeRatingBadge(game.ageRating).variant">
+                {{ getAgeRatingBadge(game.ageRating).text }}
+              </gc-badge>
+            </div>
+          </div>
+
+          <!-- Card Content -->
+          <div class="card-content">
+            <div class="title-row">
+              <h2 class="game-title">{{ game.title }}</h2>
+              <gc-badge [variant]="game.active ? 'success' : 'neutral'">
+                {{ game.active ? 'Active' : 'Inactive' }}
+              </gc-badge>
+            </div>
+
+            <div class="meta-row">
+              <span class="genre-tag">{{ game.genre }}</span>
+              <span class="year-tag">{{ game.releaseYear }}</span>
+              <span class="players-tag">👥 {{ game.maxPlayers }}P</span>
+            </div>
+
+            <p class="game-desc">{{ game.description }}</p>
+
+            <!-- Platforms Chips -->
+            <div class="platforms-list">
+              @for (p of game.platforms; track p) {
+                <span class="platform-chip">{{ getPlatformIcon(p) }}</span>
+              }
+            </div>
+
+            <!-- Installed Stations Row -->
+            <div class="installed-stations-row">
+              <span class="stations-heading">🖥️ Stations ({{ getStationsForGame(game.id).length }}):</span>
+              <div class="stations-pills">
+                @for (st of getStationsForGame(game.id); track st.id) {
+                  <span class="station-pill" [title]="st.name + ' (' + st.type + ')'">{{ st.name }}</span>
+                } @empty {
+                  <span class="no-stations-pill">No stations assigned</span>
+                }
+              </div>
+            </div>
+
+            <!-- Card Actions Footer -->
+            <div class="card-actions">
+              <button
+                type="button"
+                class="toggle-btn"
+                [class.active]="game.active"
+                (click)="toggleActive(game, $event)"
+                [title]="game.active ? 'Deactivate Title' : 'Activate Title'">
+                {{ game.active ? '🟢 Enabled' : '⚪ Disabled' }}
+              </button>
+
+              <div class="action-buttons">
+                <gc-button
+                  size="sm"
+                  variant="secondary"
+                  (click)="openEditModal(game)"
+                  aria-label="Edit game">
+                  ✏️ Edit
+                </gc-button>
+                <gc-button
+                  size="sm"
+                  variant="danger"
+                  (click)="openDeleteModal(game, $event)"
+                  aria-label="Delete game">
+                  🗑️
+                </gc-button>
+              </div>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  } @else if (!isLoading() && !errorMessage()) {
+    <gc-empty-state
+      title="No Games Found"
+      description="No games match your search or platform filter. Try adjusting your search query or add a new title."
+      icon="🎮">
+      <gc-button size="md" variant="primary" (click)="openCreateModal()">
+        ➕ Add New Game
+      </gc-button>
+    </gc-empty-state>
+  }
+
+  <!-- Create / Edit Game Modal -->
+  @if (isCreateEditModalOpen()) {
+    <gc-modal
+      [title]="isEditing() ? 'Edit Game Title' : 'Add New Game Title'"
+      [isOpen]="true"
+      (closed)="closeCreateEditModal()">
+      <div class="game-form">
+
+        <!-- Title -->
+        <div class="form-group">
+          <label class="form-label" for="game-title-input">Game Title *</label>
+          <input
+            id="game-title-input"
+            type="text"
+            class="form-input"
+            placeholder="e.g. Tekken 8, EA Sports FC 25"
+            [value]="formTitle()"
+            (input)="formTitle.set($any($event.target).value)" />
+          @if (formErrors()['title']) {
+            <span class="field-error">{{ formErrors()['title'] }}</span>
+          }
+        </div>
+
+        <!-- Genre & Age Rating -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Genre *</label>
+            <select
+              class="form-input"
+              [value]="formGenre()"
+              (change)="formGenre.set($any($event.target).value)">
+              @for (g of availableGenres; track g) {
+                <option [value]="g">{{ g }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Age Rating *</label>
+            <select
+              class="form-input"
+              [value]="formAgeRating()"
+              (change)="formAgeRating.set($any($event.target).value)">
+              @for (ar of availableAgeRatings; track ar) {
+                <option [value]="ar">{{ ar }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Platforms Multi-select -->
+        <div class="form-group">
+          <label class="form-label">Supported Platforms *</label>
+          <div class="platform-checkboxes">
+            @for (p of availablePlatforms; track p) {
+              <label class="checkbox-label" [class.selected]="formPlatforms().includes(p)">
+                <input
+                  type="checkbox"
+                  [checked]="formPlatforms().includes(p)"
+                  (change)="togglePlatform(p)" />
+                <span>{{ getPlatformIcon(p) }}</span>
+              </label>
+            }
+          </div>
+          @if (formErrors()['platforms']) {
+            <span class="field-error">{{ formErrors()['platforms'] }}</span>
+          }
+        </div>
+
+        <!-- Station Compatibility Assignment -->
+        <div class="form-group">
+          <label class="form-label">Compatible Stations</label>
+          <span class="field-hint">Select stations where this game can be played:</span>
+          <div class="station-checkboxes">
+            @for (st of availableStations(); track st.id) {
+              <label class="station-checkbox-label" [class.selected]="formStationIds().includes(st.id)">
+                <input
+                  type="checkbox"
+                  [checked]="formStationIds().includes(st.id)"
+                  (change)="toggleStation(st.id)" />
+                <span class="station-name">{{ st.name }}</span>
+                <span class="station-type-tag">{{ st.type }}</span>
+              </label>
+            } @empty {
+              <p class="no-stations-hint">No stations configured yet.</p>
+            }
+          </div>
+        </div>
+
+        <!-- Release Year & Max Players -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="game-year-input">Release Year *</label>
+            <input
+              id="game-year-input"
+              type="number"
+              class="form-input"
+              min="1980"
+              max="2035"
+              [value]="formReleaseYear()"
+              (input)="formReleaseYear.set($any($event.target).value)" />
+            @if (formErrors()['releaseYear']) {
+              <span class="field-error">{{ formErrors()['releaseYear'] }}</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="game-players-input">Max Players *</label>
+            <input
+              id="game-players-input"
+              type="number"
+              class="form-input"
+              min="1"
+              max="32"
+              [value]="formMaxPlayers()"
+              (input)="formMaxPlayers.set($any($event.target).value)" />
+            @if (formErrors()['maxPlayers']) {
+              <span class="field-error">{{ formErrors()['maxPlayers'] }}</span>
+            }
+          </div>
+        </div>
+
+        <!-- Cover Image URL -->
+        <div class="form-group">
+          <label class="form-label" for="game-cover-input">Cover Image URL</label>
+          <input
+            id="game-cover-input"
+            type="url"
+            class="form-input"
+            placeholder="https://images.unsplash.com/..."
+            [value]="formCoverUrl()"
+            (input)="formCoverUrl.set($any($event.target).value)" />
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label class="form-label" for="game-desc-input">Description</label>
+          <textarea
+            id="game-desc-input"
+            rows="3"
+            class="form-input"
+            placeholder="Synopsis, game modes, controls..."
+            [value]="formDescription()"
+            (input)="formDescription.set($any($event.target).value)"></textarea>
+        </div>
+
+        <!-- Switches -->
+        <div class="switches-row">
+          <label class="switch-control">
+            <input
+              type="checkbox"
+              [checked]="formFeatured()"
+              (change)="formFeatured.set($any($event.target).checked)" />
+            <span>⭐ Feature this title in hero banner</span>
+          </label>
+
+          <label class="switch-control">
+            <input
+              type="checkbox"
+              [checked]="formActive()"
+              (change)="formActive.set($any($event.target).checked)" />
+            <span>🟢 Active / Available for booking</span>
+          </label>
+        </div>
+
+      </div>
+
+      <!-- Modal Actions (projected to sticky modal footer) -->
+      <div modal-actions class="modal-footer-actions">
+        <gc-button
+          variant="secondary"
+          size="md"
+          (click)="closeCreateEditModal()">
+          Cancel
+        </gc-button>
+        <gc-button
+          variant="primary"
+          size="md"
+          [loading]="actionInFlight()"
+          (click)="saveGame()">
+          {{ isEditing() ? 'Save Changes' : 'Create Game Title' }}
+        </gc-button>
+      </div>
+    </gc-modal>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (isDeleteModalOpen() && gameToDelete(); as target) {
+    <gc-modal
+      title="Delete Game Title"
+      [isOpen]="true"
+      (closed)="closeDeleteModal()">
+      <div class="delete-confirm-content">
+        <p class="delete-warning">
+          Are you sure you want to remove <strong>"{{ target.title }}"</strong> from the catalog?
+        </p>
+        <p class="delete-note">
+          This action will remove the title from customer booking selectors and station assignment records.
+        </p>
+      </div>
+
+      <div modal-actions class="modal-footer-actions">
+        <gc-button
+          variant="secondary"
+          size="md"
+          (click)="closeDeleteModal()">
+          Cancel
+        </gc-button>
+        <gc-button
+          variant="danger"
+          size="md"
+          [loading]="actionInFlight()"
+          (click)="confirmDelete()">
+          Confirm Delete
+        </gc-button>
+      </div>
+    </gc-modal>
+  }
+
+</div>
