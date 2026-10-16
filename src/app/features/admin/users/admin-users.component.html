@@ -1,0 +1,437 @@
+<div class="admin-users" id="admin-users-root">
+  <!-- Page Header -->
+  <header class="page-header mb-xl">
+    <div class="header-left">
+      <div class="header-tags">
+        <gc-badge variant="accent">Community & Access Control</gc-badge>
+      </div>
+      <h1 class="page-title">User <span class="text-gradient">Management</span></h1>
+      <p class="subtitle">
+        Search players & administrators, modify roles, manage credentials, and toggle account activation status.
+      </p>
+    </div>
+    <div class="header-actions">
+      <gc-button variant="outline" size="sm" (btnClick)="exportCsv()" aria-label="Export users as CSV">
+        📥 Export CSV
+      </gc-button>
+      <gc-button variant="outline" size="sm" (btnClick)="loadUsers(); loadStats()" aria-label="Refresh users list">
+        🔄 Refresh
+      </gc-button>
+    </div>
+  </header>
+
+  <!-- Error Banner -->
+  @if (errorMessage()) {
+    <div class="error-banner mb-lg" role="alert">
+      <div class="error-icon">⚠️</div>
+      <div class="error-content">
+        <div class="error-title">Could not load users</div>
+        <div class="error-desc">{{ errorMessage() }}</div>
+      </div>
+      <gc-button variant="outline" size="sm" (btnClick)="loadUsers()">Try Again</gc-button>
+    </div>
+  }
+
+  <!-- Metric Stat Cards -->
+  <section class="stat-grid mb-xl" aria-label="User Key Metrics">
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon">👥</div>
+        <div class="stat-meta">
+          <span class="stat-label">Total Users</span>
+          <span class="stat-val font-mono" id="stat-total-users">
+            {{ (stats()?.totalUsers ?? totalElements()) | number }}
+          </span>
+        </div>
+      </div>
+    </gc-card>
+
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon active-glow">⚡</div>
+        <div class="stat-meta">
+          <span class="stat-label">Active Accounts</span>
+          <span class="stat-val font-mono text-available" id="stat-active-users">
+            {{ (stats()?.activeUsers ?? totalElements()) | number }}
+          </span>
+        </div>
+      </div>
+    </gc-card>
+
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon">🚫</div>
+        <div class="stat-meta">
+          <span class="stat-label">Deactivated</span>
+          <span class="stat-val font-mono text-warning" id="stat-deactivated-users">
+            {{ (stats()?.deactivatedUsers ?? 0) | number }}
+          </span>
+        </div>
+      </div>
+    </gc-card>
+
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon">👑</div>
+        <div class="stat-meta">
+          <span class="stat-label">Staff & Admins</span>
+          <span class="stat-val font-mono text-accent" id="stat-admin-users">
+            {{ (stats()?.adminCount ?? 2) | number }}
+          </span>
+        </div>
+      </div>
+    </gc-card>
+  </section>
+
+  <!-- Filter & Search Toolbar -->
+  <gc-card class="filter-card mb-lg">
+    <div class="filter-grid">
+      <!-- Search -->
+      <div class="filter-field search-field">
+        <label class="filter-label" for="admin-user-search">Search User</label>
+        <input
+          #searchInp
+          id="admin-user-search"
+          type="search"
+          class="gc-input-native"
+          placeholder="Name, email address, or phone..."
+          [value]="searchQuery()"
+          (input)="onSearchInput(searchInp.value)" />
+      </div>
+
+      <!-- Role Filter -->
+      <div class="filter-field">
+        <label class="filter-label" for="admin-user-role">Role</label>
+        <select
+          #roleSel
+          id="admin-user-role"
+          class="gc-select-native"
+          [value]="filterRole()"
+          (change)="onRoleChange(roleSel.value)">
+          @for (opt of roleOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Status Filter -->
+      <div class="filter-field">
+        <label class="filter-label" for="admin-user-status">Account Status</label>
+        <select
+          #statusSel
+          id="admin-user-status"
+          class="gc-select-native"
+          [value]="filterEnabled()"
+          (change)="onStatusChange(statusSel.value)">
+          @for (opt of statusOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Actions -->
+      <div class="filter-field filter-actions">
+        <gc-button variant="outline" size="sm" (btnClick)="clearFilters()">Clear Filters</gc-button>
+        <span class="total-count">{{ totalElements() | number }} matching users</span>
+      </div>
+    </div>
+  </gc-card>
+
+  <!-- Loading Skeleton -->
+  @if (isLoading()) {
+    <gc-card>
+      <div class="skeleton-list">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <gc-skeleton height="52px"></gc-skeleton>
+        }
+      </div>
+    </gc-card>
+  } @else {
+
+    <!-- Empty State -->
+    @if (users().length === 0) {
+      <gc-card>
+        <gc-empty-state
+          icon="👥"
+          title="No users found"
+          description="No user accounts match your current search and role filters."
+          actionLabel="Clear Filters"
+          (actionClick)="clearFilters()">
+        </gc-empty-state>
+      </gc-card>
+    } @else {
+
+      <!-- Users Table -->
+      <gc-card>
+        <div class="table-responsive">
+          <table class="gc-table" aria-label="User accounts table">
+            <thead>
+              <tr>
+                <th scope="col">User</th>
+                <th scope="col">Contact</th>
+                <th scope="col">Role</th>
+                <th scope="col">Status</th>
+                <th scope="col">Joined Date</th>
+                <th scope="col" class="actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of users(); track user.id) {
+                <tr class="user-row" (click)="openDetail(user)" tabindex="0"
+                    (keydown.enter)="openDetail(user)" role="button"
+                    [attr.aria-label]="'View user details for ' + user.fullName">
+                  <td>
+                    <div class="user-meta-cell">
+                      <div class="user-avatar" [class.admin]="user.role === 'ADMIN'">
+                        {{ user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U' }}
+                      </div>
+                      <div>
+                        <div class="user-name">{{ user.fullName }}</div>
+                        <div class="user-id font-mono text-muted">{{ user.id.slice(0, 8) }}…</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="contact-cell">
+                      <span class="user-email">{{ user.email }}</span>
+                      <span class="user-phone font-mono text-muted">{{ user.phoneNumber || '—' }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <gc-badge [variant]="user.role === 'ADMIN' ? 'accent' : 'primary'">
+                      {{ user.role === 'ADMIN' ? '👑 ADMIN' : 'CUSTOMER' }}
+                    </gc-badge>
+                  </td>
+                  <td>
+                    <gc-badge [variant]="user.enabled ? 'success' : 'danger'">
+                      {{ user.enabled ? '● ACTIVE' : '○ DEACTIVATED' }}
+                    </gc-badge>
+                  </td>
+                  <td class="font-mono text-muted">
+                    {{ formatDate(user.createdAt) }}
+                  </td>
+                  <td class="actions-col" (click)="$event.stopPropagation()">
+                    <div class="row-actions">
+                      <gc-button
+                        variant="outline"
+                        size="sm"
+                        (btnClick)="openEditModal(user, $event)"
+                        aria-label="Edit this user">
+                        ✏️
+                      </gc-button>
+
+                      <gc-button
+                        variant="outline"
+                        size="sm"
+                        [class.btn-danger-hover]="user.enabled"
+                        (btnClick)="promptToggleActive(user, $event)"
+                        [attr.aria-label]="user.enabled ? 'Deactivate user account' : 'Reactivate user account'">
+                        {{ user.enabled ? '⚡ Deactivate' : '⚡ Activate' }}
+                      </gc-button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages() > 1) {
+          <div class="pagination-row">
+            <gc-pagination
+              [currentPage]="currentPage()"
+              [totalPages]="totalPages()"
+              (pageChange)="onPageChange($event)">
+            </gc-pagination>
+          </div>
+        }
+      </gc-card>
+    }
+  }
+
+  <!-- ── Detail Side Drawer ────────────────────────────────────────────── -->
+  @if (detailDrawerOpen() && selectedUser(); as u) {
+    <div class="detail-overlay" role="dialog" aria-modal="true" aria-label="User details panel" (click)="closeDetail()">
+      <div class="detail-panel" (click)="$event.stopPropagation()">
+        <div class="panel-header">
+          <h2 class="panel-title">User Account Details</h2>
+          <button type="button" class="panel-close" (click)="closeDetail()" aria-label="Close details panel">✕</button>
+        </div>
+
+        <div class="panel-body">
+          <div class="detail-avatar-hero mb-md">
+            <div class="drawer-avatar" [class.admin]="u.role === 'ADMIN'">
+              {{ u.fullName ? u.fullName.charAt(0).toUpperCase() : 'U' }}
+            </div>
+            <div>
+              <h3 class="drawer-name">{{ u.fullName }}</h3>
+              <div class="drawer-badges mt-xs">
+                <gc-badge [variant]="u.role === 'ADMIN' ? 'accent' : 'primary'">{{ u.role }}</gc-badge>
+                <gc-badge [variant]="u.enabled ? 'success' : 'danger'">
+                  {{ u.enabled ? 'ACTIVE' : 'DEACTIVATED' }}
+                </gc-badge>
+              </div>
+            </div>
+          </div>
+
+          <dl class="detail-list">
+            <dt>User ID</dt>
+            <dd class="font-mono">{{ u.id }}</dd>
+
+            <dt>Email Address</dt>
+            <dd>{{ u.email }}</dd>
+
+            <dt>Phone Number</dt>
+            <dd class="font-mono">{{ u.phoneNumber || 'Not provided' }}</dd>
+
+            <dt>Account Role</dt>
+            <dd>{{ u.role }}</dd>
+
+            <dt>Status</dt>
+            <dd>{{ u.enabled ? 'Active Account' : 'Deactivated' }}</dd>
+
+            @if (!u.enabled && u.deactivatedBy) {
+              <dt>Deactivated By</dt>
+              <dd class="text-warning">
+                {{ u.deactivatedBy === 'ADMIN' ? 'Administrator Action' : 'Self-Deactivated by User' }}
+              </dd>
+            }
+
+            <dt>Registered Date</dt>
+            <dd>{{ formatDate(u.createdAt) }}</dd>
+          </dl>
+
+          <div class="panel-actions mt-lg">
+            <gc-button variant="secondary" (btnClick)="openEditModal(u); closeDetail()">
+              ✏️ Edit Profile & Role
+            </gc-button>
+            <gc-button
+              variant="outline"
+              (btnClick)="promptToggleActive(u); closeDetail()">
+              {{ u.enabled ? '⚡ Deactivate Account' : '⚡ Reactivate Account' }}
+            </gc-button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Edit User Modal ───────────────────────────────────────────────── -->
+  <gc-modal
+    [isOpen]="editModalOpen()"
+    [(isOpen)]="editModalOpen"
+    title="Edit User Profile & Role"
+    modalId="modal-edit-user">
+    @if (editingUser(); as u) {
+      <p class="modal-context-text">
+        Modifying account for <strong class="font-mono">{{ u.email }}</strong>
+      </p>
+
+      <form [formGroup]="editForm" (ngSubmit)="submitEdit()" id="form-edit-user" novalidate>
+        <div class="modal-form-grid">
+          <!-- Full Name -->
+          <div class="form-field">
+            <label class="form-label" for="edit-user-name">Full Name <span class="required" aria-hidden="true">*</span></label>
+            <input
+              id="edit-user-name"
+              type="text"
+              class="gc-input-native"
+              formControlName="fullName"
+              [attr.aria-invalid]="editForm.get('fullName')?.invalid && editForm.get('fullName')?.touched" />
+            @if (editForm.get('fullName')?.invalid && editForm.get('fullName')?.touched) {
+              <span class="field-error" role="alert">Full name is required (min 2 characters)</span>
+            }
+          </div>
+
+          <!-- Phone Number -->
+          <div class="form-field">
+            <label class="form-label" for="edit-user-phone">Phone Number</label>
+            <input
+              id="edit-user-phone"
+              type="tel"
+              class="gc-input-native font-mono"
+              placeholder="+947XXXXXXXX or 07XXXXXXXX"
+              formControlName="phoneNumber"
+              [attr.aria-invalid]="editForm.get('phoneNumber')?.invalid && editForm.get('phoneNumber')?.touched" />
+            @if (editForm.get('phoneNumber')?.invalid && editForm.get('phoneNumber')?.touched) {
+              <span class="field-error" role="alert">Valid Sri Lankan phone number required (+94... or 07...)</span>
+            }
+          </div>
+
+          <!-- Role -->
+          <div class="form-field">
+            <label class="form-label" for="edit-user-role-select">Account Role <span class="required" aria-hidden="true">*</span></label>
+            <select
+              id="edit-user-role-select"
+              class="gc-select-native"
+              formControlName="role">
+              <option value="CUSTOMER">Customer / Player</option>
+              <option value="ADMIN">Administrator (Staff Access)</option>
+            </select>
+          </div>
+
+          <!-- Enabled Checkbox -->
+          <div class="form-field checkbox-field">
+            <label class="checkbox-label" for="edit-user-active">
+              <input
+                id="edit-user-active"
+                type="checkbox"
+                class="gc-checkbox-native"
+                formControlName="enabled" />
+              <span>Account is Active and Allowed to Login</span>
+            </label>
+          </div>
+        </div>
+      </form>
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="editModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="primary"
+        form="form-edit-user"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="submitEdit()">
+        {{ actionInFlight() ? 'Saving…' : '💾 Save Changes' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Deactivate / Reactivate Confirm Modal ─────────────────────────── -->
+  <gc-modal
+    [isOpen]="toggleConfirmModalOpen()"
+    [(isOpen)]="toggleConfirmModalOpen"
+    [title]="targetToggleUser()?.enabled ? 'Deactivate User Account' : 'Reactivate User Account'"
+    modalId="modal-toggle-user">
+    @if (targetToggleUser(); as u) {
+      @if (u.enabled) {
+        <p class="confirm-text">
+          Are you sure you want to deactivate <strong>{{ u.fullName }}</strong> ({{ u.email }})?
+        </p>
+        <p class="confirm-subtext text-muted">
+          The user will immediately be barred from signing in, making reservations, or joining tournaments until an administrator reactivates their account.
+        </p>
+      } @else {
+        <p class="confirm-text">
+          Reactivate account for <strong>{{ u.fullName }}</strong> ({{ u.email }})?
+        </p>
+        <p class="confirm-subtext text-muted">
+          The user will once again be able to sign in with their existing credentials and book console stations.
+        </p>
+      }
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="toggleConfirmModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="primary"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="confirmToggleActive()">
+        {{ actionInFlight() ? 'Processing…' : (targetToggleUser()?.enabled ? '⚡ Yes, Deactivate' : '⚡ Yes, Reactivate') }}
+      </gc-button>
+    </div>
+  </gc-modal>
+</div>
