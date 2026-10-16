@@ -1,17 +1,84 @@
-export type TournamentStatus = 'UPCOMING' | 'REGISTRATION_OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type TournamentStatus =
+  | 'UPCOMING'
+  | 'REGISTRATION_OPEN'
+  | 'ONGOING'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'CANCELLED';
 
-export interface TournamentDto {
-  id: string;
-  title: string;
+export interface TournamentRequest {
+  name: string;
   gameTitle: string;
-  description: string;
-  startDate: string; // ISO date string
+  startDate: string; // ISO-8601 Instant
   endDate?: string;
-  registrationDeadline: string;
+  entryFee: number;  // LKR
   maxParticipants: number;
-  currentParticipants: number;
-  entryFee: number; // LKR
+  registrationDeadline: string; // ISO-8601 Instant
+}
+
+export interface TournamentResponse {
+  id: string;
+  name: string;
+  gameTitle: string;
+  startDate: string;
+  endDate?: string;
+  entryFee: number;
+  maxParticipants: number;
+  participantCount: number;
+  registrationDeadline: string;
   status: TournamentStatus;
+  createdByAdminId?: string;
+  createdAt?: string;
+  isRegistrationOpen?: boolean;
+  // UI aliases
+  title?: string;
+  description?: string;
+  currentParticipants?: number;
+}
+
+export interface TournamentStatusUpdateRequest {
+  status: TournamentStatus;
+}
+
+export interface RegistrationResponse {
+  id: string;
+  tournamentId: string;
+  tournamentName?: string;
+  userId: string;
+  status: 'PENDING_PAYMENT' | 'CONFIRMED' | 'CANCELLED';
+  paymentId?: string;
+  registeredAt: string;
+  gamerTag?: string;
+  userName?: string;
+}
+
+export interface MatchResponse {
+  id: string;
+  bracketId?: string;
+  round: number;
+  participant1Id?: string;
+  participant2Id?: string;
+  winnerId?: string;
+  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  scheduledTime?: string;
+  participant1Name?: string;
+  participant2Name?: string;
+  winnerName?: string;
+}
+
+export interface BracketResponse {
+  id: string;
+  tournamentId: string;
+  generatedAt: string;
+  matches: MatchResponse[];
+}
+
+export interface MatchResultRequest {
+  winnerId: string;
+}
+
+// ── Backwards compatibility aliases ──
+export interface TournamentDto extends TournamentResponse {
   winnerName?: string;
 }
 
