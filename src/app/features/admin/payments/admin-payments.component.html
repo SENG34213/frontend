@@ -1,0 +1,484 @@
+<div class="admin-payments" id="admin-payments-root">
+
+  <!-- Page Header -->
+  <header class="page-header mb-xl">
+    <div class="header-left">
+      <div class="header-tags">
+        <gc-badge variant="accent">Finance & Billing</gc-badge>
+      </div>
+      <h1 class="page-title">Payment <span class="text-gradient">Management</span></h1>
+      <p class="subtitle">
+        Track all transactions, filter by status or method, issue refunds, and export financial records to CSV.
+      </p>
+    </div>
+    <div class="header-actions">
+      <gc-button variant="outline" size="sm" (btnClick)="exportCsv()" aria-label="Export payments as CSV">
+        📥 Export CSV
+      </gc-button>
+      <gc-button variant="outline" size="sm" (btnClick)="loadPayments(); loadStats()" aria-label="Refresh payments">
+        🔄 Refresh
+      </gc-button>
+    </div>
+  </header>
+
+  <!-- Error Banner -->
+  @if (errorMessage()) {
+    <div class="error-banner mb-lg" role="alert">
+      <div class="error-icon">⚠️</div>
+      <div class="error-content">
+        <div class="error-title">Could not load payments</div>
+        <div class="error-desc">{{ errorMessage() }}</div>
+      </div>
+      <gc-button variant="outline" size="sm" (btnClick)="loadPayments()">Try Again</gc-button>
+    </div>
+  }
+
+  <!-- Stat Cards -->
+  <section class="stat-grid mb-xl" aria-label="Payment Key Metrics">
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon revenue-glow">💰</div>
+        <div class="stat-meta">
+          <span class="stat-label">Today's Revenue</span>
+          <span class="stat-val font-mono text-success" id="stat-today-revenue">
+            LKR {{ (stats()?.todayRevenue ?? 0) | number:'1.2-2' }}
+          </span>
+        </div>
+      </div>
+    </gc-card>
+
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon">📅</div>
+        <div class="stat-meta">
+          <span class="stat-label">Month Revenue</span>
+          <span class="stat-val font-mono text-accent" id="stat-month-revenue">
+            LKR {{ (stats()?.monthRevenue ?? 0) | number:'1.2-2' }}
+          </span>
+        </div>
+      </div>
+    </gc-card>
+
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon">✅</div>
+        <div class="stat-meta">
+          <span class="stat-label">Successful Payments</span>
+          <span class="stat-val font-mono" id="stat-success-payments">
+            {{ (stats()?.totalPaymentsSuccess ?? 0) | number }}
+          </span>
+        </div>
+      </div>
+    </gc-card>
+
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon">❌</div>
+        <div class="stat-meta">
+          <span class="stat-label">Failed Payments</span>
+          <span class="stat-val font-mono text-warning" id="stat-failed-payments">
+            {{ (stats()?.totalPaymentsFailed ?? 0) | number }}
+          </span>
+        </div>
+      </div>
+    </gc-card>
+  </section>
+
+  <!-- Revenue Trend Mini Chart -->
+  @if (sevenDayTrend().length > 0) {
+    <gc-card class="trend-card mb-xl">
+      <div class="trend-header">
+        <div class="trend-title-wrap">
+          <span class="trend-title">📈 7-Day Revenue Trend</span>
+          <span class="trend-subtitle">Daily breakdown of successful payments</span>
+        </div>
+        <span class="trend-total font-mono">
+          Total Month: <strong class="text-success">LKR {{ (stats()?.monthRevenue ?? 0) | number:'1.2-2' }}</strong>
+        </span>
+      </div>
+
+      <div class="trend-bars-container">
+        <div class="trend-bars" aria-label="7-Day Revenue Trend Bar Chart">
+          @for (day of sevenDayTrend(); track day.date) {
+            <div class="trend-bar-col">
+              <div class="trend-bar-wrapper">
+                <div
+                  class="trend-bar"
+                  [class.has-revenue]="day.revenue > 0"
+                  [style.height.%]="getTrendBarHeight(day.revenue)"
+                  [title]="day.date + ': LKR ' + day.revenue.toFixed(2)"
+                  role="img"
+                  [attr.aria-label]="day.date + ': ' + day.revenue">
+                  <span class="trend-bar-tooltip">
+                    LKR {{ day.revenue | number:'1.0-0' }}
+                  </span>
+                </div>
+              </div>
+              <span class="trend-date">{{ day.date | date:'d/M' }}</span>
+              <span class="trend-val-label font-mono">{{ day.revenue > 0 ? (day.revenue >= 1000 ? ((day.revenue / 1000 | number:'1.1-1') + 'k') : (day.revenue | number:'1.0-0')) : '-' }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </gc-card>
+  }
+
+  <!-- Filter Toolbar -->
+  <gc-card class="filter-card mb-lg">
+    <div class="filter-grid">
+      <!-- Status -->
+      <div class="filter-field">
+        <label class="filter-label" for="pay-filter-status">Status</label>
+        <select
+          #statusSel
+          id="pay-filter-status"
+          class="gc-select-native"
+          [value]="filterStatus()"
+          (change)="onStatusChange(statusSel.value)">
+          @for (opt of statusOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Method -->
+      <div class="filter-field">
+        <label class="filter-label" for="pay-filter-method">Payment Method</label>
+        <select
+          #methodSel
+          id="pay-filter-method"
+          class="gc-select-native"
+          [value]="filterMethod()"
+          (change)="onMethodChange(methodSel.value)">
+          @for (opt of methodOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Reference Type -->
+      <div class="filter-field">
+        <label class="filter-label" for="pay-filter-reftype">Reference Type</label>
+        <select
+          #refTypeSel
+          id="pay-filter-reftype"
+          class="gc-select-native"
+          [value]="filterReferenceType()"
+          (change)="onRefTypeChange(refTypeSel.value)">
+          @for (opt of refTypeOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Date Range -->
+      <div class="filter-field">
+        <label class="filter-label" for="pay-filter-from">From Date</label>
+        <input
+          #fromInp
+          id="pay-filter-from"
+          type="date"
+          class="gc-input-native"
+          [value]="filterFrom()"
+          (change)="onFromChange(fromInp.value)" />
+      </div>
+
+      <div class="filter-field">
+        <label class="filter-label" for="pay-filter-to">To Date</label>
+        <input
+          #toInp
+          id="pay-filter-to"
+          type="date"
+          class="gc-input-native"
+          [value]="filterTo()"
+          (change)="onToChange(toInp.value)" />
+      </div>
+
+      <!-- Actions -->
+      <div class="filter-field filter-actions">
+        <gc-button variant="outline" size="sm" (btnClick)="clearFilters()">Clear Filters</gc-button>
+        <span class="total-count">{{ totalElements() | number }} transactions</span>
+      </div>
+    </div>
+  </gc-card>
+
+  <!-- Loading Skeleton -->
+  @if (isLoading()) {
+    <gc-card>
+      <div class="skeleton-list">
+        @for (i of [1,2,3,4,5,6,7,8]; track i) {
+          <gc-skeleton height="52px"></gc-skeleton>
+        }
+      </div>
+    </gc-card>
+  } @else {
+
+    <!-- Empty State -->
+    @if (payments().length === 0) {
+      <gc-card>
+        <gc-empty-state
+          icon="💳"
+          title="No payments found"
+          description="No transactions match your current filter criteria. Try adjusting the filters."
+          actionLabel="Clear Filters"
+          (actionClick)="clearFilters()">
+        </gc-empty-state>
+      </gc-card>
+    } @else {
+
+      <!-- Payments Table -->
+      <gc-card>
+        <div class="table-responsive">
+          <table class="gc-table" aria-label="Payments table">
+            <thead>
+              <tr>
+                <th scope="col">Receipt #</th>
+                <th scope="col">Customer</th>
+                <th scope="col">Type</th>
+                <th scope="col">Method</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Status</th>
+                <th scope="col">Date</th>
+                <th scope="col" class="actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (payment of payments(); track payment.id) {
+                <tr class="payment-row" (click)="openDetail(payment)" tabindex="0"
+                    (keydown.enter)="openDetail(payment)" role="button"
+                    [attr.aria-label]="'View payment ' + (payment.receiptNumber || payment.id)">
+
+                  <!-- Receipt # -->
+                  <td>
+                    <div class="receipt-cell">
+                      <span class="receipt-num font-mono">
+                        {{ payment.receiptNumber || payment.id.slice(0, 8) + '…' }}
+                      </span>
+                      @if (payment.transactionReference) {
+                        <span class="txn-ref font-mono text-muted">{{ payment.transactionReference }}</span>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- Customer -->
+                  <td>
+                    <div class="customer-cell">
+                      <span class="customer-name">{{ getCustomerName(payment) }}</span>
+                      @if (getCustomerEmail(payment)) {
+                        <span class="customer-email font-mono text-muted">{{ getCustomerEmail(payment) }}</span>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- Reference Type -->
+                  <td>
+                    <gc-badge [variant]="payment.referenceType === 'TOURNAMENT' ? 'accent' : 'primary'">
+                      {{ payment.referenceType === 'TOURNAMENT' ? '🏆 Tournament' : '🎮 Booking' }}
+                    </gc-badge>
+                  </td>
+
+                  <!-- Method -->
+                  <td>
+                    <span class="method-cell font-mono">
+                      {{ methodIcon(payment.method || payment.paymentMethod) }}
+                      {{ payment.method || payment.paymentMethod || '—' }}
+                    </span>
+                  </td>
+
+                  <!-- Amount -->
+                  <td>
+                    <div class="amount-cell">
+                      <span class="amount font-mono">
+                        LKR {{ payment.amount | number:'1.2-2' }}
+                      </span>
+                      @if (payment.loyaltyDiscount && payment.loyaltyDiscount > 0) {
+                        <span class="loyalty-badge">⭐ -{{ payment.loyaltyDiscount | number:'1.2-2' }}</span>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- Status -->
+                  <td>
+                    <gc-badge [variant]="statusBadgeVariant(payment.status)">
+                      {{ payment.status }}
+                    </gc-badge>
+                  </td>
+
+                  <!-- Date -->
+                  <td class="font-mono text-muted">
+                    {{ formatDate(payment.createdAt) }}
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="actions-col" (click)="$event.stopPropagation()">
+                    <div class="row-actions">
+                      <gc-button
+                        variant="outline"
+                        size="sm"
+                        (btnClick)="openDetail(payment)"
+                        aria-label="View payment details">
+                        👁 View
+                      </gc-button>
+                      @if (canRefund(payment)) {
+                        <gc-button
+                          variant="outline"
+                          size="sm"
+                          (btnClick)="promptRefund(payment, $event)"
+                          aria-label="Issue refund for this payment">
+                          ↩ Refund
+                        </gc-button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages() > 1) {
+          <div class="pagination-row">
+            <gc-pagination
+              [currentPage]="currentPage()"
+              [totalPages]="totalPages()"
+              (pageChange)="onPageChange($event)">
+            </gc-pagination>
+          </div>
+        }
+      </gc-card>
+    }
+  }
+
+  <!-- ── Payment Detail Side Drawer ──────────────────────────────────── -->
+  @if (detailDrawerOpen() && selectedPayment(); as p) {
+    <div class="detail-overlay" role="dialog" aria-modal="true" aria-label="Payment details panel" (click)="closeDetail()">
+      <div class="detail-panel" (click)="$event.stopPropagation()">
+        <div class="panel-header">
+          <h2 class="panel-title">Payment Details</h2>
+          <button type="button" class="panel-close" (click)="closeDetail()" aria-label="Close details panel">✕</button>
+        </div>
+
+        <div class="panel-body">
+          <!-- Hero Status -->
+          <div class="drawer-hero mb-md">
+            <div class="hero-amount font-mono">LKR {{ p.amount | number:'1.2-2' }}</div>
+            <div class="hero-badges mt-xs">
+              <gc-badge [variant]="statusBadgeVariant(p.status)">{{ p.status }}</gc-badge>
+              <gc-badge [variant]="p.referenceType === 'TOURNAMENT' ? 'accent' : 'primary'">
+                {{ p.referenceType || 'BOOKING' }}
+              </gc-badge>
+            </div>
+          </div>
+
+          <dl class="detail-list">
+            <dt>Payment ID</dt>
+            <dd class="font-mono">{{ p.id }}</dd>
+
+            @if (p.receiptNumber) {
+              <dt>Receipt Number</dt>
+              <dd class="font-mono">{{ p.receiptNumber }}</dd>
+            }
+
+            @if (p.transactionReference) {
+              <dt>Transaction Ref</dt>
+              <dd class="font-mono">{{ p.transactionReference }}</dd>
+            }
+
+            <dt>Customer</dt>
+            <dd>{{ getCustomerName(p) }}</dd>
+
+            @if (getCustomerEmail(p)) {
+              <dt>Customer Email</dt>
+              <dd>{{ getCustomerEmail(p) }}</dd>
+            }
+
+            <dt>Customer User ID</dt>
+            <dd class="font-mono text-muted">{{ p.userId }}</dd>
+
+            <dt>Payment Method</dt>
+            <dd>{{ methodIcon(p.method || p.paymentMethod) }} {{ p.method || p.paymentMethod }}</dd>
+
+            <dt>Amount Charged</dt>
+            <dd class="font-mono">LKR {{ p.amount | number:'1.2-2' }}</dd>
+
+            @if (p.originalAmount && p.originalAmount !== p.amount) {
+              <dt>Original Amount</dt>
+              <dd class="font-mono text-muted">LKR {{ p.originalAmount | number:'1.2-2' }}</dd>
+            }
+
+            @if (p.loyaltyPointsUsed && p.loyaltyPointsUsed > 0) {
+              <dt>Loyalty Points Used</dt>
+              <dd class="font-mono">⭐ {{ p.loyaltyPointsUsed | number }} pts (−LKR {{ p.loyaltyDiscount | number:'1.2-2' }})</dd>
+            }
+
+            @if (p.referenceId) {
+              <dt>Reference ID</dt>
+              <dd class="font-mono">{{ p.referenceId }}</dd>
+            }
+
+            <dt>Created At</dt>
+            <dd class="font-mono">{{ formatDateTime(p.createdAt) }}</dd>
+
+            @if (p.updatedAt) {
+              <dt>Last Updated</dt>
+              <dd class="font-mono">{{ formatDateTime(p.updatedAt) }}</dd>
+            }
+          </dl>
+
+          @if (canRefund(p)) {
+            <div class="panel-actions mt-lg">
+              <gc-button variant="outline" (btnClick)="promptRefund(p); closeDetail()">
+                ↩ Issue Refund
+              </gc-button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Refund Confirm Modal ──────────────────────────────────────────── -->
+  <gc-modal
+    [isOpen]="refundModalOpen()"
+    [(isOpen)]="refundModalOpen"
+    title="Confirm Payment Refund"
+    modalId="modal-confirm-refund">
+    @if (targetRefund(); as p) {
+      <p class="confirm-text">
+        Are you sure you want to refund payment
+        <strong class="font-mono">{{ p.receiptNumber || p.id.slice(0, 8) }}</strong>?
+      </p>
+      <div class="refund-details-mini">
+        <div class="refund-row">
+          <span class="text-muted">Customer:</span>
+          <span>{{ p.customerName || p.userId }}</span>
+        </div>
+        <div class="refund-row">
+          <span class="text-muted">Amount:</span>
+          <span class="font-mono text-warning">LKR {{ p.amount | number:'1.2-2' }}</span>
+        </div>
+        <div class="refund-row">
+          <span class="text-muted">Method:</span>
+          <span>{{ methodIcon(p.method || p.paymentMethod) }} {{ p.method || p.paymentMethod }}</span>
+        </div>
+      </div>
+      <p class="confirm-subtext text-muted">
+        This action will mark the payment as <strong>REFUNDED</strong>. The customer will receive the
+        amount back via their original payment method. This action cannot be undone.
+      </p>
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="refundModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="primary"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="confirmRefund()">
+        {{ actionInFlight() ? 'Processing…' : '↩ Confirm Refund' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+
+</div>
