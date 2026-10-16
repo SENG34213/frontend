@@ -1,0 +1,599 @@
+<div class="admin-tournaments" id="admin-tournaments-root">
+  <!-- Page Header -->
+  <header class="page-header mb-xl">
+    <div class="header-left">
+      <div class="header-tags">
+        <gc-badge variant="accent">Esports & Competitions</gc-badge>
+      </div>
+      <h1 class="page-title">Tournament <span class="text-gradient">Management</span></h1>
+      <p class="subtitle">
+        Create championships, monitor registered participants in real-time, generate knockout brackets, and record match winners.
+      </p>
+    </div>
+    <div class="header-actions">
+      <gc-button variant="outline" size="sm" (btnClick)="loadTournaments()" aria-label="Refresh tournaments list">
+        🔄 Refresh
+      </gc-button>
+      <gc-button variant="primary" (btnClick)="openCreateModal()" aria-label="Create new tournament">
+        🏆 Create Tournament
+      </gc-button>
+    </div>
+  </header>
+
+  <!-- Error Banner -->
+  @if (errorMessage()) {
+    <div class="error-banner mb-lg" role="alert">
+      <div class="error-icon">⚠️</div>
+      <div class="error-content">
+        <div class="error-title">Could not load tournaments</div>
+        <div class="error-desc">{{ errorMessage() }}</div>
+      </div>
+      <gc-button variant="outline" size="sm" (btnClick)="loadTournaments()">Try Again</gc-button>
+    </div>
+  }
+
+  <!-- Metric Stat Cards -->
+  <section class="stat-grid mb-xl" aria-label="Tournament Key Metrics">
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-meta">
+          <span class="stat-label">Total Tournaments</span>
+          <span class="stat-val font-mono" id="stat-total-tournaments">{{ totalTournaments() }}</span>
+        </div>
+      </div>
+    </gc-card>
+
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon live-glow">🔥</div>
+        <div class="stat-meta">
+          <span class="stat-label">Live / Ongoing</span>
+          <span class="stat-val font-mono text-info" id="stat-ongoing-tournaments">{{ ongoingCount() }}</span>
+        </div>
+      </div>
+    </gc-card>
+
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon active-glow">📝</div>
+        <div class="stat-meta">
+          <span class="stat-label">Registration Open</span>
+          <span class="stat-val font-mono text-available" id="stat-open-tournaments">{{ openRegistrationCount() }}</span>
+        </div>
+      </div>
+    </gc-card>
+
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon">👥</div>
+        <div class="stat-meta">
+          <span class="stat-label">Enrolled Players</span>
+          <span class="stat-val font-mono text-accent" id="stat-enrolled-players">{{ totalEnrolledPlayers() }}</span>
+        </div>
+      </div>
+    </gc-card>
+  </section>
+
+  <!-- Filter & Search Toolbar -->
+  <gc-card class="filter-card mb-lg">
+    <div class="filter-grid">
+      <!-- Search -->
+      <div class="filter-field search-field">
+        <label class="filter-label" for="admin-tourn-search">Search Tournament or Game</label>
+        <input
+          #searchInp
+          id="admin-tourn-search"
+          type="search"
+          class="gc-input-native"
+          placeholder="Name, game title (FC 25, Valorant, Tekken)..."
+          [value]="searchQuery()"
+          (input)="onSearchInput(searchInp.value)" />
+      </div>
+
+      <!-- Status Filter -->
+      <div class="filter-field">
+        <label class="filter-label" for="admin-tourn-status">Status</label>
+        <select
+          #statusSel
+          id="admin-tourn-status"
+          class="gc-select-native"
+          [value]="filterStatus()"
+          (change)="onStatusFilterChange(statusSel.value)">
+          @for (opt of statusOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Sort -->
+      <div class="filter-field">
+        <label class="filter-label" for="admin-tourn-sort">Sort By</label>
+        <select
+          #sortSel
+          id="admin-tourn-sort"
+          class="gc-select-native"
+          [value]="sortBy()"
+          (change)="onSortChange(sortSel.value)">
+          @for (opt of sortOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Actions -->
+      <div class="filter-field filter-actions">
+        <gc-button variant="outline" size="sm" (btnClick)="clearFilters()">Clear Filters</gc-button>
+        <span class="total-count">{{ filteredTournaments().length }} of {{ totalTournaments() }} tournaments</span>
+      </div>
+    </div>
+  </gc-card>
+
+  <!-- Loading Skeleton -->
+  @if (isLoading()) {
+    <div class="tournaments-grid" aria-busy="true">
+      @for (i of [1,2,3,4]; track i) {
+        <gc-card>
+          <div class="tourn-skeleton">
+            <gc-skeleton height="24px" width="35%"></gc-skeleton>
+            <gc-skeleton height="32px" width="70%" class="mt-sm"></gc-skeleton>
+            <gc-skeleton height="18px" class="mt-md"></gc-skeleton>
+            <gc-skeleton height="48px" class="mt-lg"></gc-skeleton>
+          </div>
+        </gc-card>
+      }
+    </div>
+  } @else {
+
+    <!-- Empty State -->
+    @if (filteredTournaments().length === 0) {
+      <gc-card>
+        <gc-empty-state
+          icon="🏆"
+          title="No tournaments found"
+          description="No tournaments match your current search and status filters. Try clearing filters or create a new championship."
+          actionLabel="Clear Filters"
+          (actionClick)="clearFilters()">
+        </gc-empty-state>
+      </gc-card>
+    } @else {
+
+      <!-- Tournament Cards Grid -->
+      <section class="tournaments-grid" aria-label="Tournaments List">
+        @for (t of filteredTournaments(); track t.id) {
+          <gc-card class="tourn-card" [class.cancelled]="t.status === 'CANCELLED'">
+            <!-- Card Header -->
+            <div class="card-header">
+              <div class="game-tag">
+                <span class="game-icon">🎮</span>
+                <span class="game-name">{{ t.gameTitle }}</span>
+              </div>
+              <gc-badge [variant]="getStatusBadgeVariant(t.status)">
+                {{ t.status }}
+              </gc-badge>
+            </div>
+
+            <!-- Title & Fee -->
+            <div class="card-title-row">
+              <h2 class="tourn-title">{{ t.name || t.title }}</h2>
+              <div class="fee-badge">
+                <span class="fee-label">Entry Fee</span>
+                <span class="fee-amount font-mono">
+                  {{ t.entryFee > 0 ? ('LKR ' + (t.entryFee | number:'1.2-2')) : 'FREE' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Capacity Progress -->
+            <div class="capacity-block">
+              <div class="capacity-labels">
+                <span class="cap-text">Enrolled Participants</span>
+                <span class="cap-numbers font-mono">
+                  <strong>{{ t.participantCount || t.currentParticipants || 0 }}</strong> / {{ t.maxParticipants }}
+                </span>
+              </div>
+              <div class="progress-bar-wrap" role="progressbar" [attr.aria-valuenow]="getCapacityPercent(t)" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-bar-fill" [style.width.%]="getCapacityPercent(t)"></div>
+              </div>
+            </div>
+
+            <!-- Key Dates -->
+            <div class="dates-meta">
+              <div class="date-item">
+                <span class="date-label">Starts:</span>
+                <span class="date-val font-mono">{{ formatDate(t.startDate) }}</span>
+              </div>
+              <div class="date-item">
+                <span class="date-label">Registration Ends:</span>
+                <span class="date-val font-mono">{{ formatDate(t.registrationDeadline) }}</span>
+              </div>
+            </div>
+
+            <!-- Actions Toolbar -->
+            <div class="card-actions">
+              <gc-button
+                variant="outline"
+                size="sm"
+                (btnClick)="openRegistrations(t, $event)"
+                aria-label="View registered players">
+                👥 Players ({{ t.participantCount || t.currentParticipants || 0 }})
+              </gc-button>
+
+              <gc-button
+                variant="outline"
+                size="sm"
+                (btnClick)="openBracket(t, $event)"
+                aria-label="View and manage tournament knockout bracket">
+                🏆 Bracket
+              </gc-button>
+
+              <gc-button
+                variant="outline"
+                size="sm"
+                (btnClick)="openStatusModal(t, $event)"
+                aria-label="Update tournament lifecycle status">
+                ⚡ Status
+              </gc-button>
+
+              <gc-button
+                variant="outline"
+                size="sm"
+                (btnClick)="sendReminders(t, $event)"
+                aria-label="Dispatch 2-hour pre-tournament reminder notifications">
+                🔔
+              </gc-button>
+
+              @if (t.status !== 'CANCELLED' && t.status !== 'COMPLETED') {
+                <gc-button
+                  variant="outline"
+                  size="sm"
+                  class="btn-danger-hover"
+                  (btnClick)="openCancelModal(t, $event)"
+                  aria-label="Cancel this tournament">
+                  ✕
+                </gc-button>
+              }
+            </div>
+          </gc-card>
+        }
+      </section>
+    }
+  }
+
+  <!-- ── Create Tournament Modal ──────────────────────────────────────── -->
+  <gc-modal
+    [isOpen]="createModalOpen()"
+    [(isOpen)]="createModalOpen"
+    title="Create & Publish Tournament"
+    modalId="modal-create-tournament">
+    <form [formGroup]="createForm" (ngSubmit)="submitCreate()" id="form-create-tourn" novalidate>
+      <div class="modal-form-grid">
+        <!-- Name -->
+        <div class="form-field">
+          <label class="form-label" for="tourn-name">Tournament Name <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="tourn-name"
+            type="text"
+            class="gc-input-native"
+            formControlName="name"
+            placeholder="e.g. Colombo FC 25 Winter Clash"
+            [attr.aria-invalid]="createForm.get('name')?.invalid && createForm.get('name')?.touched" />
+          @if (createForm.get('name')?.invalid && createForm.get('name')?.touched) {
+            <span class="field-error" role="alert">Tournament name is required (min 3 characters)</span>
+          }
+        </div>
+
+        <!-- Game Title -->
+        <div class="form-field">
+          <label class="form-label" for="tourn-game">Game Title <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="tourn-game"
+            type="text"
+            class="gc-input-native"
+            formControlName="gameTitle"
+            placeholder="e.g. EA Sports FC 25, Valorant, Tekken 8"
+            [attr.aria-invalid]="createForm.get('gameTitle')?.invalid && createForm.get('gameTitle')?.touched" />
+          @if (createForm.get('gameTitle')?.invalid && createForm.get('gameTitle')?.touched) {
+            <span class="field-error" role="alert">Game title is required</span>
+          }
+        </div>
+
+        <div class="form-row-2">
+          <!-- Start Date -->
+          <div class="form-field">
+            <label class="form-label" for="tourn-start">Start Date & Time <span class="required" aria-hidden="true">*</span></label>
+            <input
+              id="tourn-start"
+              type="datetime-local"
+              class="gc-input-native"
+              formControlName="startDate" />
+            @if (createForm.get('startDate')?.invalid && createForm.get('startDate')?.touched) {
+              <span class="field-error" role="alert">Valid start date is required</span>
+            }
+          </div>
+
+          <!-- Registration Deadline -->
+          <div class="form-field">
+            <label class="form-label" for="tourn-deadline">Registration Deadline <span class="required" aria-hidden="true">*</span></label>
+            <input
+              id="tourn-deadline"
+              type="datetime-local"
+              class="gc-input-native"
+              formControlName="registrationDeadline" />
+            @if (createForm.get('registrationDeadline')?.invalid && createForm.get('registrationDeadline')?.touched) {
+              <span class="field-error" role="alert">Deadline must be before start date</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <!-- Entry Fee -->
+          <div class="form-field">
+            <label class="form-label" for="tourn-fee">Entry Fee (LKR) <span class="required" aria-hidden="true">*</span></label>
+            <input
+              id="tourn-fee"
+              type="number"
+              step="100"
+              min="0"
+              class="gc-input-native font-mono"
+              formControlName="entryFee" />
+            @if (createForm.get('entryFee')?.invalid && createForm.get('entryFee')?.touched) {
+              <span class="field-error" role="alert">Fee must be 0 or greater</span>
+            }
+          </div>
+
+          <!-- Max Participants -->
+          <div class="form-field">
+            <label class="form-label" for="tourn-max">Max Participants <span class="required" aria-hidden="true">*</span></label>
+            <select
+              id="tourn-max"
+              class="gc-select-native"
+              formControlName="maxParticipants">
+              <option [value]="4">4 Players (Semifinals + Finals)</option>
+              <option [value]="8">8 Players (Quarterfinals)</option>
+              <option [value]="16">16 Players (Round of 16)</option>
+              <option [value]="32">32 Players (Round of 32)</option>
+              <option [value]="64">64 Players (Grand Championship)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="createModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="primary"
+        form="form-create-tourn"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="submitCreate()">
+        {{ actionInFlight() ? 'Publishing…' : '🏆 Publish Tournament' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Registrations Inspector Modal ─────────────────────────────────── -->
+  <gc-modal
+    [isOpen]="registrationsModalOpen()"
+    [(isOpen)]="registrationsModalOpen"
+    title="Registered Participants"
+    modalId="modal-registrations">
+    @if (selectedTournamentForRegistrations(); as t) {
+      <div class="registrations-header mb-md">
+        <h3 class="reg-tourn-name">{{ t.name || t.title }}</h3>
+        <span class="reg-count-tag font-mono">
+          {{ registrationsList().length }} / {{ t.maxParticipants }} Registered
+        </span>
+      </div>
+
+      @if (isRegistrationsLoading()) {
+        <div class="reg-skeleton">
+          @for (s of [1,2,3,4]; track s) {
+            <gc-skeleton height="40px" class="mb-sm"></gc-skeleton>
+          }
+        </div>
+      } @else if (registrationsList().length === 0) {
+        <div class="empty-regs">
+          <p>No players have registered for this tournament yet.</p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="gc-table" aria-label="Registered participants table">
+            <thead>
+              <tr>
+                <th scope="col">Player / Gamer Tag</th>
+                <th scope="col">User ID</th>
+                <th scope="col">Status</th>
+                <th scope="col">Registered At</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (reg of registrationsList(); track reg.id) {
+                <tr>
+                  <td>
+                    <strong>{{ reg.gamerTag || reg.userName || 'Anonymous Player' }}</strong>
+                  </td>
+                  <td class="font-mono text-muted">{{ reg.userId.slice(0, 8) }}…</td>
+                  <td>
+                    <gc-badge [variant]="reg.status === 'CONFIRMED' ? 'success' : 'warning'">
+                      {{ reg.status }}
+                    </gc-badge>
+                  </td>
+                  <td class="font-mono text-muted">{{ formatDate(reg.registeredAt) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="registrationsModalOpen.set(false)">Close</gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Knockout Bracket Inspector Modal ──────────────────────────────── -->
+  <gc-modal
+    [isOpen]="bracketModalOpen()"
+    [(isOpen)]="bracketModalOpen"
+    title="Knockout Bracket Tree"
+    modalId="modal-bracket">
+    @if (selectedTournamentForBracket(); as t) {
+      <div class="bracket-topbar mb-md">
+        <div>
+          <h3 class="bracket-tourn-name">{{ t.name || t.title }}</h3>
+          <span class="text-muted">{{ t.gameTitle }} &bull; Single-Elimination Bracket</span>
+        </div>
+        <div class="bracket-actions">
+          <gc-button
+            variant="primary"
+            size="sm"
+            [disabled]="actionInFlight()"
+            (btnClick)="triggerGenerateBracket()">
+            ⚡ Re-generate Bracket
+          </gc-button>
+        </div>
+      </div>
+
+      @if (isBracketLoading()) {
+        <div class="bracket-skeleton">
+          <gc-skeleton height="200px"></gc-skeleton>
+        </div>
+      } @else if (!activeBracket() || bracketRounds().length === 0) {
+        <div class="empty-bracket">
+          <p>No knockout bracket has been generated for this tournament yet.</p>
+          <gc-button variant="primary" (btnClick)="triggerGenerateBracket()">
+            ⚡ Generate Single-Elimination Bracket
+          </gc-button>
+        </div>
+      } @else {
+        <!-- Visual Rounds Tree -->
+        <div class="bracket-tree-container">
+          @for (round of bracketRounds(); track round.roundNumber) {
+            <div class="bracket-round">
+              <h4 class="round-header">{{ round.roundTitle }}</h4>
+
+              <div class="round-matches">
+                @for (match of round.matches; track match.id) {
+                  <div class="match-card" [class.match-completed]="match.status === 'COMPLETED'">
+                    <!-- Participant 1 -->
+                    <div class="participant-row" [class.winner]="match.winnerId === match.participant1Id">
+                      <span class="p-name font-mono">
+                        {{ match.participant1Name || 'TBD' }}
+                      </span>
+                      @if (match.status !== 'COMPLETED' && match.participant1Id && match.participant2Id) {
+                        <button
+                          type="button"
+                          class="btn-pick-winner"
+                          (click)="recordMatchWinner(match, match.participant1Id)"
+                          aria-label="Declare Participant 1 as match winner">
+                          🏆 Win
+                        </button>
+                      } @else if (match.winnerId === match.participant1Id) {
+                        <span class="winner-crown">👑 WIN</span>
+                      }
+                    </div>
+
+                    <div class="match-divider">vs</div>
+
+                    <!-- Participant 2 -->
+                    <div class="participant-row" [class.winner]="match.winnerId === match.participant2Id">
+                      <span class="p-name font-mono">
+                        {{ match.participant2Name || (match.participant2Id ? 'TBD' : 'BYE') }}
+                      </span>
+                      @if (match.status !== 'COMPLETED' && match.participant1Id && match.participant2Id) {
+                        <button
+                          type="button"
+                          class="btn-pick-winner"
+                          (click)="recordMatchWinner(match, match.participant2Id)"
+                          aria-label="Declare Participant 2 as match winner">
+                          🏆 Win
+                        </button>
+                      } @else if (match.winnerId === match.participant2Id) {
+                        <span class="winner-crown">👑 WIN</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="bracketModalOpen.set(false)">Close Bracket</gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Status Change Modal ───────────────────────────────────────────── -->
+  <gc-modal
+    [isOpen]="statusModalOpen()"
+    [(isOpen)]="statusModalOpen"
+    title="Change Tournament Lifecycle Status"
+    modalId="modal-status">
+    @if (selectedTournamentForStatus(); as t) {
+      <p class="status-context">
+        Updating status for: <strong>{{ t.name || t.title }}</strong>
+      </p>
+
+      <form [formGroup]="statusForm" (ngSubmit)="submitStatusChange()" id="form-status" novalidate>
+        <div class="form-field">
+          <label class="form-label" for="tourn-new-status">New Lifecycle Status</label>
+          <select
+            id="tourn-new-status"
+            class="gc-select-native"
+            formControlName="status">
+            <option value="REGISTRATION_OPEN">Registration Open</option>
+            <option value="ONGOING">Ongoing / Live Matches</option>
+            <option value="UPCOMING">Upcoming (Announced)</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+        </div>
+      </form>
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="statusModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="primary"
+        form="form-status"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="submitStatusChange()">
+        {{ actionInFlight() ? 'Updating…' : '⚡ Save Status' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Cancel Confirm Modal ──────────────────────────────────────────── -->
+  <gc-modal
+    [isOpen]="cancelModalOpen()"
+    [(isOpen)]="cancelModalOpen"
+    title="Cancel Tournament"
+    modalId="modal-cancel-tourn">
+    @if (selectedTournamentForCancel(); as t) {
+      <p class="cancel-confirm-text">
+        Are you sure you want to cancel tournament <strong>{{ t.name || t.title }}</strong>?
+      </p>
+      <p class="cancel-warning text-muted">
+        All registered players will receive cancellation alerts. Registered fees will be flagged for refund per policy. This action is irreversible.
+      </p>
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="cancelModalOpen.set(false)">Keep Tournament</gc-button>
+      <gc-button
+        variant="outline"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="confirmCancel()">
+        {{ actionInFlight() ? 'Cancelling…' : '✕ Yes, Cancel Tournament' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+</div>
