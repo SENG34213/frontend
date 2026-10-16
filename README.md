@@ -47,7 +47,15 @@ Client-side Single Page Application (SPA) for the **Gaming Castle** online loung
 | `/login` | `LoginComponent` | Public | `guestGuard` | Customer & Admin login with `returnUrl` support (Fig 2) |
 | `/register` | `RegisterComponent` | Public | `guestGuard` | Customer account registration (Fig 3) |
 | `/dashboard` | `DashboardComponent` | `CustomerLayout` | `authGuard` | Customer primary landing and quick actions (Fig 1) |
-| `/admin` | `DashboardComponent` | `AdminLayout` | `roleGuard` (ADMIN) | Administrative operations overview (Fig C.15) |
+| `/admin` | `AdminDashboardComponent` | `AdminLayout` | `roleGuard` (ADMIN) | Administrative operations overview (Fig C.15 / FE-26) |
+| `/admin/bookings` | `AdminBookingsComponent` | `AdminLayout` | `roleGuard` (ADMIN) | Admin booking management & walk-in desk (Fig C.16 / FE-27) |
+| `/admin/stations` | `AdminStationsComponent` | `AdminLayout` | `roleGuard` (ADMIN) | Game station hardware & rate management (FE-28) |
+| `/admin/tournaments` | `AdminTournamentsComponent` | `AdminLayout` | `roleGuard` (ADMIN) | Tournament management & bracket generation (FE-29) |
+| `/admin/users` | `AdminUsersComponent` | `AdminLayout` | `roleGuard` (ADMIN) | Gamer account administration & security roles (FE-30) |
+| `/admin/payments` | `AdminPaymentsComponent` | `AdminLayout` | `roleGuard` (ADMIN) | Cash desk & payment reconciliation (FE-31) |
+| `/admin/reports` | `AdminReportsComponent` | `AdminLayout` | `roleGuard` (ADMIN) | Management reporting & CSV audit export (FE-32 / FR-29) |
+| `/admin/games` | `AdminGamesComponent` | `AdminLayout` | `roleGuard` (ADMIN) | Game titles library & platform catalog (FE-33 / FR-30) |
+| `/admin/loyalty` | `AdminLoyaltyComponent` | `AdminLayout` | `roleGuard` (ADMIN) | Loyalty rules, multipliers & points ledger (FE-34 / FR-27) |
 | `/forbidden` | `ForbiddenComponent` | Standalone | None | 403 Access Denied page with safe return navigation |
 | `/404` | `NotFoundComponent` | Standalone | None | 404 Level Not Found page with dashboard redirect |
 | `**` | Redirect to `/404` | — | None | Wildcard catch-all fallback |

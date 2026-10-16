@@ -39,6 +39,14 @@
         <span class="nav-icon">📈</span>
         @if (!sidebarCollapsed()) { <span>Reports</span> }
       </a>
+      <a routerLink="/admin/games" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">🎯</span>
+        @if (!sidebarCollapsed()) { <span>Games</span> }
+      </a>
+      <a routerLink="/admin/loyalty" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">🎁</span>
+        @if (!sidebarCollapsed()) { <span>Loyalty</span> }
+      </a>
     </nav>
 
     <div class="sidebar-footer">
@@ -72,4 +80,7 @@
       <router-outlet></router-outlet>
     </main>
   </div>
+
+  <!-- Real-time Admin Notifications Center (Bottom-Right) -->
+  <gc-notification-center></gc-notification-center>
 </div>

@@ -1,0 +1,444 @@
+<div class="admin-dashboard container-fluid" id="admin-dashboard-root">
+  <!-- Operational Header -->
+  <header class="dashboard-header">
+    <div class="header-titles">
+      <div class="badge-row">
+        <gc-badge variant="accent" [showDot]="true">Admin Operations Center</gc-badge>
+        @if (lastSynced()) {
+          <span class="sync-time" aria-live="polite">Last updated: {{ lastSynced() }}</span>
+        }
+      </div>
+      <h1 class="page-title">Executive Operations <span class="text-gradient">Dashboard</span></h1>
+      <p class="subtitle">Monitor real-time gaming lounge occupancy, revenue cashflow, tournament progression, and walk-in reservations.</p>
+    </div>
+
+    <div class="header-actions">
+      <gc-button
+        variant="outline"
+        size="sm"
+        (btnClick)="triggerRefresh()"
+        [attr.aria-label]="'Refresh dashboard metrics'">
+        🔄 Refresh
+      </gc-button>
+
+      <gc-button
+        variant="secondary"
+        size="sm"
+        (btnClick)="exportBookings()"
+        [attr.aria-label]="'Export bookings CSV'">
+        📥 Bookings CSV
+      </gc-button>
+
+      <gc-button
+        variant="primary"
+        size="sm"
+        (btnClick)="exportPayments()"
+        [attr.aria-label]="'Export payments CSV'">
+        📥 Payments CSV
+      </gc-button>
+    </div>
+  </header>
+
+  <!-- Error Banner (NFR-08 Plain English corrective action) -->
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">
+      <div class="error-icon">⚠️</div>
+      <div class="error-content">
+        <div class="error-title">Unable to synchronize live dashboard metrics</div>
+        <div class="error-desc">{{ errorMessage() }}</div>
+      </div>
+      <gc-button variant="outline" size="sm" (btnClick)="loadDashboardData()">
+        Try Again
+      </gc-button>
+    </div>
+  }
+
+  <!-- Loading Skeleton State -->
+  @if (isLoading()) {
+    <div class="dashboard-loading" aria-label="Loading dashboard analytics">
+      <div class="grid grid-cols-4 gap-md mb-lg">
+        <gc-card><gc-skeleton height="110px"></gc-skeleton></gc-card>
+        <gc-card><gc-skeleton height="110px"></gc-skeleton></gc-card>
+        <gc-card><gc-skeleton height="110px"></gc-skeleton></gc-card>
+        <gc-card><gc-skeleton height="110px"></gc-skeleton></gc-card>
+      </div>
+      <div class="grid grid-cols-3 gap-lg mb-lg">
+        <div class="col-span-2">
+          <gc-card><gc-skeleton height="320px"></gc-skeleton></gc-card>
+        </div>
+        <div>
+          <gc-card><gc-skeleton height="320px"></gc-skeleton></gc-card>
+        </div>
+      </div>
+      <gc-card><gc-skeleton height="260px"></gc-skeleton></gc-card>
+    </div>
+  } @else {
+    <!-- 4 KPI Metrics Widgets Grid -->
+    <section class="kpi-grid mb-xl" aria-label="Key Performance Indicators">
+      <!-- 1. Revenue Card -->
+      <gc-card title="Revenue & Cashflow" subtitle="Payment Gateway & Cash Counter" glow="blue">
+        <div class="kpi-body">
+          <div class="kpi-main">
+            <span class="currency-tag">LKR</span>
+            <span class="kpi-value" id="kpi-today-revenue">
+              {{ (paymentStats()?.todayRevenue || 0) | number:'1.2-2' }}
+            </span>
+          </div>
+          <div class="kpi-status-row">
+            <gc-badge variant="available" [showDot]="false">Today</gc-badge>
+            <span class="kpi-subtext">Month: LKR {{ (paymentStats()?.monthRevenue || 0) | number:'1.0-0' }}</span>
+          </div>
+          <div class="kpi-meta">
+            <span class="text-muted">Successful payments: <strong>{{ paymentStats()?.totalPaymentsSuccess || 0 }}</strong></span>
+            <span class="text-muted">Failed: <strong>{{ paymentStats()?.totalPaymentsFailed || 0 }}</strong></span>
+          </div>
+        </div>
+      </gc-card>
+
+      <!-- 2. Active Sessions & Booking Card -->
+      <gc-card title="Lounge Sessions & Bookings" subtitle="Live Station Occupancy" glow="blue">
+        <div class="kpi-body">
+          <div class="kpi-main">
+            <span class="live-dot" aria-hidden="true"></span>
+            <span class="kpi-value" id="kpi-active-sessions">
+              {{ bookingStats()?.activeSessionsNow || 0 }}
+            </span>
+            <span class="kpi-unit">Live Now</span>
+          </div>
+          <div class="kpi-status-row">
+            <gc-badge variant="primary" [showDot]="false">{{ bookingStats()?.todayConfirmedBookings || 0 }} Confirmed</gc-badge>
+            <span class="kpi-subtext">Total Today: {{ bookingStats()?.todayTotalBookings || 0 }}</span>
+          </div>
+          <div class="kpi-meta">
+            <span class="text-muted">Cancelled today: <strong>{{ bookingStats()?.todayCancelledBookings || 0 }}</strong></span>
+            <span class="text-muted">Month total: <strong>{{ bookingStats()?.monthTotalBookings || 0 }}</strong></span>
+          </div>
+        </div>
+      </gc-card>
+
+      <!-- 3. Player Base & Users Card -->
+      <gc-card title="Players & User Accounts" subtitle="Registered Gaming Community" glow="purple">
+        <div class="kpi-body">
+          <div class="kpi-main">
+            <span class="kpi-icon">👥</span>
+            <span class="kpi-value" id="kpi-total-users">
+              {{ userStats()?.totalUsers || 0 }}
+            </span>
+            <span class="kpi-unit">Members</span>
+          </div>
+          <div class="kpi-status-row">
+            <gc-badge variant="accent" [showDot]="false">{{ userStats()?.activeUsers || 0 }} Active</gc-badge>
+            <span class="kpi-subtext">+{{ userStats()?.newUsersToday || 0 }} Joined Today</span>
+          </div>
+          <div class="kpi-meta">
+            <span class="text-muted">Customers: <strong>{{ userStats()?.customerCount || 0 }}</strong></span>
+            <span class="text-muted">This Month: <strong>+{{ userStats()?.newUsersThisMonth || 0 }}</strong></span>
+          </div>
+        </div>
+      </gc-card>
+
+      <!-- 4. Tournament Arena Card -->
+      <gc-card title="Tournament Arena" subtitle="Esports Knockout Series" glow="purple">
+        <div class="kpi-body">
+          <div class="kpi-main">
+            <span class="kpi-icon">🏆</span>
+            <span class="kpi-value" id="kpi-tournaments-active">
+              {{ (tournamentStats()?.upcomingTournaments || 0) + (tournamentStats()?.ongoingTournaments || 0) }}
+            </span>
+            <span class="kpi-unit">Active / Upcoming</span>
+          </div>
+          <div class="kpi-status-row">
+            <gc-badge variant="warning" [showDot]="false">{{ tournamentStats()?.ongoingTournaments || 0 }} Ongoing</gc-badge>
+            <span class="kpi-subtext">{{ tournamentStats()?.totalParticipants || 0 }} Competitors</span>
+          </div>
+          <div class="kpi-meta">
+            <span class="text-muted">Completed: <strong>{{ tournamentStats()?.completedTournaments || 0 }}</strong></span>
+            <span class="text-muted">Total hosted: <strong>{{ tournamentStats()?.totalTournaments || 0 }}</strong></span>
+          </div>
+        </div>
+      </gc-card>
+    </section>
+
+    <!-- Analytics Chart & Quick Launch Operations Grid -->
+    <div class="analytics-row mb-xl">
+      <!-- Interactive Revenue Trend Chart -->
+      <div class="chart-container">
+        <gc-card title="Revenue Cashflow Trend" subtitle="LKR Daily Income Trajectory" [interactive]="false">
+          <div class="chart-header-controls">
+            <div class="trend-tabs" role="group" aria-label="Select trend window">
+              <button
+                type="button"
+                class="trend-btn"
+                [class.active]="selectedTrendDays() === 7"
+                (click)="setTrendDays(7)">
+                7D
+              </button>
+              <button
+                type="button"
+                class="trend-btn"
+                [class.active]="selectedTrendDays() === 14"
+                (click)="setTrendDays(14)">
+                14D
+              </button>
+              <button
+                type="button"
+                class="trend-btn"
+                [class.active]="selectedTrendDays() === 30"
+                (click)="setTrendDays(30)">
+                30D
+              </button>
+            </div>
+          </div>
+
+          <!-- SVG Responsive Bar Chart with Tooltips -->
+          <div class="svg-chart-wrapper" (mouseleave)="hoveredBar.set(null)">
+            <svg class="trend-svg" viewBox="0 0 600 200" preserveAspectRatio="none" role="img" aria-label="Daily revenue bar chart">
+              <defs>
+                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.9" />
+                  <stop offset="100%" stop-color="#1d4ed8" stop-opacity="0.3" />
+                </linearGradient>
+                <linearGradient id="barHoverGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#c084fc" stop-opacity="1" />
+                  <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.5" />
+                </linearGradient>
+              </defs>
+
+              <!-- Chart Baseline Grid lines -->
+              <line x1="0" y1="20" x2="600" y2="20" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+              <line x1="0" y1="70" x2="600" y2="70" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+              <line x1="0" y1="120" x2="600" y2="120" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+              <line x1="0" y1="170" x2="600" y2="170" stroke="rgba(255,255,255,0.15)" stroke-width="1" />
+
+              <!-- Render Chart Bars -->
+              @for (item of revenueTrend(); track item.date; let i = $index) {
+                <!-- Calculate bar geometry: total width 600, evenly spaced -->
+                <g class="bar-group" (mouseenter)="hoveredBar.set(item)" (focus)="hoveredBar.set(item)" tabindex="0">
+                  <rect
+                    [attr.x]="(i * (600 / revenueTrend().length)) + 4"
+                    [attr.y]="170 - ((item.revenue / maxRevenue()) * 145)"
+                    [attr.width]="(600 / revenueTrend().length) - 8"
+                    [attr.height]="((item.revenue / maxRevenue()) * 145)"
+                    rx="4"
+                    [attr.fill]="hoveredBar()?.date === item.date ? 'url(#barHoverGradient)' : 'url(#barGradient)'"
+                    class="chart-bar" />
+                </g>
+              }
+            </svg>
+
+            <!-- Floating Tooltip -->
+            @if (hoveredBar(); as h) {
+              <div class="chart-tooltip" role="tooltip">
+                <span class="tooltip-date">{{ h.date }}</span>
+                <span class="tooltip-rev">LKR {{ h.revenue | number:'1.2-2' }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Chart Footer Stats -->
+          <div class="chart-summary-footer">
+            <div class="summary-stat">
+              <span class="stat-label">Period Total</span>
+              <span class="stat-num text-gradient">LKR {{ totalTrendRevenue() | number:'1.0-0' }}</span>
+            </div>
+            <div class="summary-stat">
+              <span class="stat-label">Daily Average</span>
+              <span class="stat-num text-primary">LKR {{ averageDailyRevenue() | number:'1.0-0' }}</span>
+            </div>
+            <div class="summary-stat">
+              <span class="stat-label">Peak Day</span>
+              <span class="stat-num text-accent">LKR {{ maxRevenue() | number:'1.0-0' }}</span>
+            </div>
+          </div>
+        </gc-card>
+      </div>
+
+      <!-- Quick Operations Hub -->
+      <div class="operations-container">
+        <gc-card title="Quick Operations Hub" subtitle="Rapid Admin Workflows" glow="none">
+          <div class="operations-menu">
+            <a routerLink="/admin/bookings" [queryParams]="{tab: 'walkin'}" class="op-item">
+              <div class="op-icon bg-blue">🎮</div>
+              <div class="op-info">
+                <span class="op-title">New Walk-In Booking</span>
+                <span class="op-desc">Allocate a console and time slot immediately</span>
+              </div>
+              <span class="op-arrow">➔</span>
+            </a>
+
+            <a routerLink="/admin/payments" [queryParams]="{action: 'cash'}" class="op-item">
+              <div class="op-icon bg-green">💵</div>
+              <div class="op-info">
+                <span class="op-title">Record Cash Payment</span>
+                <span class="op-desc">Collect counter cash and print instant receipt</span>
+              </div>
+              <span class="op-arrow">➔</span>
+            </a>
+
+            <a routerLink="/admin/tournaments" [queryParams]="{action: 'create'}" class="op-item">
+              <div class="op-icon bg-purple">🏆</div>
+              <div class="op-info">
+                <span class="op-title">Create Tournament</span>
+                <span class="op-desc">Configure brackets, games, entry fees and rules</span>
+              </div>
+              <span class="op-arrow">➔</span>
+            </a>
+
+            <a routerLink="/admin/stations" class="op-item">
+              <div class="op-icon bg-cyan">🖥️</div>
+              <div class="op-info">
+                <span class="op-title">Console Stations</span>
+                <span class="op-desc">Configure rates, hardware specs and maintenance</span>
+              </div>
+              <span class="op-arrow">➔</span>
+            </a>
+
+            <a routerLink="/admin/reports" class="op-item">
+              <div class="op-icon bg-amber">📊</div>
+              <div class="op-info">
+                <span class="op-title">Reports & Audits</span>
+                <span class="op-desc">Download financial breakdowns & occupancy records</span>
+              </div>
+              <span class="op-arrow">➔</span>
+            </a>
+
+            <a routerLink="/admin/games" class="op-item">
+              <div class="op-icon bg-purple">🎯</div>
+              <div class="op-info">
+                <span class="op-title">Game Titles Catalog</span>
+                <span class="op-desc">Manage game titles, platforms and hero featured status</span>
+              </div>
+              <span class="op-arrow">➔</span>
+            </a>
+
+            <a routerLink="/admin/loyalty" class="op-item">
+              <div class="op-icon bg-emerald">🎁</div>
+              <div class="op-info">
+                <span class="op-title">Loyalty Program</span>
+                <span class="op-desc">Configure tier multipliers, inspect accounts & adjust points</span>
+              </div>
+              <span class="op-arrow">➔</span>
+            </a>
+          </div>
+        </gc-card>
+      </div>
+    </div>
+
+    <!-- Today's Live Station Schedule & Recent Operations -->
+    <section class="schedule-section mb-xl">
+      <gc-card title="Today's Station Sessions & Live Operations" subtitle="Real-time schedule of active and upcoming player bookings">
+        <div class="filter-toolbar mb-md">
+          <div class="filter-chips" role="group" aria-label="Filter bookings by status or channel">
+            <button
+              type="button"
+              class="chip-btn"
+              [class.active]="selectedBookingFilter() === 'ALL'"
+              (click)="setBookingFilter('ALL')">
+              All Sessions ({{ recentBookings().length }})
+            </button>
+            <button
+              type="button"
+              class="chip-btn"
+              [class.active]="selectedBookingFilter() === 'IN_PROGRESS'"
+              (click)="setBookingFilter('IN_PROGRESS')">
+              Live In-Progress
+            </button>
+            <button
+              type="button"
+              class="chip-btn"
+              [class.active]="selectedBookingFilter() === 'CONFIRMED'"
+              (click)="setBookingFilter('CONFIRMED')">
+              Confirmed Upcoming
+            </button>
+            <button
+              type="button"
+              class="chip-btn"
+              [class.active]="selectedBookingFilter() === 'WALK_IN'"
+              (click)="setBookingFilter('WALK_IN')">
+              Walk-in
+            </button>
+            <button
+              type="button"
+              class="chip-btn"
+              [class.active]="selectedBookingFilter() === 'ONLINE'"
+              (click)="setBookingFilter('ONLINE')">
+              Online
+            </button>
+          </div>
+
+          <a routerLink="/admin/bookings">
+            <gc-button size="sm" variant="outline">
+              Manage All Bookings ➔
+            </gc-button>
+          </a>
+        </div>
+
+        @if (filteredBookings().length === 0) {
+          <gc-empty-state
+            icon="🎮"
+            title="No sessions match filter"
+            description="There are no active or scheduled sessions for the selected criteria."
+            actionLabel="Reset Filter"
+            (actionClick)="setBookingFilter('ALL')">
+          </gc-empty-state>
+        } @else {
+          <div class="table-responsive">
+            <table class="gc-table" aria-label="Today's station bookings">
+              <thead>
+                <tr>
+                  <th scope="col">Station</th>
+                  <th scope="col">Time Slot</th>
+                  <th scope="col">Duration</th>
+                  <th scope="col">Channel</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (booking of filteredBookings(); track booking.id) {
+                  <tr>
+                    <td>
+                      <div class="station-cell">
+                        <span class="station-code">{{ booking.stationCode || 'Station' }}</span>
+                        <span class="station-type text-muted">{{ booking.stationType || 'Console' }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="time-slot font-mono">
+                        {{ formatTime(booking.startTime) }} - {{ formatTime(booking.endTime) }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="text-secondary">{{ booking.durationMinutes ? booking.durationMinutes + ' mins' : 'Session' }}</span>
+                    </td>
+                    <td>
+                      <span class="channel-badge" [class.walkin]="booking.source === 'WALK_IN'">
+                        {{ booking.source === 'WALK_IN' ? '🏃 Walk-in' : '🌐 Online' }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="amount-cell font-mono">
+                        LKR {{ (booking.payableAmount || booking.totalAmount || 0) | number:'1.2-2' }}
+                      </span>
+                    </td>
+                    <td>
+                      <gc-badge [variant]="getStatusBadgeVariant(booking.status)">
+                        {{ booking.status }}
+                      </gc-badge>
+                    </td>
+                    <td class="text-right">
+                      <a [routerLink]="['/admin/bookings']" [queryParams]="{search: booking.id}">
+                        <gc-button size="sm" variant="outline">Details</gc-button>
+                      </a>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </gc-card>
+    </section>
+  }
+</div>
