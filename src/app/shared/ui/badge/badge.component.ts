@@ -1,7 +1,7 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type BadgeVariant = 'available' | 'occupied' | 'primary' | 'accent' | 'warning' | 'info' | 'neutral';
+export type BadgeVariant = 'available' | 'occupied' | 'primary' | 'accent' | 'warning' | 'info' | 'neutral' | 'success' | 'danger';
 
 @Component({
   selector: 'gc-badge',
