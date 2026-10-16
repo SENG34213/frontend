@@ -68,7 +68,47 @@ export const routes: Routes = [
       {
         path: '',
         loadComponent: () =>
-          import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent)
+          import('./features/admin/dashboard/admin-dashboard.component').then((m) => m.AdminDashboardComponent)
+      },
+      {
+        path: 'bookings',
+        loadComponent: () =>
+          import('./features/admin/bookings/admin-bookings.component').then((m) => m.AdminBookingsComponent)
+      },
+      {
+        path: 'stations',
+        loadComponent: () =>
+          import('./features/admin/stations/admin-stations.component').then((m) => m.AdminStationsComponent)
+      },
+      {
+        path: 'tournaments',
+        loadComponent: () =>
+          import('./features/admin/tournaments/admin-tournaments.component').then((m) => m.AdminTournamentsComponent)
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./features/admin/users/admin-users.component').then((m) => m.AdminUsersComponent)
+      },
+      {
+        path: 'payments',
+        loadComponent: () =>
+          import('./features/admin/payments/admin-payments.component').then((m) => m.AdminPaymentsComponent)
+      },
+      {
+        path: 'reports',
+        loadComponent: () =>
+          import('./features/admin/reports/admin-reports.component').then((m) => m.AdminReportsComponent)
+      },
+      {
+        path: 'games',
+        loadComponent: () =>
+          import('./features/admin/games/admin-games.component').then((m) => m.AdminGamesComponent)
+      },
+      {
+        path: 'loyalty',
+        loadComponent: () =>
+          import('./features/admin/loyalty/admin-loyalty.component').then((m) => m.AdminLoyaltyComponent)
       }
     ]
   },
