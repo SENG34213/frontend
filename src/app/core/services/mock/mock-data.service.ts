@@ -193,6 +193,33 @@ export class MockDataService {
     }
   ];
 
+  private readonly games: Game[] = [
+    {
+      id: 'game-01',
+      title: 'CYBERPUNK 2077',
+      genre: 'Action RPG',
+      coverImage: '/assets/images/game_cyberpunk.jpg'
+    },
+    {
+      id: 'game-02',
+      title: 'GRAN TURISMO 7',
+      genre: 'Racing Sim',
+      coverImage: '/assets/images/game_granturismo.jpg'
+    },
+    {
+      id: 'game-03',
+      title: 'ELDEN RING',
+      genre: 'Action RPG',
+      coverImage: '/assets/images/game_eldenring.jpg'
+    },
+    {
+      id: 'game-04',
+      title: 'TEKKEN 8',
+      genre: 'Fighting',
+      coverImage: '/assets/images/game_tekken.jpg'
+    }
+  ];
+
   private readonly tournaments: TournamentResponse[] = [
     {
       id: 'tourn-01',
@@ -524,6 +551,10 @@ export class MockDataService {
 
   getAvailableStations(): Observable<Station[]> {
     return of(this.stations.filter((s) => s.active)).pipe(delay(150));
+  }
+
+  getGames(): Observable<Game[]> {
+    return of(this.games).pipe(delay(100));
   }
 
   createStation(request: GameStationRequest): Observable<GameStationResponse> {
