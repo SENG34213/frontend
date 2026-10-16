@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "socket-server": "node notification-socket-server/server.js",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
@@ -20,6 +21,7 @@
     "@angular/platform-browser-dynamic": "^19.2.25",
     "@angular/router": "^19.2.25",
     "rxjs": "~7.8.0",
+    "socket.io-client": "^4.8.4",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.1"
   },
