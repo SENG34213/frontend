@@ -14,6 +14,7 @@ describe('ResetPasswordComponent', () => {
   let router: Router;
 
   beforeEach(async () => {
+    history.replaceState({ identifier: 'soldier@gamingcastle.lk' }, '');
     sessionStorage.setItem('gc_reset_identifier', 'soldier@gamingcastle.lk');
     authServiceSpy = jasmine.createSpyObj('AuthService', ['resetPassword', 'forgotPassword']);
     toastServiceSpy = jasmine.createSpyObj('ToastService', ['success', 'info', 'error']);
@@ -36,6 +37,7 @@ describe('ResetPasswordComponent', () => {
   });
 
   afterEach(() => {
+    history.replaceState(null, '');
     sessionStorage.clear();
     component.ngOnDestroy();
   });
