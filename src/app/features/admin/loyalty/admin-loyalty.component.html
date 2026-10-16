@@ -1,0 +1,525 @@
+<div class="loyalty-page-container">
+
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-left">
+      <div class="header-tags">
+        <gc-badge variant="accent">Customer Retention</gc-badge>
+      </div>
+      <h1 class="page-title">Loyalty Program <span class="text-gradient">Management</span></h1>
+      <p class="page-subtitle">
+        Configure earning ratios, tier progression thresholds, inspect player accounts, and grant manual audit adjustments.
+      </p>
+    </div>
+  </header>
+
+  <!-- Top KPI Stats -->
+  @if (stats(); as st) {
+    <section class="stats-grid" aria-label="Loyalty Program High-Level KPIs">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-info">
+          <span class="stat-label">Loyalty Members</span>
+          <span class="stat-value">{{ st.totalAccounts.toLocaleString() }}</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon text-accent">💎</div>
+        <div class="stat-info">
+          <span class="stat-label">Points in Circulation</span>
+          <span class="stat-value">{{ st.totalPointsInCirculation.toLocaleString() }}</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon text-success">🎁</div>
+        <div class="stat-info">
+          <span class="stat-label">All-Time Awarded</span>
+          <span class="stat-value">{{ st.totalPointsAwardedAllTime.toLocaleString() }}</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon text-warning">🏷️</div>
+        <div class="stat-info">
+          <span class="stat-label">All-Time Redeemed</span>
+          <span class="stat-value">{{ st.totalPointsRedeemedAllTime.toLocaleString() }}</span>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- Tab Navigation -->
+  <nav class="loyalty-tabs" aria-label="Loyalty Sub-sections">
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'accounts'"
+      (click)="selectTab('accounts')">
+      👥 Customer Accounts
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'rules'"
+      (click)="selectTab('rules')">
+      ⚙️ Program Rules & Tiers
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'audit'"
+      (click)="selectTab('audit')">
+      📜 Points Audit Log
+    </button>
+  </nav>
+
+  <!-- Error Banner -->
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">
+      <span class="error-icon">⚠️</span>
+      <div class="error-text">
+        <strong>Error:</strong>
+        <p>{{ errorMessage() }}</p>
+      </div>
+      <gc-button size="sm" variant="secondary" (click)="loadAccounts()">
+        Retry
+      </gc-button>
+    </div>
+  }
+
+  <!-- ═════════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 1: CUSTOMER ACCOUNTS -->
+  <!-- ═════════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'accounts') {
+
+    <!-- Filter Toolbar -->
+    <div class="filter-toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search by name, email, phone..."
+          [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)"
+          (keyup.enter)="applyAccountFilters()" />
+      </div>
+
+      <div class="filter-controls">
+        <select
+          class="select-control"
+          [value]="selectedTier()"
+          (change)="selectedTier.set($any($event.target).value); applyAccountFilters()">
+          <option value="">All Tiers</option>
+          <option value="BRONZE">Bronze</option>
+          <option value="SILVER">Silver</option>
+          <option value="GOLD">Gold</option>
+          <option value="VIP">VIP Elite</option>
+        </select>
+
+        <gc-button size="sm" variant="primary" (click)="applyAccountFilters()">
+          Filter
+        </gc-button>
+
+        @if (searchTerm() || selectedTier()) {
+          <gc-button size="sm" variant="secondary" (click)="resetAccountFilters()">
+            Clear
+          </gc-button>
+        }
+      </div>
+    </div>
+
+    <!-- Loading Skeleton -->
+    @if (isLoading()) {
+      <div class="table-skeleton-wrap">
+        <gc-skeleton width="100%" height="320px"></gc-skeleton>
+      </div>
+    }
+
+    <!-- Accounts Table -->
+    @if (!isLoading() && accounts().length > 0) {
+      <div class="table-responsive">
+        <table class="loyalty-table">
+          <thead>
+            <tr>
+              <th>Gamer</th>
+              <th>Phone</th>
+              <th>Tier</th>
+              <th style="text-align: right;">Points Balance</th>
+              <th style="text-align: right;">Discount Equiv.</th>
+              <th style="text-align: center;">Lifetime Activity</th>
+              <th>Last Active</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (acc of accounts(); track acc.id) {
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <span class="user-name">{{ acc.userName }}</span>
+                    <span class="user-email">{{ acc.userEmail }}</span>
+                  </div>
+                </td>
+                <td>{{ acc.phoneNumber || '—' }}</td>
+                <td>
+                  <gc-badge [variant]="getTierBadgeVariant(acc.tier)">
+                    {{ acc.tier }}
+                  </gc-badge>
+                </td>
+                <td style="text-align: right;">
+                  <strong class="points-val">{{ acc.pointsBalance.toLocaleString() }}</strong> pts
+                </td>
+                <td style="text-align: right; color: #34d399;">
+                  LKR {{ acc.equivalentDiscountLkr.toLocaleString() }}
+                </td>
+                <td style="text-align: center;">
+                  <span class="life-stat">Earned: {{ acc.totalEarnedAllTime }}</span> ·
+                  <span class="life-stat">Used: {{ acc.totalRedeemedAllTime }}</span>
+                </td>
+                <td>{{ acc.updatedAt | date:'shortDate' }}</td>
+                <td style="text-align: right;">
+                  <gc-button
+                    size="sm"
+                    variant="secondary"
+                    (click)="openAdjustModal(acc)"
+                    aria-label="Adjust player points">
+                    🎁 Adjust
+                  </gc-button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="pagination-footer">
+        <gc-pagination
+          [currentPage]="page()"
+          [totalPages]="totalPages()"
+          (pageChange)="onPageChange($event)">
+        </gc-pagination>
+      </div>
+
+    } @else if (!isLoading() && !errorMessage()) {
+      <gc-empty-state
+        title="No Loyalty Accounts Found"
+        description="No customer accounts match your search filters."
+        icon="👥">
+      </gc-empty-state>
+    }
+
+  }
+
+  <!-- ═════════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 2: RULES & TIERS CONFIGURATION -->
+  <!-- ═════════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'rules') {
+
+    <div class="rules-editor-container">
+
+      <section class="rules-card">
+        <h2 class="card-title">Point Earning & Conversion Formula</h2>
+        <p class="card-subtitle">Define spending-to-points accrual and cash discount equivalence.</p>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">LKR Spend Required per Point</label>
+            <div class="input-with-addon">
+              <span class="addon">LKR</span>
+              <input
+                type="number"
+                min="1"
+                class="form-input"
+                [value]="ruleAmountPerPoint()"
+                (input)="ruleAmountPerPoint.set($any($event.target).value)" />
+            </div>
+            <span class="input-hint">Default: 100 LKR spent = 1 point awarded</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Cash Discount Value per Point</label>
+            <div class="input-with-addon">
+              <span class="addon">LKR</span>
+              <input
+                type="number"
+                min="0.1"
+                step="0.1"
+                class="form-input"
+                [value]="rulePointValueLkr()"
+                (input)="rulePointValueLkr.set($any($event.target).value)" />
+            </div>
+            <span class="input-hint">Default: 1 point = LKR 1.00 checkout discount</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="rules-card">
+        <h2 class="card-title">Redemption Bounds & Safeguards</h2>
+        <p class="card-subtitle">Enforce minimum thresholds and cap maximum transaction percentage.</p>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Minimum Points to Redeem</label>
+            <input
+              type="number"
+              min="0"
+              class="form-input"
+              [value]="ruleMinRedeemPoints()"
+              (input)="ruleMinRedeemPoints.set($any($event.target).value)" />
+            <span class="input-hint">Gamers must hold at least this many points</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Redemption Step / Increment</label>
+            <input
+              type="number"
+              min="1"
+              class="form-input"
+              [value]="ruleRedeemStep()"
+              (input)="ruleRedeemStep.set($any($event.target).value)" />
+            <span class="input-hint">Points must be redeemed in multiples (e.g. 10s)</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Maximum Discount Cap (%)</label>
+            <div class="input-with-addon">
+              <input
+                type="number"
+                min="5"
+                max="100"
+                class="form-input"
+                [value]="ruleMaxDiscountPercent()"
+                (input)="ruleMaxDiscountPercent.set($any($event.target).value)" />
+              <span class="addon">%</span>
+            </div>
+            <span class="input-hint">Prevents total zero-cost bookings (e.g. 50%)</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Reservation Hold Timeout</label>
+            <div class="input-with-addon">
+              <input
+                type="number"
+                min="5"
+                max="60"
+                class="form-input"
+                [value]="ruleReservationTimeout()"
+                (input)="ruleReservationTimeout.set($any($event.target).value)" />
+              <span class="addon">mins</span>
+            </div>
+            <span class="input-hint">Release points if checkout is abandoned</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="rules-card">
+        <h2 class="card-title">Tier Progression & Multipliers</h2>
+        <p class="card-subtitle">Reward loyal players with bonus points on every gaming session.</p>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Silver Tier Threshold</label>
+            <input
+              type="number"
+              min="100"
+              class="form-input"
+              [value]="ruleSilverThreshold()"
+              (input)="ruleSilverThreshold.set($any($event.target).value)" />
+            <span class="input-hint">Points required to reach Silver</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Silver Earning Multiplier</label>
+            <div class="input-with-addon">
+              <input
+                type="number"
+                min="1.0"
+                step="0.05"
+                class="form-input"
+                [value]="ruleSilverMultiplier()"
+                (input)="ruleSilverMultiplier.set($any($event.target).value)" />
+              <span class="addon">x</span>
+            </div>
+            <span class="input-hint">e.g. 1.25x = 25% extra points</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Gold Tier Threshold</label>
+            <input
+              type="number"
+              min="500"
+              class="form-input"
+              [value]="ruleGoldThreshold()"
+              (input)="ruleGoldThreshold.set($any($event.target).value)" />
+            <span class="input-hint">Points required to reach Gold</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Gold Earning Multiplier</label>
+            <div class="input-with-addon">
+              <input
+                type="number"
+                min="1.0"
+                step="0.05"
+                class="form-input"
+                [value]="ruleGoldMultiplier()"
+                (input)="ruleGoldMultiplier.set($any($event.target).value)" />
+              <span class="addon">x</span>
+            </div>
+            <span class="input-hint">e.g. 1.50x = 50% extra points</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Live Simulation Summary -->
+      <div class="simulation-box">
+        <div class="sim-header">💡 Real-time Formula Simulation</div>
+        <div class="sim-content">
+          A player spending <strong>LKR 2,000</strong> on a PlayStation 5 booking earns:
+          <ul>
+            <li>Bronze (Standard): <strong>20 points</strong> (LKR 20 discount value)</li>
+            <li>Silver ({{ ruleSilverMultiplier() }}x): <strong>{{ 20 * ruleSilverMultiplier() }} points</strong> (LKR {{ 20 * ruleSilverMultiplier() }} value)</li>
+            <li>Gold ({{ ruleGoldMultiplier() }}x): <strong>{{ 20 * ruleGoldMultiplier() }} points</strong> (LKR {{ 20 * ruleGoldMultiplier() }} value)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rules-actions">
+        <gc-button
+          variant="primary"
+          size="lg"
+          [loading]="isSavingRules()"
+          (click)="saveRules()">
+          💾 Save Loyalty Program Rules
+        </gc-button>
+      </div>
+
+    </div>
+
+  }
+
+  <!-- ═════════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 3: TRANSACTION AUDIT LOG -->
+  <!-- ═════════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'audit') {
+
+    <div class="audit-container">
+      <div class="audit-header">
+        <h2 class="card-title">Points Ledger & Adjustment Records</h2>
+        <span class="audit-subtitle">Chronological ledger of point events across the platform</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="loyalty-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Customer</th>
+              <th>Event Type</th>
+              <th style="text-align: right;">Points Delta</th>
+              <th>Description / Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (tx of transactions(); track tx.id) {
+              <tr>
+                <td>{{ tx.createdAt | date:'medium' }}</td>
+                <td><strong>{{ tx.userName || tx.userId }}</strong></td>
+                <td>
+                  <gc-badge [variant]="tx.type === 'EARN' ? 'success' : tx.type === 'REDEEM' ? 'warning' : 'accent'">
+                    {{ tx.type }}
+                  </gc-badge>
+                </td>
+                <td style="text-align: right;">
+                  <strong [class.text-success]="tx.points > 0" [class.text-danger]="tx.points < 0">
+                    {{ tx.points > 0 ? '+' : '' }}{{ tx.points }}
+                  </strong>
+                </td>
+                <td>{{ tx.description }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  }
+
+  <!-- ═════════════════════════════════════════════════════════════════════════ -->
+  <!-- MODAL: MANUAL ADJUST POINTS -->
+  <!-- ═════════════════════════════════════════════════════════════════════════ -->
+  @if (isAdjustModalOpen() && targetAccount(); as acc) {
+    <gc-modal
+      title="Adjust Customer Points"
+      [isOpen]="true"
+      (closed)="closeAdjustModal()">
+      <div class="adjust-form">
+
+        <div class="account-summary-banner">
+          <div>
+            <div class="acc-name">{{ acc.userName }}</div>
+            <div class="acc-sub">{{ acc.userEmail }} · {{ acc.phoneNumber }}</div>
+          </div>
+          <div class="acc-current-pts">
+            <span class="pts-label">Current Balance</span>
+            <span class="pts-num">{{ acc.pointsBalance }} pts</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="adjust-points-input">
+            Adjustment Amount (+ to award, - to deduct) *
+          </label>
+          <input
+            id="adjust-points-input"
+            type="number"
+            class="form-input"
+            [value]="adjustPointsInput()"
+            (input)="adjustPointsInput.set($any($event.target).value)" />
+          <span class="input-hint">Example: +200 for bonus gesture, -50 for correction</span>
+        </div>
+
+        <div class="preview-calculation">
+          <span>New Projected Balance:</span>
+          <strong>{{ previewNewBalance() }} points</strong>
+          <span class="discount-note">(≈ LKR {{ previewNewBalance() }} discount)</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="adjust-reason-input">
+            Reason for Adjustment (Audit Record) *
+          </label>
+          <textarea
+            id="adjust-reason-input"
+            rows="3"
+            class="form-input"
+            placeholder="e.g. Tournament runner-up gesture, customer dispute credit..."
+            [value]="adjustReasonInput()"
+            (input)="adjustReasonInput.set($any($event.target).value)"></textarea>
+          @if (adjustError()) {
+            <span class="field-error">{{ adjustError() }}</span>
+          }
+        </div>
+
+        <div class="modal-footer-actions">
+          <gc-button
+            variant="secondary"
+            size="md"
+            (click)="closeAdjustModal()">
+            Cancel
+          </gc-button>
+          <gc-button
+            variant="primary"
+            size="md"
+            [loading]="isAdjusting()"
+            (click)="confirmAdjustPoints()">
+            Confirm Adjustment
+          </gc-button>
+        </div>
+
+      </div>
+    </gc-modal>
+  }
+
+</div>

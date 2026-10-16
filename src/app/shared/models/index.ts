@@ -5,3 +5,7 @@ export * from './booking.model';
 export * from './payment.model';
 export * from './tournament.model';
 export * from './loyalty.model';
+export * from './admin.model';
+export * from './report.model';
+export * from './game.model';
+export * from './notification.model';
