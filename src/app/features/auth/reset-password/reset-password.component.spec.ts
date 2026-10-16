@@ -14,6 +14,7 @@ describe('ResetPasswordComponent', () => {
   let router: Router;
 
   beforeEach(async () => {
+    history.replaceState({ identifier: 'soldier@gamingcastle.lk' }, '');
     sessionStorage.setItem('gc_reset_identifier', 'soldier@gamingcastle.lk');
     authServiceSpy = jasmine.createSpyObj('AuthService', ['resetPassword', 'forgotPassword']);
     toastServiceSpy = jasmine.createSpyObj('ToastService', ['success', 'info', 'error']);
@@ -36,6 +37,7 @@ describe('ResetPasswordComponent', () => {
   });
 
   afterEach(() => {
+    history.replaceState(null, '');
     sessionStorage.clear();
     component.ngOnDestroy();
   });
@@ -154,6 +156,11 @@ describe('ResetPasswordComponent', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('That code is incorrect or has expired.');
     expect(text).toContain('You have up to 5 attempts');
+    expect(toastServiceSpy.error).toHaveBeenCalledWith(
+      'The 6-digit verification code is invalid or has expired. Please check your messages for the latest code or request a new one.',
+      'Password reset failed'
+    );
+    expect(fixture.nativeElement.querySelector('.auth-error-banner')).toBeNull();
   });
 
   it('should toggle password visibilities', () => {

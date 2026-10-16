@@ -5,6 +5,7 @@ import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ErrorMapper } from '../../../core/http/error-mapper';
 import { ApiError } from '../../../shared/models/api-response.model';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { AuthShellComponent } from '../shared/auth-shell.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
@@ -35,7 +36,7 @@ export class LoginComponent {
   readonly isPhoneMode = signal<boolean>(false);
   readonly showPassword = signal<boolean>(false);
   readonly isSubmitting = signal<boolean>(false);
-  readonly apiError = signal<ApiError | null>(null);
+  private readonly toastService = inject(ToastService);
 
   readonly form = this.fb.group({
     identifier: ['', [Validators.required, Validators.email]],
@@ -86,8 +87,6 @@ export class LoginComponent {
   togglePhoneMode(): void {
     const nextMode = !this.isPhoneMode();
     this.isPhoneMode.set(nextMode);
-    this.apiError.set(null);
-
     this.identifierControl.reset('');
     if (nextMode) {
       this.identifierControl.setValidators([Validators.required, sriLankanPhoneValidator()]);
@@ -112,8 +111,6 @@ export class LoginComponent {
     }
 
     this.isSubmitting.set(true);
-    this.apiError.set(null);
-
     const { identifier, password } = this.form.getRawValue();
     const cleanId = (identifier || '').trim();
     const cleanPassword = password || '';
@@ -142,7 +139,13 @@ export class LoginComponent {
         const mappedError = err?.status !== undefined && err?.message && err?.action
           ? (err as ApiError)
           : ErrorMapper.map(err);
-        this.apiError.set(mappedError);
+        const accountLockedAction = mappedError.code === 'ACCOUNT_LOCKED'
+          ? ' Use Forgot password to reset your password.'
+          : '';
+        this.toastService.error(
+          `${mappedError.message} ${mappedError.action}${accountLockedAction}`,
+          'Sign in failed'
+        );
       }
     });
   }

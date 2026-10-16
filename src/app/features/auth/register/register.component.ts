@@ -43,7 +43,6 @@ export class RegisterComponent {
   readonly showPassword = signal<boolean>(false);
   readonly showConfirmPassword = signal<boolean>(false);
   readonly isSubmitting = signal<boolean>(false);
-  readonly apiError = signal<ApiError | null>(null);
   readonly emailTaken = signal<boolean>(false);
   readonly phoneTaken = signal<boolean>(false);
 
@@ -89,9 +88,6 @@ export class RegisterComponent {
   }
 
   get emailErrorMessage(): string | null {
-    if (this.emailTaken()) {
-      return 'This email address is already registered.';
-    }
     const ctrl = this.form.controls.email;
     if ((!ctrl.touched && !ctrl.dirty) || !ctrl.errors) return null;
     if (ctrl.errors['emailTaken']) {
@@ -104,9 +100,6 @@ export class RegisterComponent {
   }
 
   get phoneErrorMessage(): string | null {
-    if (this.phoneTaken()) {
-      return 'This phone number is already registered.';
-    }
     const ctrl = this.form.controls.phoneNumber;
     if ((!ctrl.touched && !ctrl.dirty) || !ctrl.errors) return null;
     if (ctrl.errors['phoneTaken']) {
@@ -156,7 +149,6 @@ export class RegisterComponent {
     }
 
     this.isSubmitting.set(true);
-    this.apiError.set(null);
     this.emailTaken.set(false);
     this.phoneTaken.set(false);
 
@@ -183,14 +175,10 @@ export class RegisterComponent {
           ? (err as ApiError)
           : ErrorMapper.map(err);
 
-        this.apiError.set(mappedError);
-
         if (mappedError.code === 'EMAIL_TAKEN') {
           this.emailTaken.set(true);
-          this.form.controls.email.setErrors({ emailTaken: true });
         } else if (mappedError.code === 'PHONE_TAKEN') {
           this.phoneTaken.set(true);
-          this.form.controls.phoneNumber.setErrors({ phoneTaken: true });
         }
 
         // Map field errors from 400 VALIDATION_ERROR onto individual controls
@@ -203,6 +191,11 @@ export class RegisterComponent {
             }
           });
         }
+
+        this.toastService.error(
+          `${mappedError.message} ${mappedError.action}`,
+          'Registration failed'
+        );
       }
     });
   }

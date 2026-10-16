@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, delay, throwError } from 'rxjs';
 import {
   Station,
+  Game,
   SlotAvailability,
   GameStationRequest,
   GameStationResponse,
@@ -154,6 +155,8 @@ export class MockDataService {
       type: 'CONSOLE',
       hourlyRate: 600,
       specifications: 'Dolby Atmos, Xbox Elite Wireless Controller',
+      controllersCount: 2,
+      imageUrl: '/assets/images/ps5_console_01.jpg',
       active: true
     },
     {
@@ -164,6 +167,8 @@ export class MockDataService {
       type: 'PC',
       hourlyRate: 800,
       specifications: 'RTX 4090, i9-14900K, 240Hz Zowie XL2546K',
+      controllersCount: 1,
+      imageUrl: '/assets/images/ps5_console_02.jpg',
       active: true
     },
     {
