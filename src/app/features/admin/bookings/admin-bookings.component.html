@@ -1,0 +1,477 @@
+<div class="admin-bookings" id="admin-bookings-root">
+  <!-- Page Header -->
+  <header class="page-header mb-xl">
+    <div class="header-left">
+      <div class="header-tags">
+        <gc-badge variant="accent">Operations</gc-badge>
+      </div>
+      <h1 class="page-title">Booking <span class="text-gradient">Management</span></h1>
+      <p class="subtitle">Review, filter, cancel, reschedule, and create walk-in reservations across all console stations.</p>
+    </div>
+    <div class="header-actions">
+      <gc-button variant="outline" size="sm" (btnClick)="exportCsv()" aria-label="Export filtered bookings as CSV">
+        📥 Export CSV
+      </gc-button>
+      <gc-button variant="primary" (btnClick)="openWalkIn()" aria-label="Create new walk-in booking">
+        🎮 Walk-In Booking
+      </gc-button>
+    </div>
+  </header>
+
+  <!-- Error Banner -->
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">
+      <div class="error-icon">⚠️</div>
+      <div class="error-content">
+        <div class="error-title">Could not load bookings</div>
+        <div class="error-desc">{{ errorMessage() }}</div>
+      </div>
+      <gc-button variant="outline" size="sm" (btnClick)="loadBookings()">Try Again</gc-button>
+    </div>
+  }
+
+  <!-- Filter Toolbar -->
+  <gc-card class="filter-card mb-lg">
+    <div class="filter-grid">
+      <!-- Status Filter -->
+      <div class="filter-field">
+        <label class="filter-label" for="admin-bk-status">Status</label>
+        <select
+          #statusSel
+          id="admin-bk-status"
+          class="gc-select-native"
+          [value]="filterStatus()"
+          (change)="onStatusChange(statusSel.value)">
+          @for (opt of statusOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Source Filter -->
+      <div class="filter-field">
+        <label class="filter-label" for="admin-bk-source">Channel</label>
+        <select
+          #sourceSel
+          id="admin-bk-source"
+          class="gc-select-native"
+          [value]="filterSource()"
+          (change)="onSourceChange(sourceSel.value)">
+          @for (opt of sourceOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Sort -->
+      <div class="filter-field">
+        <label class="filter-label" for="admin-bk-sort">Sort By</label>
+        <select
+          #sortSel
+          id="admin-bk-sort"
+          class="gc-select-native"
+          [value]="sortLabel()"
+          (change)="onSortChange(sortSel.value)">
+          @for (opt of sortOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Clear Filters -->
+      <div class="filter-field filter-actions">
+        <gc-button variant="outline" size="sm" (btnClick)="clearFilters()">Clear Filters</gc-button>
+        @if (totalElements() > 0) {
+          <span class="total-count">{{ totalElements() | number }} bookings</span>
+        }
+      </div>
+    </div>
+  </gc-card>
+
+  <!-- Loading Skeleton -->
+  @if (isLoading()) {
+    <gc-card>
+      <div class="skeleton-list">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <gc-skeleton height="52px"></gc-skeleton>
+        }
+      </div>
+    </gc-card>
+  } @else {
+
+    <!-- Main Table -->
+    @if (rows().length === 0) {
+      <gc-card>
+        <gc-empty-state
+          icon="📅"
+          title="No bookings found"
+          description="No bookings match your current filters. Try clearing the filters or check back after new reservations are made."
+          actionLabel="Clear Filters"
+          (actionClick)="clearFilters()">
+        </gc-empty-state>
+      </gc-card>
+    } @else {
+      <gc-card>
+        <div class="table-responsive">
+          <table class="gc-table" aria-label="Admin bookings table">
+            <thead>
+              <tr>
+                <th scope="col">Booking ID</th>
+                <th scope="col">Station</th>
+                <th scope="col">Date & Time (SLST)</th>
+                <th scope="col">Duration</th>
+                <th scope="col">Channel</th>
+                <th scope="col">Amount (LKR)</th>
+                <th scope="col">Status</th>
+                <th scope="col" class="actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (booking of rows(); track booking.id) {
+                <tr class="booking-row" (click)="openDetail(booking)" tabindex="0"
+                    (keydown.enter)="openDetail(booking)" role="button"
+                    [attr.aria-label]="'View booking ' + booking.id">
+                  <td>
+                    <div class="id-cell">
+                      <span class="booking-id font-mono">{{ booking.id.slice(0, 8) }}…</span>
+                      <span class="user-id text-muted">User: {{ booking.userId.slice(0, 8) }}…</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="station-cell">
+                      <span class="station-code">{{ booking.stationCode || '—' }}</span>
+                      <span class="station-type text-muted">{{ booking.stationType || 'Console' }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="time-cell">
+                      <span class="start-time">{{ formatDateTime(booking.startTime) }}</span>
+                      <span class="end-time text-muted">→ {{ formatTime(booking.endTime) }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="font-mono">{{ getDuration(booking) }}</span>
+                  </td>
+                  <td>
+                    <span class="channel-pill" [class.walkin]="booking.source === 'WALK_IN'">
+                      {{ booking.source === 'WALK_IN' ? '🏃 Walk-in' : '🌐 Online' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="amount font-mono">LKR {{ getAmount(booking) | number:'1.2-2' }}</span>
+                  </td>
+                  <td>
+                    <gc-badge [variant]="getStatusVariant(booking.status)">{{ booking.status }}</gc-badge>
+                  </td>
+                  <td class="actions-col" (click)="$event.stopPropagation()">
+                    <div class="row-actions">
+                      @if (canReschedule(booking)) {
+                        <gc-button
+                          size="sm" variant="outline"
+                          (btnClick)="openReschedule(booking, $event)"
+                          aria-label="Reschedule this booking">
+                          🔄
+                        </gc-button>
+                      }
+                      @if (canCancel(booking)) {
+                        <gc-button
+                          size="sm" variant="outline"
+                          (btnClick)="openCancel(booking, $event)"
+                          aria-label="Cancel this booking">
+                          ✕
+                        </gc-button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages() > 1) {
+          <div class="pagination-row">
+            <gc-pagination
+              [currentPage]="currentPage()"
+              [totalPages]="totalPages()"
+              (pageChange)="onPageChange($event)">
+            </gc-pagination>
+          </div>
+        }
+      </gc-card>
+    }
+  }
+
+  <!-- ── Detail Side Panel ──────────────────────────────────────────────── -->
+  @if (detailPanelOpen() && selectedBooking(); as bk) {
+    <div class="detail-overlay" role="dialog" aria-modal="true" aria-label="Booking details panel" (click)="closeDetail()">
+      <div class="detail-panel" (click)="$event.stopPropagation()">
+        <div class="panel-header">
+          <h2 class="panel-title">Booking Details</h2>
+          <button type="button" class="panel-close" (click)="closeDetail()" aria-label="Close details panel">✕</button>
+        </div>
+
+        <div class="panel-body">
+          <div class="detail-badge-row mb-md">
+            <gc-badge [variant]="getStatusVariant(bk.status)">{{ bk.status }}</gc-badge>
+            <span class="channel-pill" [class.walkin]="bk.source === 'WALK_IN'">
+              {{ bk.source === 'WALK_IN' ? '🏃 Walk-in' : '🌐 Online' }}
+            </span>
+          </div>
+
+          <dl class="detail-list">
+            <dt>Booking ID</dt>
+            <dd class="font-mono">{{ bk.id }}</dd>
+
+            <dt>Customer ID</dt>
+            <dd class="font-mono">{{ bk.userId }}</dd>
+
+            <dt>Station</dt>
+            <dd>{{ bk.stationCode || '—' }} &mdash; {{ bk.stationType || 'Console' }}</dd>
+
+            <dt>Start</dt>
+            <dd>{{ formatDateTime(bk.startTime) }}</dd>
+
+            <dt>End</dt>
+            <dd>{{ formatDateTime(bk.endTime) }}</dd>
+
+            <dt>Duration</dt>
+            <dd>{{ getDuration(bk) }}</dd>
+
+            <dt>Hourly Rate</dt>
+            <dd class="font-mono">LKR {{ (bk.hourlyRate || 0) | number:'1.2-2' }}</dd>
+
+            <dt>Total Amount</dt>
+            <dd class="font-mono">LKR {{ getAmount(bk) | number:'1.2-2' }}</dd>
+
+            @if (bk.discountAmount && bk.discountAmount > 0) {
+              <dt>Discount</dt>
+              <dd class="text-available font-mono">- LKR {{ bk.discountAmount | number:'1.2-2' }}</dd>
+            }
+
+            <dt>Payable Amount</dt>
+            <dd class="font-mono text-primary">LKR {{ getAmount(bk) | number:'1.2-2' }}</dd>
+
+            @if (bk.paymentId) {
+              <dt>Payment ID</dt>
+              <dd class="font-mono">{{ bk.paymentId }}</dd>
+            }
+
+            <dt>Created</dt>
+            <dd>{{ formatDateTime(bk.createdAt) }}</dd>
+          </dl>
+
+          <div class="panel-actions mt-lg">
+            @if (canReschedule(bk)) {
+              <gc-button variant="secondary" (btnClick)="openReschedule(bk, $event); closeDetail()">
+                🔄 Reschedule
+              </gc-button>
+            }
+            @if (canCancel(bk)) {
+              <gc-button variant="outline" (btnClick)="openCancel(bk, $event); closeDetail()">
+                ✕ Cancel Booking
+              </gc-button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Walk-In Booking Modal ─────────────────────────────────────────── -->
+  <gc-modal
+    [isOpen]="walkInModalOpen()"
+    [(isOpen)]="walkInModalOpen"
+    title="New Walk-In Booking"
+    modalId="modal-walkin">
+    <form [formGroup]="walkInForm" (ngSubmit)="submitWalkIn()" id="form-walkin" novalidate>
+      <div class="modal-form-grid">
+        <div class="form-field customer-select-field">
+          <label class="form-label" for="walkin-user-id">Customer <span class="required" aria-hidden="true">*</span></label>
+          <input
+            type="search"
+            class="gc-input-native mb-xs"
+            placeholder="🔍 Search customer by name or email..."
+            [value]="customerSearch()"
+            (input)="customerSearch.set($any($event.target).value)" />
+          <select
+            id="walkin-user-id"
+            class="gc-select-native"
+            formControlName="targetUserId"
+            [attr.aria-invalid]="walkInForm.get('targetUserId')?.invalid && walkInForm.get('targetUserId')?.touched">
+            <option value="" disabled selected>-- Select Customer --</option>
+            @for (c of filteredCustomers(); track c.id) {
+              <option [value]="c.id">{{ c.fullName }} ({{ c.email }})</option>
+            }
+          </select>
+          @if (walkInForm.get('targetUserId')?.invalid && walkInForm.get('targetUserId')?.touched) {
+            <span class="field-error" role="alert">Please select a customer</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="walkin-station-id">Gaming Station <span class="required" aria-hidden="true">*</span></label>
+          <select
+            id="walkin-station-id"
+            class="gc-select-native"
+            formControlName="stationId"
+            [attr.aria-invalid]="walkInForm.get('stationId')?.invalid && walkInForm.get('stationId')?.touched">
+            <option value="" disabled selected>-- Select Station --</option>
+            @for (st of stations(); track st.id) {
+              <option [value]="st.id">
+                {{ st.stationCode || st.name }} ({{ st.type }}) — LKR {{ (st.hourlyRate || 0) | number:'1.2-2' }}/hr
+              </option>
+            }
+          </select>
+          @if (walkInForm.get('stationId')?.invalid && walkInForm.get('stationId')?.touched) {
+            <span class="field-error" role="alert">Station is required</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="walkin-start">Start Date & Time <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="walkin-start"
+            type="datetime-local"
+            class="gc-input-native"
+            formControlName="startTime"
+            [attr.aria-invalid]="walkInForm.get('startTime')?.invalid && walkInForm.get('startTime')?.touched" />
+          @if (walkInForm.get('startTime')?.invalid && walkInForm.get('startTime')?.touched) {
+            <span class="field-error" role="alert">Start time is required</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="walkin-end">End Date & Time <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="walkin-end"
+            type="datetime-local"
+            class="gc-input-native"
+            formControlName="endTime"
+            [attr.aria-invalid]="walkInForm.get('endTime')?.invalid && walkInForm.get('endTime')?.touched" />
+          @if (walkInForm.get('endTime')?.invalid && walkInForm.get('endTime')?.touched) {
+            <span class="field-error" role="alert">End time is required</span>
+          }
+        </div>
+      </div>
+
+      <p class="modal-info-text">
+        ⚠️ Walk-in bookings remain <strong>PENDING</strong> until confirmed with a cash payment. Go to
+        <a routerLink="/admin/payments" class="inline-link">Payments</a> after creating.
+      </p>
+    </form>
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="walkInModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="primary"
+        form="form-walkin"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="submitWalkIn()">
+        {{ actionInFlight() ? 'Creating…' : '🎮 Create Walk-In' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Reschedule Modal ──────────────────────────────────────────────── -->
+  <gc-modal
+    [isOpen]="rescheduleModalOpen()"
+    [(isOpen)]="rescheduleModalOpen"
+    title="Reschedule Booking"
+    modalId="modal-reschedule">
+    @if (actionTarget(); as target) {
+      <p class="modal-context-text">
+        Rescheduling booking <strong class="font-mono">{{ target.id.slice(0, 8) }}…</strong>
+        on station <strong>{{ target.stationCode || target.stationId }}</strong>
+      </p>
+    }
+
+    <form [formGroup]="rescheduleForm" (ngSubmit)="submitReschedule()" id="form-reschedule" novalidate>
+      <div class="modal-form-grid">
+        <div class="form-field">
+          <label class="form-label" for="reschedule-station">Gaming Station <span class="required" aria-hidden="true">*</span></label>
+          <select
+            id="reschedule-station"
+            class="gc-select-native"
+            formControlName="stationId">
+            <option value="" disabled selected>-- Select Station --</option>
+            @for (st of stations(); track st.id) {
+              <option [value]="st.id">
+                {{ st.stationCode || st.name }} ({{ st.type }}) — LKR {{ (st.hourlyRate || 0) | number:'1.2-2' }}/hr
+              </option>
+            }
+          </select>
+          @if (rescheduleForm.get('stationId')?.invalid && rescheduleForm.get('stationId')?.touched) {
+            <span class="field-error" role="alert">Station is required</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="reschedule-start">New Start Time <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="reschedule-start"
+            type="datetime-local"
+            class="gc-input-native"
+            formControlName="startTime" />
+          @if (rescheduleForm.get('startTime')?.invalid && rescheduleForm.get('startTime')?.touched) {
+            <span class="field-error" role="alert">Start time is required</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="reschedule-end">New End Time <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="reschedule-end"
+            type="datetime-local"
+            class="gc-input-native"
+            formControlName="endTime" />
+          @if (rescheduleForm.get('endTime')?.invalid && rescheduleForm.get('endTime')?.touched) {
+            <span class="field-error" role="alert">End time is required</span>
+          }
+        </div>
+      </div>
+    </form>
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="rescheduleModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="secondary"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="submitReschedule()">
+        {{ actionInFlight() ? 'Saving…' : '🔄 Confirm Reschedule' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Cancel Confirm Modal ──────────────────────────────────────────── -->
+  <gc-modal
+    [isOpen]="cancelModalOpen()"
+    [(isOpen)]="cancelModalOpen"
+    title="Cancel Booking"
+    modalId="modal-cancel">
+    @if (actionTarget(); as target) {
+      <p class="cancel-confirm-text">
+        Are you sure you want to cancel booking
+        <strong class="font-mono">{{ target.id.slice(0, 8) }}…</strong> for station
+        <strong>{{ target.stationCode || target.stationId }}</strong>?
+      </p>
+      <p class="cancel-subtext">
+        No refund is issued per the platform policy. The customer will be notified. This action cannot be undone.
+      </p>
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="cancelModalOpen.set(false)">Keep Booking</gc-button>
+      <gc-button
+        variant="outline"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="confirmCancel()">
+        {{ actionInFlight() ? 'Cancelling…' : '✕ Yes, Cancel Booking' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+</div>
