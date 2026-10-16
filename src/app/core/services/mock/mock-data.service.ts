@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, delay, throwError } from 'rxjs';
 import {
   Station,
+  Game,
   SlotAvailability,
   TournamentDto,
   LoyaltyBalanceDto,
@@ -53,38 +54,77 @@ export class MockDataService {
     {
       id: 'st-01',
       stationNumber: 1,
-      name: 'PlayStation 5 Pro Lounge #01',
+      stationCode: 'PS5-01',
+      name: 'PS5 CONSOLE 01',
       type: 'PS5',
-      hourlyRate: 650,
-      specifications: '4K 120Hz OLED, 2x DualSense Edge',
+      hourlyRate: 500,
+      specifications: 'Ultra-High Speed SSD, DualSense™ Wireless Controller',
+      controllersCount: 4,
+      imageUrl: '/assets/images/ps5_console_01.jpg',
       active: true
     },
     {
       id: 'st-02',
       stationNumber: 2,
-      name: 'PlayStation 5 Pro Lounge #02',
+      stationCode: 'PS5-02',
+      name: 'PS5 CONSOLE 02',
       type: 'PS5',
-      hourlyRate: 650,
-      specifications: '4K 120Hz OLED, 2x DualSense Edge',
+      hourlyRate: 500,
+      specifications: '4K-TV Gaming, Up to 120fps with 120Hz Output',
+      controllersCount: 4,
+      imageUrl: '/assets/images/ps5_console_02.jpg',
       active: true
     },
     {
       id: 'st-03',
       stationNumber: 3,
+      stationCode: 'XB-01',
       name: 'Xbox Series X Combat Rig',
       type: 'XBOX_SERIES_X',
-      hourlyRate: 600,
+      hourlyRate: 500,
       specifications: 'Dolby Atmos, Xbox Elite Wireless Controller',
+      controllersCount: 2,
+      imageUrl: '/assets/images/ps5_console_01.jpg',
       active: true
     },
     {
       id: 'st-04',
       stationNumber: 4,
+      stationCode: 'PC-01',
       name: 'PC Esports Arena Rig #04',
       type: 'PC_ESPORTS',
       hourlyRate: 800,
       specifications: 'RTX 4090, i9-14900K, 240Hz Zowie XL2546K',
+      controllersCount: 1,
+      imageUrl: '/assets/images/ps5_console_02.jpg',
       active: true
+    }
+  ];
+
+  private readonly games: Game[] = [
+    {
+      id: 'game-01',
+      title: 'CYBERPUNK 2077',
+      genre: 'Action RPG',
+      coverImage: '/assets/images/game_cyberpunk.jpg'
+    },
+    {
+      id: 'game-02',
+      title: 'GRAN TURISMO 7',
+      genre: 'Racing Sim',
+      coverImage: '/assets/images/game_granturismo.jpg'
+    },
+    {
+      id: 'game-03',
+      title: 'ELDEN RING',
+      genre: 'Action RPG',
+      coverImage: '/assets/images/game_eldenring.jpg'
+    },
+    {
+      id: 'game-04',
+      title: 'TEKKEN 8',
+      genre: 'Fighting',
+      coverImage: '/assets/images/game_tekken.jpg'
     }
   ];
 
@@ -298,6 +338,10 @@ export class MockDataService {
 
   getAvailableStations(): Observable<Station[]> {
     return of(this.stations.filter((s) => s.active)).pipe(delay(150));
+  }
+
+  getGames(): Observable<Game[]> {
+    return of(this.games).pipe(delay(100));
   }
 
   getStationAvailability(stationId: string, date: string): Observable<SlotAvailability[]> {
