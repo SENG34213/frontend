@@ -50,6 +50,16 @@ export const routes: Routes = [
           import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent)
       },
       {
+        path: 'bookings',
+        loadComponent: () =>
+          import('./features/bookings/bookings.component').then((m) => m.BookingsComponent)
+      },
+      {
+        path: 'book',
+        redirectTo: 'bookings',
+        pathMatch: 'full'
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'

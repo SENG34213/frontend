@@ -5,8 +5,8 @@
     </a>
   </header>
 
-  <main class="auth-main">
-    <div class="auth-container">
+  <main class="auth-main" [class.auth-main-right]="position === 'right'">
+    <div class="auth-container" [class.auth-container-wide]="wide">
       <ng-content></ng-content>
     </div>
   </main>

@@ -15,6 +15,8 @@ export interface Station {
   type: StationType;
   hourlyRate: number; // LKR
   specifications?: string;
+  controllersCount?: number;
+  imageUrl?: string;
   active: boolean;
 }
 
@@ -46,4 +48,13 @@ export interface SlotAvailability {
   endTime: string; // HH:mm
   isAvailable: boolean;
   price: number;
+}
+
+export interface Game {
+  id: string;
+  title: string;
+  genre?: string;
+  coverImage: string;
+  badge?: string;
+  publisher?: string;
 }

@@ -192,10 +192,14 @@ describe('RegisterComponent', () => {
     fixture.detectChanges();
 
     expect(component.emailTaken()).toBeTrue();
-    expect(component.emailErrorMessage).toContain('already registered');
+    expect(toastServiceSpy.error).toHaveBeenCalledWith(
+      'This email address is already registered. Sign in with your password or use a different email.',
+      'Registration failed'
+    );
     const helpAction = fixture.nativeElement.querySelector('.field-help-action');
     expect(helpAction).toBeTruthy();
     expect(helpAction.textContent).toContain('Sign in instead');
+    expect(fixture.nativeElement.querySelector('.auth-error-banner')).toBeNull();
   });
 
   it('should handle PHONE_TAKEN by displaying phone field error', () => {
@@ -217,7 +221,11 @@ describe('RegisterComponent', () => {
     fixture.detectChanges();
 
     expect(component.phoneTaken()).toBeTrue();
-    expect(component.phoneErrorMessage).toContain('already registered');
+    expect(toastServiceSpy.error).toHaveBeenCalledWith(
+      'This phone number is already registered. Sign in with your password or use a different phone number.',
+      'Registration failed'
+    );
+    expect(fixture.nativeElement.querySelector('.auth-error-banner')).toBeNull();
   });
 
   it('should map 400 VALIDATION_ERROR fieldErrors onto controls', () => {

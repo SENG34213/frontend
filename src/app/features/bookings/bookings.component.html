@@ -1,0 +1,414 @@
+<div class="booking-page-container container">
+  <div class="booking-layout">
+    <!-- LEFT COLUMN: Session Date & Time, Console, Games -->
+    <div class="booking-content-col">
+      <!-- 1. SELECT YOUR SESSION -->
+      <section class="section-block" aria-labelledby="session-title">
+        <h2 id="session-title" class="section-title">SELECT YOUR SESSION</h2>
+
+        <div class="session-picker-grid">
+          <!-- Calendar Card -->
+          <div class="calendar-card" role="region" aria-label="Interactive Date Picker">
+            <div class="calendar-header">
+              <span class="month-label font-bold">{{ currentMonthTitle() }}</span>
+              <div class="calendar-nav-buttons">
+                <button
+                  type="button"
+                  class="calendar-nav-btn"
+                  [disabled]="isCurrentOrPastMonth()"
+                  [attr.aria-disabled]="isCurrentOrPastMonth()"
+                  (click)="prevMonth()"
+                  aria-label="Previous month">
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  class="calendar-nav-btn"
+                  (click)="nextMonth()"
+                  aria-label="Next month">
+                  ›
+                </button>
+              </div>
+            </div>
+
+            <!-- Weekday Headers (Mo, Tu, We, Th, Fr, Sa, Su - Sa and Su in purple) -->
+            <div class="weekdays-grid">
+              <span class="weekday">Mo</span>
+              <span class="weekday">Tu</span>
+              <span class="weekday">We</span>
+              <span class="weekday">Th</span>
+              <span class="weekday">Fr</span>
+              <span class="weekday weekend">Sa</span>
+              <span class="weekday weekend">Su</span>
+            </div>
+
+            <!-- Calendar Days Grid -->
+            <div class="days-grid">
+              @for (day of calendarDays(); track day.dateStr) {
+                <button
+                  type="button"
+                  class="day-btn"
+                  [class.other-month]="!day.isCurrentMonth"
+                  [class.selected]="day.isSelected"
+                  [class.today]="day.isToday"
+                  [class.weekend]="day.isWeekend"
+                  [class.past]="day.isPast"
+                  [class.deactive]="day.isPast || !day.isCurrentMonth"
+                  [disabled]="day.isPast || !day.isCurrentMonth"
+                  [attr.aria-disabled]="day.isPast || !day.isCurrentMonth"
+                  (click)="selectDate(day)"
+                  [attr.aria-pressed]="day.isSelected"
+                  [attr.aria-label]="day.dateStr + (day.isPast ? ' (Past date - Deactivated)' : '')">
+                  {{ day.dayNumber }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Time Slots Grid -->
+          <div class="time-slots-card" role="region" aria-label="Available Time Slots">
+            <div class="slots-grid">
+              @for (slot of availableSlots(); track slot.id) {
+                <button
+                  type="button"
+                  class="slot-btn"
+                  [class.selected]="slot.id === selectedSlotId() && slot.isAvailable"
+                  [class.occupied]="!slot.isAvailable"
+                  [class.booked]="!slot.isAvailable"
+                  [class.deactive]="!slot.isAvailable"
+                  [disabled]="!slot.isAvailable"
+                  [attr.aria-disabled]="!slot.isAvailable"
+                  (click)="selectSlot(slot)"
+                  [attr.aria-pressed]="slot.id === selectedSlotId() && slot.isAvailable"
+                  [attr.aria-label]="slot.startTime + ' to ' + slot.endTime + (!slot.isAvailable ? ' (Booked)' : '')">
+                  <span class="slot-start">{{ slot.startTime }}</span>
+                  <span class="slot-end">{{ slot.endTime }}</span>
+                  @if (!slot.isAvailable) {
+                    <span class="slot-badge booked-badge">Booked</span>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. CHOOSE CONSOLE -->
+      <section class="section-block" aria-labelledby="console-title">
+        <h2 id="console-title" class="section-title">CHOOSE CONSOLE</h2>
+
+        <div class="consoles-grid">
+          @for (station of activeStations(); track station.id) {
+            <div
+              class="console-card"
+              [class.selected]="station.id === selectedStationId()"
+              (click)="selectStation(station.id)"
+              role="button"
+              tabindex="0"
+              (keydown.enter)="selectStation(station.id)"
+              (keydown.space)="selectStation(station.id); $event.preventDefault()"
+              [attr.aria-pressed]="station.id === selectedStationId()">
+              
+              <!-- Console Card Image with Selected Badge -->
+              <div class="console-image-wrapper">
+                <img
+                  [src]="station.imageUrl || '/assets/images/ps5_console_01.jpg'"
+                  [alt]="station.name"
+                  class="console-img"
+                  loading="lazy" />
+
+                @if (station.id === selectedStationId()) {
+                  <span class="selected-badge">SELECTED</span>
+                }
+              </div>
+
+              <!-- Console Card Content -->
+              <div class="console-body">
+                <h3 class="console-name">{{ station.name }}</h3>
+                <p class="console-specs">{{ station.specifications || 'Ultra-High Speed SSD, DualSense™ Wireless Controller' }}</p>
+
+                <div class="console-footer">
+                  <div class="console-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">ACTIVE</span>
+                  </div>
+                  <span class="controller-count">{{ station.controllersCount || 4 }} Controllers</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- 3. AVAILABLE GAMES -->
+      <section class="section-block" aria-labelledby="games-title">
+        <h2 id="games-title" class="section-title">AVAILABLE GAMES</h2>
+
+        <div class="games-grid">
+          @for (game of games(); track game.id) {
+            <div
+              class="game-card"
+              [class.selected]="game.id === selectedGameId()"
+              (click)="selectGame(game.id)"
+              role="button"
+              tabindex="0"
+              (keydown.enter)="selectGame(game.id)"
+              (keydown.space)="selectGame(game.id); $event.preventDefault()"
+              [attr.aria-pressed]="game.id === selectedGameId()">
+              
+              <div class="game-cover-wrapper">
+                <img
+                  [src]="game.coverImage"
+                  [alt]="game.title"
+                  class="game-cover-img"
+                  loading="lazy" />
+                
+                <div class="game-overlay">
+                  <span class="game-title">{{ game.title }}</span>
+                </div>
+
+                @if (game.id === selectedGameId()) {
+                  <div class="game-selected-indicator" aria-label="Game Selected">
+                    <span class="check-icon">✓</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT COLUMN: Booking Summary Panel -->
+    <aside class="booking-summary-col">
+      <div class="summary-panel" role="complementary" aria-label="Booking Summary">
+        <h2 class="summary-title">BOOKING SUMMARY</h2>
+
+        <div class="summary-details">
+          <!-- DATE & TIME -->
+          <div class="summary-section">
+            <div class="section-header-row">
+              <span class="section-meta-label">DATE & TIME</span>
+              <button type="button" class="edit-icon-btn" aria-label="Edit Date and Time">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+            </div>
+            <p class="summary-highlight-text">{{ formattedSelectedDate() }}</p>
+            <p class="summary-subtext">
+              {{ selectedSlot()?.startTime }} - {{ selectedSlot()?.endTime }} ({{ sessionHours() }} {{ sessionHours() === 1 ? 'hour' : 'hours' }})
+            </p>
+          </div>
+
+          <!-- HARDWARE -->
+          <div class="summary-section">
+            <div class="section-header-row">
+              <span class="section-meta-label">HARDWARE</span>
+              <button type="button" class="edit-icon-btn" aria-label="Edit Hardware">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+            </div>
+            <p class="summary-highlight-text">{{ selectedStation().name }}</p>
+          </div>
+
+          <!-- SELECTED GAME -->
+          <div class="summary-section">
+            <div class="section-header-row">
+              <span class="section-meta-label">SELECTED GAME</span>
+            </div>
+            <p class="summary-game-title">{{ selectedGame().title }}</p>
+          </div>
+
+          <!-- LOYALTY REWARD TOGGLE -->
+          <div class="loyalty-discount-card">
+            <div class="loyalty-info">
+              <span class="loyalty-icon">⭐</span>
+              <div>
+                <span class="loyalty-title">Redeem Loyalty Points</span>
+                <span class="loyalty-balance">
+                  @if (canRedeemLoyalty()) {
+                    {{ loyaltyPointsBalance() }} Points Available (Save LKR {{ (loyaltyDiscountAmount() > 0 ? loyaltyDiscountAmount() : 300) | number:'1.2-2' }})
+                  } @else {
+                    {{ loyaltyPointsBalance() }} Points Available (Min. 100 points required to redeem)
+                  }
+                </span>
+              </div>
+            </div>
+            <label class="toggle-switch" [class.disabled]="!canRedeemLoyalty()">
+              <input
+                type="checkbox"
+                [checked]="redeemLoyalty()"
+                [disabled]="!canRedeemLoyalty()"
+                (change)="toggleLoyalty()"
+                aria-label="Redeem loyalty points for discount" />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <!-- PRICING BREAKDOWN -->
+          <div class="pricing-row">
+            <span class="pricing-label">Base Rate (LKR {{ baseHourlyRate() }}/hr)</span>
+            <span class="pricing-val">LKR {{ subtotalAmount() | number:'1.2-2' }}</span>
+          </div>
+
+          @if (redeemLoyalty() && loyaltyDiscountAmount() > 0) {
+            <div class="pricing-row discount-row">
+              <span class="pricing-label">Loyalty Reward ({{ effectivePointsToRedeem() }} Pts)</span>
+              <span class="pricing-val discount-val">-LKR {{ loyaltyDiscountAmount() | number:'1.2-2' }}</span>
+            </div>
+          }
+
+          <div class="total-row">
+            <span class="total-label">TOTAL</span>
+            <span class="total-val">LKR {{ totalAmount() | number:'1.2-2' }}</span>
+          </div>
+
+          <!-- CTA BUTTON -->
+          <button
+            type="button"
+            class="proceed-btn"
+            [disabled]="!selectedSlot() || !selectedSlot()?.isAvailable"
+            (click)="onProceedToPayment()"
+            aria-label="Proceed to checkout and payment">
+            PROCEED TO PAYMENT
+            <span class="arrow-icon">→</span>
+          </button>
+
+          <!-- SECURITY BADGE -->
+          <p class="security-note">
+            SECURE TRANSACTION POWERED BY GAMING CASTLE SYSTEMS
+          </p>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- CHECKOUT / PAYMENT MODAL (UC-03 & UC-06 & SDS 6.3.3) -->
+<gc-modal
+  [isOpen]="paymentModalOpen()"
+  [title]="bookingSuccessReceipt() ? 'Booking Confirmed' : 'Complete Reservation & Payment'"
+  (closed)="closePaymentModal()">
+  
+  @if (!bookingSuccessReceipt()) {
+    <div class="payment-modal-body">
+      <!-- Order Quick Recalculation -->
+      <div class="modal-order-summary">
+        <div class="flex justify-between items-center mb-sm">
+          <span class="text-secondary font-medium">{{ selectedStation().name }} • {{ sessionHours() }} {{ sessionHours() === 1 ? 'hour' : 'hours' }}</span>
+          <span class="text-primary font-bold">LKR {{ totalAmount() | number:'1.2-2' }}</span>
+        </div>
+        <div class="text-xs text-muted">
+          {{ formattedSelectedDate() }} • {{ selectedSlot()?.startTime }} - {{ selectedSlot()?.endTime }}
+        </div>
+      </div>
+
+      <!-- Payment Method (Card Payments Only) -->
+      <div class="payment-method-selector mb-md">
+        <span class="section-meta-label mb-xs block">PAYMENT METHOD</span>
+        <div class="single-payment-method">
+          <div class="method-card-active">
+            <div class="method-info">
+              <span class="method-icon">💳</span>
+              <div class="method-text">
+                <span class="method-name font-bold">Credit / Debit Card</span>
+                <span class="method-desc">Instant online payment and slot confirmation</span>
+              </div>
+            </div>
+            <span class="card-only-badge">Card Only</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Entry Form -->
+      <form class="card-form-grid" (submit)="$event.preventDefault()">
+        <div class="form-group mb-sm">
+          <label class="form-label" for="cardholder-name">Cardholder Name</label>
+          <input type="text" id="cardholder-name" name="cardholderName" autocomplete="name" [(ngModel)]="cardholderName" class="form-input" placeholder="e.g. Kasun Perera" />
+        </div>
+
+        <div class="form-group mb-sm">
+          <label class="form-label" for="card-number">Card Number</label>
+          <input type="text" id="card-number" name="cardNumber" autocomplete="cc-number" [(ngModel)]="cardNumber" class="form-input" placeholder="4242 •••• •••• 4242" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-sm">
+          <div class="form-group">
+            <label class="form-label" for="card-expiry">Expiry Date</label>
+            <input type="text" id="card-expiry" name="cardExpiry" autocomplete="cc-exp" [(ngModel)]="cardExpiry" class="form-input" placeholder="MM/YY" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="card-cvv">Security Code (CVV)</label>
+            <input type="password" id="card-cvv" name="cardCvv" autocomplete="cc-csc" [(ngModel)]="cardCvv" maxlength="4" class="form-input" placeholder="•••" />
+          </div>
+        </div>
+      </form>
+
+      @if (bookingErrorMessage()) {
+        <div class="booking-error-banner mt-md mb-sm">
+          <span>⚠️ {{ bookingErrorMessage() }}</span>
+        </div>
+      }
+
+      <div class="modal-actions mt-lg">
+        <gc-button
+          variant="outline"
+          (btnClick)="closePaymentModal()">
+          Cancel
+        </gc-button>
+        
+        <gc-button
+          variant="primary"
+          [loading]="isProcessingPayment()"
+          (btnClick)="confirmPayment()">
+          Pay LKR {{ totalAmount() | number:'1.2-2' }} & Confirm
+        </gc-button>
+      </div>
+    </div>
+  } @else {
+    <!-- Digital Receipt Confirmation -->
+    <div class="receipt-container text-center">
+      <div class="receipt-success-badge">✔</div>
+      <h3 class="receipt-title">Reservation Confirmed!</h3>
+      <p class="receipt-subtitle">Your slot has been reserved. Digital receipt has been generated.</p>
+
+      <div class="receipt-details-box text-left">
+        <div class="receipt-row">
+          <span class="text-muted">Booking Reference:</span>
+          <span class="font-mono text-primary font-bold">{{ bookingSuccessReceipt()?.bookingReference }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="text-muted">Console Hardware:</span>
+          <span class="font-bold text-white">{{ bookingSuccessReceipt()?.stationName }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="text-muted">Date & Time:</span>
+          <span class="text-white">{{ bookingSuccessReceipt()?.bookingDate }} • {{ bookingSuccessReceipt()?.startTime }} - {{ bookingSuccessReceipt()?.endTime }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="text-muted">Game:</span>
+          <span class="text-accent font-semibold">{{ selectedGame().title }}</span>
+        </div>
+        <div class="receipt-row total-highlight">
+          <span class="font-bold text-white">Amount Paid:</span>
+          <span class="font-bold text-available">LKR {{ bookingSuccessReceipt()?.finalAmount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="receipt-actions mt-lg flex justify-center gap-md">
+        <gc-button
+          variant="primary"
+          (btnClick)="closePaymentModal()">
+          Done
+        </gc-button>
+      </div>
+    </div>
+  }
+</gc-modal>

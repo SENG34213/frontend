@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
@@ -10,4 +10,7 @@ import { RouterLink } from '@angular/router';
   templateUrl: './auth-shell.component.html',
   styleUrl: './auth-shell.component.scss'
 })
-export class AuthShellComponent {}
+export class AuthShellComponent {
+  @Input() wide = false;
+  @Input() position: 'center' | 'right' = 'center';
+}

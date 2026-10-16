@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { ErrorMapper } from '../../../core/http/error-mapper';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
+import { ApiError } from '../../../shared/models/api-response.model';
 import { AuthShellComponent } from '../shared/auth-shell.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
@@ -99,9 +101,15 @@ export class ForgotPasswordComponent implements OnInit {
         this.toastService.info(neutralMessage);
         this.navigateToReset(cleanIdentifier);
       },
-      error: () => {
+      error: (err) => {
         this.isSubmitting.set(false);
-        this.toastService.info(neutralMessage);
+        const mappedError = err?.status !== undefined && err?.message && err?.action
+          ? (err as ApiError)
+          : ErrorMapper.map(err);
+        this.toastService.error(
+          `${mappedError.message} ${mappedError.action}`,
+          'Code request failed'
+        );
         this.navigateToReset(cleanIdentifier);
       }
     });
