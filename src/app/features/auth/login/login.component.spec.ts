@@ -6,11 +6,13 @@ import { Router, ActivatedRoute, RouterLink, provideRouter } from '@angular/rout
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthResponse } from '../../../shared/models/auth.model';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let toastServiceSpy: jasmine.SpyObj<ToastService>;
   let router: Router;
   let routeSnapshotStub: { queryParamMap: { get: jasmine.Spy }; queryParams: Record<string, string> };
 
@@ -19,6 +21,7 @@ describe('LoginComponent', () => {
       isAuthenticated: jasmine.createSpy('isAuthenticated').and.returnValue(false)
     });
     authServiceSpy.isAdmin.and.returnValue(false);
+    toastServiceSpy = jasmine.createSpyObj('ToastService', ['error']);
 
     routeSnapshotStub = {
       queryParamMap: { get: jasmine.createSpy('get').and.returnValue(null) },
@@ -30,6 +33,7 @@ describe('LoginComponent', () => {
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: authServiceSpy },
+        { provide: ToastService, useValue: toastServiceSpy },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: routeSnapshotStub }
@@ -237,7 +241,7 @@ describe('LoginComponent', () => {
     expect(authServiceSpy.login).not.toHaveBeenCalled();
   });
 
-  it('should display error banner with plain-English message and action on INVALID_CREDENTIALS', () => {
+  it('should show INVALID_CREDENTIALS in an error toast without an inline banner', () => {
     const errorResponse = new HttpErrorResponse({
       status: 401,
       error: { error: 'INVALID_CREDENTIALS', message: 'Bad credentials' }
@@ -252,15 +256,14 @@ describe('LoginComponent', () => {
     component.onSubmit();
     fixture.detectChanges();
 
-    expect(component.apiError()).toBeTruthy();
-    expect(component.apiError()?.code).toBe('INVALID_CREDENTIALS');
-    const banner = fixture.nativeElement.querySelector('.auth-error-banner');
-    expect(banner).toBeTruthy();
-    expect(banner.textContent).toContain('incorrect');
-    expect(banner.textContent).toContain('reset your password');
+    expect(toastServiceSpy.error).toHaveBeenCalledWith(
+      'The email/phone or password you entered is incorrect. Please check your details and try again, or reset your password.',
+      'Sign in failed'
+    );
+    expect(fixture.nativeElement.querySelector('.auth-error-banner')).toBeNull();
   });
 
-  it('should display reset link when error is ACCOUNT_LOCKED', () => {
+  it('should include Forgot password guidance in the ACCOUNT_LOCKED toast', () => {
     const errorResponse = new HttpErrorResponse({
       status: 423,
       error: { error: 'ACCOUNT_LOCKED', message: 'Account is locked' }
@@ -275,9 +278,59 @@ describe('LoginComponent', () => {
     component.onSubmit();
     fixture.detectChanges();
 
-    const link = fixture.nativeElement.querySelector('.error-link');
-    expect(link).toBeTruthy();
-    expect(link.getAttribute('href')).toContain('forgot-password');
+    expect(toastServiceSpy.error).toHaveBeenCalledWith(
+      'This account has been temporarily locked due to too many failed login attempts. Please wait 15 minutes before trying again, or reset your password. Use Forgot password to reset your password.',
+      'Sign in failed'
+    );
+    expect(fixture.nativeElement.querySelector('.auth-error-banner')).toBeNull();
+  });
+
+  it('should show ACCOUNT_DEACTIVATED in an error toast without an inline banner', () => {
+    const errorResponse = new HttpErrorResponse({
+      status: 403,
+      error: { error: 'ACCOUNT_DEACTIVATED', message: 'Account deactivated' }
+    });
+    authServiceSpy.login.and.returnValue(throwError(() => errorResponse));
+    component.form.setValue({
+      identifier: 'soldier@gamingcastle.lk',
+      password: 'wrongPassword'
+    });
+
+    component.onSubmit();
+    fixture.detectChanges();
+
+    expect(toastServiceSpy.error).toHaveBeenCalledWith(
+      'This account has been deactivated. You can reactivate your account by requesting a reactivation code.',
+      'Sign in failed'
+    );
+    expect(fixture.nativeElement.querySelector('.auth-error-banner')).toBeNull();
+  });
+
+  it('should show server and network errors in error toasts without inline banners', () => {
+    const failures = [
+      {
+        error: new HttpErrorResponse({ status: 503, error: { message: 'Unavailable' } }),
+        message: 'The Gaming Castle server encountered a temporary issue. Our team has been notified. Please try again in 1–2 minutes.'
+      },
+      {
+        error: new HttpErrorResponse({ status: 0, statusText: 'Unknown Error' }),
+        message: 'Unable to connect to the Gaming Castle server. Please check your internet connection or verify the server is running.'
+      }
+    ];
+
+    failures.forEach(({ error, message }) => {
+      authServiceSpy.login.and.returnValue(throwError(() => error));
+      component.form.setValue({
+        identifier: 'soldier@gamingcastle.lk',
+        password: 'wrongPassword'
+      });
+
+      component.onSubmit();
+      fixture.detectChanges();
+
+      expect(toastServiceSpy.error).toHaveBeenCalledWith(message, 'Sign in failed');
+      expect(fixture.nativeElement.querySelector('.auth-error-banner')).toBeNull();
+    });
   });
 
   it('should render social buttons as disabled', () => {
