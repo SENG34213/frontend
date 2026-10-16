@@ -1,0 +1,490 @@
+<div class="admin-stations" id="admin-stations-root">
+  <!-- Page Header -->
+  <header class="page-header mb-xl">
+    <div class="header-left">
+      <div class="header-tags">
+        <gc-badge variant="accent">Floor Management</gc-badge>
+      </div>
+      <h1 class="page-title">Station <span class="text-gradient">Management</span></h1>
+      <p class="subtitle">
+        Configure gaming stations, console/PC types, hourly rates (LKR), active status, and inspect slot availability.
+      </p>
+    </div>
+    <div class="header-actions">
+      <gc-button variant="outline" size="sm" (btnClick)="loadStations()" aria-label="Refresh stations list">
+        🔄 Refresh
+      </gc-button>
+      <gc-button variant="primary" (btnClick)="openCreateModal()" aria-label="Add new gaming station">
+        ➕ Add Station
+      </gc-button>
+    </div>
+  </header>
+
+  <!-- Error Banner -->
+  @if (errorMessage()) {
+    <div class="error-banner mb-lg" role="alert">
+      <div class="error-icon">⚠️</div>
+      <div class="error-content">
+        <div class="error-title">Could not load stations</div>
+        <div class="error-desc">{{ errorMessage() }}</div>
+      </div>
+      <gc-button variant="outline" size="sm" (btnClick)="loadStations()">Try Again</gc-button>
+    </div>
+  }
+
+  <!-- Metric Stat Cards -->
+  <section class="stat-grid mb-xl" aria-label="Station Key Metrics">
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon">🎮</div>
+        <div class="stat-meta">
+          <span class="stat-label">Total Stations</span>
+          <span class="stat-val font-mono" id="stat-total-stations">{{ totalStations() }}</span>
+        </div>
+      </div>
+    </gc-card>
+
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon active-glow">⚡</div>
+        <div class="stat-meta">
+          <span class="stat-label">Active Rigs</span>
+          <span class="stat-val font-mono text-available" id="stat-active-stations">{{ activeStationsCount() }}</span>
+        </div>
+      </div>
+    </gc-card>
+
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon">💻</div>
+        <div class="stat-meta">
+          <span class="stat-label">PC Esports</span>
+          <span class="stat-val font-mono text-primary" id="stat-pc-stations">{{ pcStationsCount() }}</span>
+        </div>
+      </div>
+    </gc-card>
+
+    <gc-card class="stat-card">
+      <div class="stat-inner">
+        <div class="stat-icon">🕹️</div>
+        <div class="stat-meta">
+          <span class="stat-label">Consoles & Simulators</span>
+          <span class="stat-val font-mono text-accent" id="stat-console-stations">{{ consoleStationsCount() }}</span>
+        </div>
+      </div>
+    </gc-card>
+  </section>
+
+  <!-- Filter & Search Toolbar -->
+  <gc-card class="filter-card mb-lg">
+    <div class="filter-grid">
+      <!-- Search -->
+      <div class="filter-field search-field">
+        <label class="filter-label" for="admin-st-search">Search Station</label>
+        <input
+          #searchInp
+          id="admin-st-search"
+          type="search"
+          class="gc-input-native"
+          placeholder="Code, hardware, or type..."
+          [value]="searchQuery()"
+          (input)="onSearchInput(searchInp.value)" />
+      </div>
+
+      <!-- Type Filter -->
+      <div class="filter-field">
+        <label class="filter-label" for="admin-st-type">Type</label>
+        <select
+          #typeSel
+          id="admin-st-type"
+          class="gc-select-native"
+          [value]="filterType()"
+          (change)="onTypeChange(typeSel.value)">
+          @for (opt of typeOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Status Filter -->
+      <div class="filter-field">
+        <label class="filter-label" for="admin-st-status">Status</label>
+        <select
+          #statusSel
+          id="admin-st-status"
+          class="gc-select-native"
+          [value]="filterStatus()"
+          (change)="onStatusChange(statusSel.value)">
+          @for (opt of statusOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Sort -->
+      <div class="filter-field">
+        <label class="filter-label" for="admin-st-sort">Sort By</label>
+        <select
+          #sortSel
+          id="admin-st-sort"
+          class="gc-select-native"
+          [value]="sortBy()"
+          (change)="onSortChange(sortSel.value)">
+          @for (opt of sortOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Actions -->
+      <div class="filter-field filter-actions">
+        <gc-button variant="outline" size="sm" (btnClick)="clearFilters()">Clear Filters</gc-button>
+        <span class="total-count">{{ filteredStations().length }} of {{ totalStations() }} stations</span>
+      </div>
+    </div>
+  </gc-card>
+
+  <!-- Loading Skeleton -->
+  @if (isLoading()) {
+    <div class="stations-grid" aria-busy="true">
+      @for (i of [1,2,3,4,5,6]; track i) {
+        <gc-card>
+          <div class="station-skeleton">
+            <gc-skeleton height="28px" width="50%"></gc-skeleton>
+            <gc-skeleton height="20px" width="30%" class="mt-sm"></gc-skeleton>
+            <gc-skeleton height="40px" class="mt-md"></gc-skeleton>
+            <gc-skeleton height="36px" class="mt-lg"></gc-skeleton>
+          </div>
+        </gc-card>
+      }
+    </div>
+  } @else {
+
+    <!-- Empty State -->
+    @if (filteredStations().length === 0) {
+      <gc-card>
+        <gc-empty-state
+          icon="🎮"
+          title="No stations found"
+          description="No gaming stations match your current search and filter criteria."
+          actionLabel="Clear Filters"
+          (actionClick)="clearFilters()">
+        </gc-empty-state>
+      </gc-card>
+    } @else {
+
+      <!-- Stations Cards Grid -->
+      <section class="stations-grid" aria-label="Gaming stations list">
+        @for (st of filteredStations(); track st.id) {
+          <gc-card class="station-card" [class.inactive]="!st.active">
+            <!-- Card Header -->
+            <div class="card-header">
+              <div class="code-wrap">
+                <span class="type-icon">{{ getTypeIcon(st.type) }}</span>
+                <div>
+                  <h2 class="station-code font-mono">{{ st.stationCode || st.name }}</h2>
+                  <span class="type-tag">{{ getTypeLabel(st.type) }}</span>
+                </div>
+              </div>
+              <gc-badge [variant]="st.active ? 'success' : 'neutral'">
+                {{ st.active ? '● ACTIVE' : '○ INACTIVE' }}
+              </gc-badge>
+            </div>
+
+            <!-- Card Body -->
+            <div class="card-body">
+              <div class="rate-badge">
+                <span class="rate-label">Hourly Rate</span>
+                <span class="rate-amount font-mono">
+                  LKR {{ (st.hourlyRate || 0) | number:'1.2-2' }} <small>/ hr</small>
+                </span>
+              </div>
+
+              @if (st.specifications) {
+                <div class="specs-box">
+                  <span class="specs-title">Hardware & Setup:</span>
+                  <span class="specs-text">{{ st.specifications }}</span>
+                </div>
+              }
+
+              <!-- Installed Games Section -->
+              <div class="station-games-section">
+                <div class="station-games-header">
+                  <span class="games-count-label">🎮 Installed Games ({{ getGamesForStation(st.id).length }}):</span>
+                  <button
+                    type="button"
+                    class="btn-manage-games"
+                    (click)="openAssignGamesModal(st, $event)"
+                    title="Configure installed games on this station">
+                    ⚙️ Manage
+                  </button>
+                </div>
+
+                <div class="installed-games-list">
+                  @for (game of getGamesForStation(st.id); track game.id) {
+                    <span class="station-game-chip">
+                      <span class="game-chip-title">{{ game.title }}</span>
+                      <button
+                        type="button"
+                        class="btn-remove-game"
+                        (click)="removeGameFromStation(st, game, $event)"
+                        title="Remove {{ game.title }} from station">
+                        ✕
+                      </button>
+                    </span>
+                  } @empty {
+                    <span class="no-games-installed">No games assigned yet</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Actions -->
+            <div class="card-actions">
+              <gc-button
+                variant="outline"
+                size="sm"
+                (btnClick)="openAvailability(st, $event)"
+                aria-label="Check slot availability for this station">
+                📅 Slots
+              </gc-button>
+
+              <gc-button
+                variant="outline"
+                size="sm"
+                (btnClick)="openEditModal(st)"
+                aria-label="Edit station settings">
+                ✏️ Edit
+              </gc-button>
+
+              <gc-button
+                variant="outline"
+                size="sm"
+                (btnClick)="toggleActive(st, $event)"
+                [attr.aria-label]="st.active ? 'Deactivate station' : 'Activate station'">
+                {{ st.active ? '⚡ Deactivate' : '⚡ Activate' }}
+              </gc-button>
+
+              <gc-button
+                variant="outline"
+                size="sm"
+                class="btn-danger-hover"
+                (btnClick)="openDeleteModal(st, $event)"
+                aria-label="Delete or retire this station">
+                🗑️
+              </gc-button>
+            </div>
+          </gc-card>
+        }
+      </section>
+    }
+  }
+
+  <!-- ── Station Form Modal (Create / Edit) ─────────────────────────────── -->
+  <gc-modal
+    [isOpen]="formModalOpen()"
+    [(isOpen)]="formModalOpen"
+    [title]="isEditing() ? 'Edit Gaming Station' : 'Add New Gaming Station'"
+    modalId="modal-station-form">
+    <form [formGroup]="stationForm" (ngSubmit)="submitStationForm()" id="form-station" novalidate>
+      <div class="modal-form-grid">
+        <!-- Station Code -->
+        <div class="form-field">
+          <label class="form-label" for="form-st-code">Station Code <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="form-st-code"
+            type="text"
+            class="gc-input-native font-mono"
+            formControlName="stationCode"
+            placeholder="e.g. PS5-03, PC-08, VR-02"
+            [attr.aria-invalid]="stationForm.get('stationCode')?.invalid && stationForm.get('stationCode')?.touched" />
+          @if (stationForm.get('stationCode')?.invalid && stationForm.get('stationCode')?.touched) {
+            <span class="field-error" role="alert">Station code is required (min 2 characters)</span>
+          }
+        </div>
+
+        <!-- Station Type -->
+        <div class="form-field">
+          <label class="form-label" for="form-st-type">Station Type <span class="required" aria-hidden="true">*</span></label>
+          <select
+            id="form-st-type"
+            class="gc-select-native"
+            formControlName="type">
+            <option value="CONSOLE">Console (PS5 / Xbox Series X)</option>
+            <option value="PC">PC Esports Arena Rig</option>
+            <option value="VR">VR Simulator / Racing Cockpit</option>
+          </select>
+        </div>
+
+        <!-- Hourly Rate -->
+        <div class="form-field">
+          <label class="form-label" for="form-st-rate">Hourly Rate (LKR) <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="form-st-rate"
+            type="number"
+            step="50"
+            min="10"
+            class="gc-input-native font-mono"
+            formControlName="hourlyRate"
+            [attr.aria-invalid]="stationForm.get('hourlyRate')?.invalid && stationForm.get('hourlyRate')?.touched" />
+          @if (stationForm.get('hourlyRate')?.invalid && stationForm.get('hourlyRate')?.touched) {
+            <span class="field-error" role="alert">Hourly rate must be greater than 0</span>
+          }
+        </div>
+
+        <!-- Active Toggle -->
+        <div class="form-field checkbox-field">
+          <label class="checkbox-label" for="form-st-active">
+            <input
+              id="form-st-active"
+              type="checkbox"
+              class="gc-checkbox-native"
+              formControlName="active" />
+            <span>Station is Active & Bookable by Customers</span>
+          </label>
+        </div>
+      </div>
+    </form>
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="formModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="primary"
+        form="form-station"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="submitStationForm()">
+        {{ actionInFlight() ? 'Saving…' : (isEditing() ? '💾 Update Station' : '➕ Create Station') }}
+      </gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Slot Availability Inspector Modal ─────────────────────────────── -->
+  <gc-modal
+    [isOpen]="availabilityModalOpen()"
+    [(isOpen)]="availabilityModalOpen"
+    title="Slot Availability Inspector"
+    modalId="modal-availability">
+    @if (selectedStationForAvailability(); as st) {
+      <div class="availability-meta mb-md">
+        <div>
+          <span class="avail-title">{{ st.stationCode || st.name }}</span>
+          <span class="avail-type text-muted">({{ getTypeLabel(st.type) }})</span>
+        </div>
+        <div class="date-picker-wrap">
+          <label for="avail-date-input" class="date-label">Inspect Date:</label>
+          <input
+            #dateInp
+            id="avail-date-input"
+            type="date"
+            class="gc-input-native date-inp"
+            [value]="availabilityDate()"
+            (change)="onDateChange(dateInp.value)" />
+        </div>
+      </div>
+
+      @if (isAvailabilityLoading()) {
+        <div class="slots-skeleton">
+          @for (s of [1,2,3,4,5,6,7,8]; track s) {
+            <gc-skeleton height="48px"></gc-skeleton>
+          }
+        </div>
+      } @else {
+        <div class="slots-container">
+          <div class="slots-legend mb-sm">
+            <span class="legend-item"><span class="legend-dot avail"></span> Available</span>
+            <span class="legend-item"><span class="legend-dot booked"></span> Booked / Occupied</span>
+          </div>
+
+          <div class="slots-grid">
+            @for (slot of availabilitySlots(); track slot.startTime) {
+              <div class="slot-pill" [class.available]="slot.available" [class.booked]="!slot.available">
+                <span class="slot-time font-mono">
+                  {{ formatSlotTime(slot.startTime) }} - {{ formatSlotTime(slot.endTime) }}
+                </span>
+                <span class="slot-status">
+                  {{ slot.available ? '🟢 Available' : '🔴 Booked' }}
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="availabilityModalOpen.set(false)">Close</gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Delete Confirm Modal ─────────────────────────────────────────── -->
+  <gc-modal
+    [isOpen]="deleteModalOpen()"
+    [(isOpen)]="deleteModalOpen"
+    title="Delete Gaming Station"
+    modalId="modal-delete-station">
+    @if (deletingStation(); as st) {
+      <p class="delete-confirm-text">
+        Are you sure you want to delete station <strong class="font-mono">{{ st.stationCode || st.name }}</strong>?
+      </p>
+      <p class="delete-warning text-muted">
+        This station will be retired from active booking slots. Existing bookings referencing this station will remain in historical records.
+      </p>
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="deleteModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="outline"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="confirmDelete()">
+        {{ actionInFlight() ? 'Deleting…' : '🗑️ Yes, Delete Station' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Assign Games to Station Modal ─────────────────────────────────── -->
+  <gc-modal
+    [isOpen]="assignGamesModalOpen()"
+    [(isOpen)]="assignGamesModalOpen"
+    title="Configure Station Games"
+    modalId="modal-assign-station-games">
+    @if (targetStationForAssign(); as st) {
+      <div class="station-games-modal-meta">
+        <p class="modal-intro">
+          Select games installed and playable on
+          <strong class="font-mono text-white">{{ st.stationCode || st.name }}</strong> ({{ getTypeLabel(st.type) }}):
+        </p>
+      </div>
+
+      <div class="station-games-selection-grid">
+        @for (game of allGames(); track game.id) {
+          <label class="game-select-card" [class.selected]="isGameSelectedForStation(game.id)">
+            <input
+              type="checkbox"
+              [checked]="isGameSelectedForStation(game.id)"
+              (change)="toggleGameForStation(game.id)" />
+            <div class="game-select-info">
+              <span class="game-select-title">{{ game.title }}</span>
+              <span class="game-select-genre">{{ game.genre }} • {{ game.maxPlayers }}P</span>
+            </div>
+          </label>
+        } @empty {
+          <p class="text-muted">No games catalogued in system yet.</p>
+        }
+      </div>
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="assignGamesModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="primary"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="saveStationGames()">
+        {{ actionInFlight() ? 'Saving…' : '💾 Save Installed Games' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+</div>
