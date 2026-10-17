@@ -481,7 +481,9 @@ export class AdminStationsComponent implements OnInit, OnDestroy {
   }
 
   onSortChange(sort: string): void {
-    this.sortBy.set(sort as any);
+    if (sort === 'code_asc' || sort === 'code_desc' || sort === 'rate_asc' || sort === 'rate_desc') {
+      this.sortBy.set(sort);
+    }
   }
 
   clearFilters(): void {

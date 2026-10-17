@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NotificationSocketService } from '../../../core/services/notification-socket.service';
-import { AdminNotification, NotificationCategory } from '../../models/notification.model';
+import { NotificationCategory } from '../../models/notification.model';
 
 @Component({
   selector: 'gc-notification-center',

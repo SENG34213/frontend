@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, OnDestroy, signal, computed, inject, ChangeDetectionStrategy
+  Component, OnInit, signal, computed, inject, ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -46,7 +46,7 @@ import {
   templateUrl: './admin-bookings.component.html',
   styleUrl: './admin-bookings.component.scss'
 })
-export class AdminBookingsComponent implements OnInit, OnDestroy {
+export class AdminBookingsComponent implements OnInit {
   private readonly svc = inject(BookingAdminService);
   private readonly stationSvc = inject(StationAdminService);
   private readonly userSvc = inject(UserAdminService);
@@ -148,8 +148,6 @@ export class AdminBookingsComponent implements OnInit, OnDestroy {
     this.loadDropdownData();
     this.loadBookings();
   }
-
-  ngOnDestroy(): void {}
 
   private loadDropdownData(): void {
     this.stationSvc.getAllStations().subscribe({
@@ -266,6 +264,12 @@ export class AdminBookingsComponent implements OnInit, OnDestroy {
 
   closeDetail(): void {
     this.detailPanelOpen.set(false);
+  }
+
+  onOverlayClick(e: MouseEvent): void {
+    if (e.target === e.currentTarget) {
+      this.closeDetail();
+    }
   }
 
   // ── Walk-In ──────────────────────────────────────────────────────────────
@@ -460,17 +464,18 @@ export class AdminBookingsComponent implements OnInit, OnDestroy {
     });
   }
 
-  getDuration(booking: AdminBookingRow | any): string {
-    if (booking.durationMinutes && Number(booking.durationMinutes) > 0) {
-      const totalMins = Number(booking.durationMinutes);
+  getDuration(booking: AdminBookingRow | { durationMinutes?: number; startTime?: string; endTime?: string }): string {
+    const b = booking as AdminBookingRow;
+    if (b.durationMinutes && Number(b.durationMinutes) > 0) {
+      const totalMins = Number(b.durationMinutes);
       const hrs = Math.floor(totalMins / 60);
       const mins = totalMins % 60;
       if (hrs > 0 && mins > 0) return `${hrs}h ${mins}m`;
       if (hrs > 0) return `${hrs}h`;
       return `${mins}m`;
     }
-    if (booking.startTime && booking.endTime) {
-      const diffMs = new Date(booking.endTime).getTime() - new Date(booking.startTime).getTime();
+    if (b.startTime && b.endTime) {
+      const diffMs = new Date(b.endTime).getTime() - new Date(b.startTime).getTime();
       const totalMins = Math.max(0, Math.round(diffMs / 60000));
       const hrs = Math.floor(totalMins / 60);
       const mins = totalMins % 60;
@@ -481,23 +486,24 @@ export class AdminBookingsComponent implements OnInit, OnDestroy {
     return '1h';
   }
 
-  getAmount(booking: AdminBookingRow | any): number {
-    if (booking.payableAmount !== undefined && booking.payableAmount !== null && Number(booking.payableAmount) > 0) {
-      return Number(booking.payableAmount);
+  getAmount(booking: AdminBookingRow | Partial<AdminBookingRow>): number {
+    const b = booking as AdminBookingRow;
+    if (b.payableAmount !== undefined && b.payableAmount !== null && Number(b.payableAmount) > 0) {
+      return Number(b.payableAmount);
     }
-    if (booking.totalAmount !== undefined && booking.totalAmount !== null && Number(booking.totalAmount) > 0) {
-      return Number(booking.totalAmount);
+    if (b.totalAmount !== undefined && b.totalAmount !== null && Number(b.totalAmount) > 0) {
+      return Number(b.totalAmount);
     }
 
     // Determine hourly rate
-    let rate = Number(booking.hourlyRate) || 0;
+    let rate = Number(b.hourlyRate) || 0;
 
     // If rate not on booking, lookup from stations list
     if (rate <= 0) {
       const stList = this.stations();
       const st = stList.find(
-        (s) => (booking.stationId && s.id === booking.stationId) ||
-               (booking.stationCode && (s.stationCode === booking.stationCode || s.name === booking.stationCode))
+        (s) => (b.stationId && s.id === b.stationId) ||
+               (b.stationCode && (s.stationCode === b.stationCode || s.name === b.stationCode))
       );
       if (st && st.hourlyRate) {
         rate = Number(st.hourlyRate);
@@ -506,14 +512,14 @@ export class AdminBookingsComponent implements OnInit, OnDestroy {
 
     // Default standard rates if station lookup is still resolving
     if (rate <= 0) {
-      const codeOrType = ((booking.stationCode || '') + ' ' + (booking.stationType || '')).toUpperCase();
+      const codeOrType = ((b.stationCode || '') + ' ' + (b.stationType || '')).toUpperCase();
       if (codeOrType.includes('PC')) rate = 300;
       else if (codeOrType.includes('VR')) rate = 600;
       else rate = 400; // Console (PS5 / Xbox) default
     }
 
-    if (booking.startTime && booking.endTime) {
-      const diffMs = new Date(booking.endTime).getTime() - new Date(booking.startTime).getTime();
+    if (b.startTime && b.endTime) {
+      const diffMs = new Date(b.endTime).getTime() - new Date(b.startTime).getTime();
       const hours = Math.max(0.5, diffMs / 3600000);
       return Math.round(rate * hours * 100) / 100;
     }

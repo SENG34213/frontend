@@ -9,8 +9,7 @@ import { ToastService } from '../../../shared/ui/toast/toast.service';
 import {
   TournamentResponse,
   RegistrationResponse,
-  BracketResponse,
-  MatchResponse
+  BracketResponse
 } from '../../../shared/models';
 
 describe('AdminTournamentsComponent', () => {

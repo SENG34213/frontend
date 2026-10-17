@@ -156,7 +156,7 @@ describe('AdminService', () => {
       if (url.includes('/users/admin/stats')) return of(mockUserStats);
       if (url.includes('/tournaments/admin/stats')) return of(mockTournamentStats);
       return of({});
-    }) as any);
+    }) as unknown as typeof apiSpy.get);
 
     service.getOverviewStats().subscribe((overview) => {
       expect(overview.bookings.activeSessionsNow).toBe(3);

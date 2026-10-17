@@ -352,8 +352,8 @@
 
   <!-- ── Payment Detail Side Drawer ──────────────────────────────────── -->
   @if (detailDrawerOpen() && selectedPayment(); as p) {
-    <div class="detail-overlay" role="dialog" aria-modal="true" aria-label="Payment details panel" (click)="closeDetail()">
-      <div class="detail-panel" (click)="$event.stopPropagation()">
+    <div class="detail-overlay" role="dialog" aria-modal="true" aria-label="Payment details panel" (click)="onOverlayClick($event)" (keydown.escape)="closeDetail()">
+      <div class="detail-panel">
         <div class="panel-header">
           <h2 class="panel-title">Payment Details</h2>
           <button type="button" class="panel-close" (click)="closeDetail()" aria-label="Close details panel">✕</button>

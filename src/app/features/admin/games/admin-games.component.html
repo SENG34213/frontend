@@ -279,8 +279,9 @@
         <!-- Genre & Age Rating -->
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Genre *</label>
+            <label class="form-label" for="game-genre-select">Genre *</label>
             <select
+              id="game-genre-select"
               class="form-input"
               [value]="formGenre()"
               (change)="formGenre.set($any($event.target).value)">
@@ -291,8 +292,9 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Age Rating *</label>
+            <label class="form-label" for="game-age-rating-select">Age Rating *</label>
             <select
+              id="game-age-rating-select"
               class="form-input"
               [value]="formAgeRating()"
               (change)="formAgeRating.set($any($event.target).value)">
@@ -305,7 +307,7 @@
 
         <!-- Platforms Multi-select -->
         <div class="form-group">
-          <label class="form-label">Supported Platforms *</label>
+          <span class="form-label">Supported Platforms *</span>
           <div class="platform-checkboxes">
             @for (p of availablePlatforms; track p) {
               <label class="checkbox-label" [class.selected]="formPlatforms().includes(p)">
@@ -324,7 +326,7 @@
 
         <!-- Station Compatibility Assignment -->
         <div class="form-group">
-          <label class="form-label">Compatible Stations</label>
+          <span class="form-label">Compatible Stations</span>
           <span class="field-hint">Select stations where this game can be played:</span>
           <div class="station-checkboxes">
             @for (st of availableStations(); track st.id) {

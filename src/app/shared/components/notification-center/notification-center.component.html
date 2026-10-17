@@ -107,6 +107,8 @@
               <article
                 class="notification-card"
                 [class.unread]="!item.read"
+                tabindex="0"
+                (keydown.enter)="!item.read && notifService.markAsRead(item.id)"
                 (click)="!item.read && notifService.markAsRead(item.id)">
                 <!-- Left Icon -->
                 <div class="item-icon-box" [ngClass]="getCategoryBadgeClass(item.category)">

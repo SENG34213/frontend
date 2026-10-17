@@ -91,18 +91,7 @@ export class PaymentAdminService {
    * In production, triggers a direct browser download via hidden anchor tag.
    * In mock mode, returns a pre-built Blob.
    */
-  exportCsv(filter: Omit<PaymentFilter, 'page' | 'size'>): Observable<Blob> {
-    if (environment.useMocks) {
-      return this.mock.exportPaymentsCsv();
-    }
-
-    let params = new HttpParams();
-    if (filter.status) params = params.set('status', filter.status);
-    if (filter.method) params = params.set('method', filter.method);
-    if (filter.from) params = params.set('from', filter.from);
-    if (filter.to) params = params.set('to', filter.to);
-
-    // Fallback to mock CSV since the real endpoint returns CSV text
+  exportCsv(_filter: Omit<PaymentFilter, 'page' | 'size'>): Observable<Blob> {
     return this.mock.exportPaymentsCsv();
   }
 }

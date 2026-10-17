@@ -242,7 +242,7 @@
                     @if (col.format === 'badge') {
                       <gc-badge variant="success">{{ row[col.key] }}</gc-badge>
                     } @else if (col.format === 'date') {
-                      {{ row[col.key] | date:'mediumDate' }}
+                      {{ formatCellValue(row[col.key], 'date') }}
                     } @else {
                       {{ formatCellValue(row[col.key], col.format) }}
                     }

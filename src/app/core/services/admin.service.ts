@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin, map, catchError, of } from 'rxjs';
+import { Observable, forkJoin, map, catchError } from 'rxjs';
 import { ApiService } from './api.service';
 import { MockDataService } from './mock/mock-data.service';
 import { environment } from '../../../environments/environment';
@@ -62,7 +62,7 @@ export class AdminService {
     return this.api.get<{ content?: AdminBookingRow[] } | AdminBookingRow[]>(
       `/bookings/admin/all?size=${limit}&sort=createdAt,desc`
     ).pipe(
-      map((res: any) => {
+      map((res: { content?: AdminBookingRow[] } | AdminBookingRow[]) => {
         if (Array.isArray(res)) return res.slice(0, limit);
         if (res && Array.isArray(res.content)) return res.content.slice(0, limit);
         return [];

@@ -7,7 +7,6 @@ import {
   SlotAvailability,
   GameStationRequest,
   GameStationResponse,
-  TournamentDto,
   TournamentResponse,
   TournamentRequest,
   TournamentStatus,
@@ -35,7 +34,6 @@ import {
   PagedPayments,
   PaymentFilter,
   PaymentStatus,
-  PaymentMethod,
   AdminReportResponse,
   ReportFilter,
   GameTitle,
@@ -1871,7 +1869,7 @@ export class MockDataService {
     }
 
     if (filter?.platform) {
-      result = result.filter(g => g.platforms.includes(filter.platform as any));
+      result = result.filter(g => (g.platforms as string[]).includes(filter.platform!));
     }
 
     if (filter?.active !== undefined && filter?.active !== null) {
