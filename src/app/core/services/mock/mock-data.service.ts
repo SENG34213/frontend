@@ -871,7 +871,7 @@ export class MockDataService {
     }).pipe(delay(200));
   }
 
-  getAdminPaymentStats(trendDays: number = 14): Observable<AdminPaymentStatsResponse> {
+  getAdminPaymentStats(trendDays = 14): Observable<AdminPaymentStatsResponse> {
     const today = new Date();
     const trend = Array.from({ length: trendDays }).map((_, i) => {
       const d = new Date(today);
