@@ -4,18 +4,19 @@ import { provideRouter, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
 import { AdminTournamentsComponent } from './admin-tournaments.component';
 import { TournamentAdminService } from './tournament-admin.service';
+import { NotificationSocketService } from '../../../core/services/notification-socket.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import {
   TournamentResponse,
   RegistrationResponse,
-  BracketResponse,
-  MatchResponse
+  BracketResponse
 } from '../../../shared/models';
 
 describe('AdminTournamentsComponent', () => {
   let component: AdminTournamentsComponent;
   let fixture: ComponentFixture<AdminTournamentsComponent>;
   let tournamentAdminServiceSpy: jasmine.SpyObj<TournamentAdminService>;
+  let notificationSocketServiceSpy: jasmine.SpyObj<NotificationSocketService>;
   let toastServiceSpy: jasmine.SpyObj<ToastService>;
 
   const mockTournaments: TournamentResponse[] = [
@@ -168,12 +169,14 @@ describe('AdminTournamentsComponent', () => {
     tournamentAdminServiceSpy.sendReminders.and.returnValue(of(void 0));
 
     toastServiceSpy = jasmine.createSpyObj('ToastService', ['show', 'success', 'error', 'warning', 'info']);
+    notificationSocketServiceSpy = jasmine.createSpyObj('NotificationSocketService', ['sendNotification']);
 
     await TestBed.configureTestingModule({
       imports: [AdminTournamentsComponent, ReactiveFormsModule],
       providers: [
         provideRouter([]),
         { provide: TournamentAdminService, useValue: tournamentAdminServiceSpy },
+        { provide: NotificationSocketService, useValue: notificationSocketServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
         {
           provide: ActivatedRoute,

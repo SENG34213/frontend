@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, OnDestroy, signal, computed, inject, ChangeDetectionStrategy
+  Component, OnInit, OnDestroy, signal, inject, ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -256,6 +256,12 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
 
   closeDetail(): void {
     this.detailDrawerOpen.set(false);
+  }
+
+  onOverlayClick(e: MouseEvent): void {
+    if (e.target === e.currentTarget) {
+      this.closeDetail();
+    }
   }
 
   // ── Pagination & Filter Events ─────────────────────────────────────────────

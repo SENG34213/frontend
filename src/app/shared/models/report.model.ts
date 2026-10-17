@@ -55,5 +55,5 @@ export interface AdminReportResponse {
   trend: ReportDataPoint[];
   breakdowns: ReportBreakdownItem[];
   tableColumns: ReportTableColumn[];
-  tableData: Record<string, any>[];
+  tableData: Record<string, unknown>[];
 }

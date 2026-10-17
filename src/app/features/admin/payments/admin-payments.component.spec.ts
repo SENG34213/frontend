@@ -4,6 +4,7 @@ import { of, throwError } from 'rxjs';
 
 import { AdminPaymentsComponent } from './admin-payments.component';
 import { PaymentAdminService } from './payment-admin.service';
+import { UserAdminService } from '../users/user-admin.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import {
   PagedPayments,
@@ -61,6 +62,22 @@ describe('AdminPaymentsComponent', () => {
     const toastSpy = jasmine.createSpyObj<ToastService>('ToastService', [
       'success', 'error', 'warning'
     ]);
+    const userSpy = jasmine.createSpyObj<UserAdminService>('UserAdminService', ['getUsers', 'getUserById']);
+    const mockCustomer = {
+      id: 'usr-001',
+      email: 'kasun@test.lk',
+      fullName: 'Kasun Perera',
+      role: 'CUSTOMER' as const,
+      enabled: true
+    };
+    userSpy.getUsers.and.returnValue(of({
+      content: [mockCustomer],
+      totalElements: 1,
+      totalPages: 1,
+      size: 100,
+      number: 0
+    }));
+    userSpy.getUserById.and.returnValue(of(mockCustomer));
 
     paymentSpy.getPayments.and.returnValue(of(mockPage));
     paymentSpy.getPaymentStats.and.returnValue(of(mockStats));
@@ -71,6 +88,7 @@ describe('AdminPaymentsComponent', () => {
       imports: [AdminPaymentsComponent],
       providers: [
         { provide: PaymentAdminService, useValue: paymentSpy },
+        { provide: UserAdminService, useValue: userSpy },
         { provide: ToastService, useValue: toastSpy },
         { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
         { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } }

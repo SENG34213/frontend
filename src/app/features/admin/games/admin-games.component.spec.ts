@@ -4,6 +4,7 @@ import { of, throwError } from 'rxjs';
 
 import { AdminGamesComponent } from './admin-games.component';
 import { GameAdminService } from './game-admin.service';
+import { StationAdminService } from '../stations/station-admin.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { GameTitle, AdminGameStatsResponse } from '../../../shared/models';
 
@@ -11,6 +12,7 @@ describe('AdminGamesComponent', () => {
   let component: AdminGamesComponent;
   let fixture: ComponentFixture<AdminGamesComponent>;
   let mockGameService: jasmine.SpyObj<GameAdminService>;
+  let mockStationService: jasmine.SpyObj<StationAdminService>;
   let mockToastService: jasmine.SpyObj<ToastService>;
   let mockRouter: jasmine.SpyObj<Router>;
 
@@ -61,22 +63,28 @@ describe('AdminGamesComponent', () => {
       'updateGame',
       'deleteGame',
       'toggleGameActive',
-      'getGameStats'
+      'getGameStats',
+      'getStationsForGame'
     ]);
     mockToastService = jasmine.createSpyObj('ToastService', ['success', 'error', 'info', 'warning']);
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
 
     mockGameService.getGames.and.returnValue(of(mockGamesList));
     mockGameService.getGameStats.and.returnValue(of(mockStats));
+    mockGameService.getStationsForGame.and.returnValue(of([]));
     mockGameService.createGame.and.returnValue(of({ ...mockGamesList[0], id: 'g-3', title: 'New Game' }));
     mockGameService.updateGame.and.returnValue(of({ ...mockGamesList[0], title: 'Tekken 8 Deluxe' }));
     mockGameService.deleteGame.and.returnValue(of(void 0));
     mockGameService.toggleGameActive.and.returnValue(of({ ...mockGamesList[0], active: false }));
 
+    mockStationService = jasmine.createSpyObj('StationAdminService', ['getAllStations']);
+    mockStationService.getAllStations.and.returnValue(of([]));
+
     await TestBed.configureTestingModule({
       imports: [AdminGamesComponent],
       providers: [
         { provide: GameAdminService, useValue: mockGameService },
+        { provide: StationAdminService, useValue: mockStationService },
         { provide: ToastService, useValue: mockToastService },
         { provide: Router, useValue: mockRouter },
         {

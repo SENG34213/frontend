@@ -1,3 +1,5 @@
+import { Station } from './station.model';
+
 export type GameGenre =
   | 'ACTION'
   | 'RPG'
@@ -36,7 +38,7 @@ export interface GameTitle {
   featured: boolean;
   active: boolean;
   installedStationCount: number;
-  stations?: any[];
+  stations?: Station[];
   stationIds?: string[];
   createdAt: string;
   updatedAt?: string;

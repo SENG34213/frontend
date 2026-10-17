@@ -270,6 +270,12 @@ export class AdminPaymentsComponent implements OnInit, OnDestroy {
     this.detailDrawerOpen.set(false);
   }
 
+  onOverlayClick(e: MouseEvent): void {
+    if (e.target === e.currentTarget) {
+      this.closeDetail();
+    }
+  }
+
   // ── Refund ────────────────────────────────────────────────────────────────
   promptRefund(payment: PaymentResponse, event?: Event): void {
     if (event) event.stopPropagation();

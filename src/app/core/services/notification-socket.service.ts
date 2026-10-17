@@ -293,7 +293,8 @@ export class NotificationSocketService {
   private playNotificationSound(): void {
     try {
       if (!this.audioCtx) {
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioContextClass = window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
         if (AudioContextClass) {
           this.audioCtx = new AudioContextClass();
         }

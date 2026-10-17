@@ -99,8 +99,9 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      if (params['tab'] && ['accounts', 'rules', 'audit'].includes(params['tab'])) {
-        this.activeTab.set(params['tab'] as any);
+      const tabParam = params['tab'];
+      if (tabParam === 'accounts' || tabParam === 'rules' || tabParam === 'audit') {
+        this.activeTab.set(tabParam);
       }
       if (params['page']) this.page.set(Number(params['page']) || 0);
       if (params['search']) this.searchTerm.set(params['search']);
