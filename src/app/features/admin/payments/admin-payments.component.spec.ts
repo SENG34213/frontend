@@ -62,7 +62,20 @@ describe('AdminPaymentsComponent', () => {
     const toastSpy = jasmine.createSpyObj<ToastService>('ToastService', [
       'success', 'error', 'warning'
     ]);
-    const userSpy = jasmine.createSpyObj<UserAdminService>('UserAdminService', ['getUserById']);
+    const userSpy = jasmine.createSpyObj<UserAdminService>('UserAdminService', ['getUsers', 'getUserById']);
+    userSpy.getUsers.and.returnValue(of({
+      content: [{
+        id: 'usr-001',
+        email: 'kasun@test.lk',
+        fullName: 'Kasun Perera',
+        role: 'CUSTOMER',
+        enabled: true
+      }],
+      totalElements: 1,
+      totalPages: 1,
+      size: 100,
+      number: 0
+    }));
     userSpy.getUserById.and.returnValue(of(null as any));
 
     paymentSpy.getPayments.and.returnValue(of(mockPage));

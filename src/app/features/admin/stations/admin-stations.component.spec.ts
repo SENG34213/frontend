@@ -4,6 +4,7 @@ import { provideRouter, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
 import { AdminStationsComponent } from './admin-stations.component';
 import { StationAdminService } from './station-admin.service';
+import { GameAdminService } from '../games/game-admin.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { Station, SlotAvailabilityResponse } from '../../../shared/models';
 
@@ -11,6 +12,7 @@ describe('AdminStationsComponent', () => {
   let component: AdminStationsComponent;
   let fixture: ComponentFixture<AdminStationsComponent>;
   let stationAdminServiceSpy: jasmine.SpyObj<StationAdminService>;
+  let gameAdminServiceSpy: jasmine.SpyObj<GameAdminService>;
   let toastServiceSpy: jasmine.SpyObj<ToastService>;
 
   const mockStations: Station[] = [
@@ -77,6 +79,17 @@ describe('AdminStationsComponent', () => {
     );
     stationAdminServiceSpy.deleteStation.and.returnValue(of(void 0));
 
+    gameAdminServiceSpy = jasmine.createSpyObj('GameAdminService', [
+      'getGames',
+      'getGamesForStation',
+      'removeGameFromStation',
+      'assignGamesToStation'
+    ]);
+    gameAdminServiceSpy.getGames.and.returnValue(of([]));
+    gameAdminServiceSpy.getGamesForStation.and.returnValue(of([]));
+    gameAdminServiceSpy.removeGameFromStation.and.returnValue(of(void 0));
+    gameAdminServiceSpy.assignGamesToStation.and.returnValue(of([]));
+
     toastServiceSpy = jasmine.createSpyObj('ToastService', ['show', 'success', 'error', 'warning', 'info']);
 
     await TestBed.configureTestingModule({
@@ -84,6 +97,7 @@ describe('AdminStationsComponent', () => {
       providers: [
         provideRouter([]),
         { provide: StationAdminService, useValue: stationAdminServiceSpy },
+        { provide: GameAdminService, useValue: gameAdminServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
         {
           provide: ActivatedRoute,
