@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { BookingsComponent } from './bookings.component';
 import { BookingService } from '../../core/services/booking.service';
 import { Station, Game, SlotAvailability } from '../../shared/models';
@@ -278,5 +278,145 @@ describe('BookingsComponent', () => {
     expect(component.redeemLoyalty()).toBeFalse();
     expect(component.effectivePointsToRedeem()).toBe(0);
     expect(component.loyaltyDiscountAmount()).toBe(0);
+  });
+
+  describe('Query Parameters Handling', () => {
+    it('should read stationId and gameId from query params and preselect both given they exist', () => {
+      // Arrange
+      const route = TestBed.inject(ActivatedRoute);
+      (route as any).snapshot = {
+        queryParams: { stationId: 'st-02', gameId: 'game-03' }
+      };
+
+      // Act
+      component.ngOnInit();
+
+      // Assert
+      expect(component.selectedStationId()).toBe('st-02');
+      expect(mockBookingService.getStationGames).toHaveBeenCalledWith('st-02');
+      expect(component.selectedGameId()).toBe('game-03');
+    });
+
+    it('should read gameId from query params and find station via getGameStations given only gameId is present', () => {
+      // Arrange
+      const route = TestBed.inject(ActivatedRoute);
+      (route as any).snapshot = {
+        queryParams: { gameId: 'game-01' }
+      };
+
+      // Act
+      component.ngOnInit();
+
+      // Assert
+      expect(mockBookingService.getGameStations).toHaveBeenCalledWith('game-01');
+      expect(component.selectedStationId()).toBe('st-01');
+      expect(component.selectedGameId()).toBe('game-01');
+    });
+  });
+
+  describe('canProceedToPayment Validation', () => {
+    it('should evaluate canProceedToPayment as false given station is missing', () => {
+      // Arrange: no station
+      component.selectedStationId.set('');
+      component.selectedGameId.set('game-01');
+      const firstAvail = component.availableSlots().find((s) => s.isAvailable);
+      if (firstAvail) component.selectedSlotId.set(firstAvail.id);
+
+      // Assert
+      expect(component.canProceedToPayment()).toBeFalse();
+    });
+
+    it('should evaluate canProceedToPayment as false given game is missing', () => {
+      // Arrange: station and slot, but no game
+      component.selectedStationId.set('st-01');
+      component.selectedGameId.set('');
+      const firstAvail = component.availableSlots().find((s) => s.isAvailable);
+      if (firstAvail) component.selectedSlotId.set(firstAvail.id);
+
+      // Assert
+      expect(component.canProceedToPayment()).toBeFalse();
+    });
+
+    it('should evaluate canProceedToPayment as false given slot is missing', () => {
+      // Arrange: station and game, but no slot
+      component.selectedStationId.set('st-01');
+      component.stationGames.set(testGamesStation1);
+      component.selectedGameId.set('game-01');
+      component.selectedSlotId.set('');
+
+      // Assert
+      expect(component.canProceedToPayment()).toBeFalse();
+    });
+
+    it('should evaluate canProceedToPayment as true given station, game, and slot are all selected', () => {
+      // Arrange
+      component.selectedStationId.set('st-01');
+      component.stationGames.set(testGamesStation1);
+      component.selectedGameId.set('game-01');
+      const firstAvail = component.availableSlots().find((s) => s.isAvailable);
+      if (firstAvail) component.selectedSlotId.set(firstAvail.id);
+
+      // Assert
+      expect(component.canProceedToPayment()).toBeTrue();
+    });
+  });
+
+  describe('Error Handling for Game Booking', () => {
+    beforeEach(() => {
+      component.selectedStationId.set('st-01');
+      component.stationGames.set(testGamesStation1);
+      component.selectedGameId.set('game-01');
+      const firstAvail = component.availableSlots().find((s) => s.isAvailable);
+      if (firstAvail) component.selectedSlotId.set(firstAvail.id);
+    });
+
+    it('should display friendly message and clear game selection given GAME_NOT_ON_STATION error', () => {
+      // Arrange
+      mockBookingService.createBooking.and.returnValue(
+        throwError(() => ({ error: { error: 'GAME_NOT_ON_STATION' } }))
+      );
+
+      // Act
+      component.confirmPayment();
+
+      // Assert
+      expect(component.bookingErrorMessage()).toBe(
+        'This game is not installed on the selected station. Please choose a different game.'
+      );
+      expect(component.selectedGameId()).toBe('');
+      expect(mockBookingService.getStationGames).toHaveBeenCalledWith('st-01');
+    });
+
+    it('should display friendly message given GAME_INACTIVE error', () => {
+      // Arrange
+      mockBookingService.createBooking.and.returnValue(
+        throwError(() => ({ error: { error: 'GAME_INACTIVE' } }))
+      );
+
+      // Act
+      component.confirmPayment();
+
+      // Assert
+      expect(component.bookingErrorMessage()).toBe(
+        'This game is no longer available. Please choose another game.'
+      );
+      expect(mockBookingService.getStationGames).toHaveBeenCalledWith('st-01');
+    });
+
+    it('should display friendly message given GAME_NOT_FOUND error', () => {
+      // Arrange
+      mockBookingService.createBooking.and.returnValue(
+        throwError(() => ({ error: { error: 'GAME_NOT_FOUND' } }))
+      );
+
+      // Act
+      component.confirmPayment();
+
+      // Assert
+      expect(component.bookingErrorMessage()).toBe(
+        'The selected game could not be found. Please choose another game.'
+      );
+      expect(mockBookingService.getStationGames).toHaveBeenCalledWith('st-01');
+    });
   });
 });
