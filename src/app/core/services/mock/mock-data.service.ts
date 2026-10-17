@@ -198,67 +198,25 @@ export class MockDataService {
       id: 'game-01',
       title: 'CYBERPUNK 2077',
       genre: 'Action RPG',
-      coverImage: '/assets/images/game_cyberpunk.jpg',
-      platforms: ['PC'],
-      ageRating: 'PEGI_18',
-      maxPlayers: 1,
-      featured: true,
-      active: true
+      coverImage: '/assets/images/game_cyberpunk.jpg'
     },
     {
       id: 'game-02',
       title: 'GRAN TURISMO 7',
       genre: 'Racing Sim',
-      coverImage: '/assets/images/game_granturismo.jpg',
-      platforms: ['PS5'],
-      ageRating: 'PEGI_3',
-      maxPlayers: 2,
-      featured: true,
-      active: true
+      coverImage: '/assets/images/game_granturismo.jpg'
     },
     {
       id: 'game-03',
       title: 'ELDEN RING',
       genre: 'Action RPG',
-      coverImage: '/assets/images/game_eldenring.jpg',
-      platforms: ['PS5', 'PC'],
-      ageRating: 'PEGI_16',
-      maxPlayers: 1,
-      featured: true,
-      active: true
+      coverImage: '/assets/images/game_eldenring.jpg'
     },
     {
       id: 'game-04',
       title: 'TEKKEN 8',
       genre: 'Fighting',
-      coverImage: '/assets/images/game_tekken.jpg',
-      platforms: ['PS5', 'PC'],
-      ageRating: 'PEGI_12',
-      maxPlayers: 2,
-      featured: true,
-      active: true
-    },
-    {
-      id: 'game-05',
-      title: 'SPIDER-MAN 2',
-      genre: 'Action',
-      coverImage: '/assets/images/ps5_console_01.jpg',
-      platforms: ['PS5'],
-      ageRating: 'PEGI_16',
-      maxPlayers: 1,
-      featured: true,
-      active: true
-    },
-    {
-      id: 'game-06',
-      title: 'VALORANT',
-      genre: 'FPS',
-      coverImage: '/assets/images/ps5_console_02.jpg',
-      platforms: ['PC'],
-      ageRating: 'PEGI_16',
-      maxPlayers: 5,
-      featured: false,
-      active: true
+      coverImage: '/assets/images/game_tekken.jpg'
     }
   ];
 
@@ -596,27 +554,7 @@ export class MockDataService {
   }
 
   getGames(): Observable<Game[]> {
-    return of([...this.games]).pipe(delay(100));
-  }
-
-  /** Returns games appropriate to the station type (mirrors backend seed data) */
-  getStationGames(stationId: string): Observable<Game[]> {
-    const station = this.stations.find((s) => s.id === stationId);
-    if (!station) {
-      return of([...this.games]).pipe(delay(150));
-    }
-    const type = station.type;
-    let filtered: Game[];
-    if (type === 'VR') {
-      filtered = this.games.filter((g) => g.platforms?.includes('VR'));
-      if (filtered.length === 0) filtered = [...this.games]; // fallback all
-    } else if (type === 'PC' || type === 'PC_ESPORTS') {
-      filtered = this.games.filter((g) => g.platforms?.includes('PC'));
-    } else {
-      // CONSOLE / PS5 / XBOX_SERIES_X
-      filtered = this.games.filter((g) => g.platforms?.includes('PS5') || g.platforms?.includes('XBOX_SERIES_X'));
-    }
-    return of(filtered.length > 0 ? filtered : [...this.games]).pipe(delay(150));
+    return of(this.games).pipe(delay(100));
   }
 
   createStation(request: GameStationRequest): Observable<GameStationResponse> {
@@ -871,7 +809,7 @@ export class MockDataService {
     }).pipe(delay(200));
   }
 
-  getAdminPaymentStats(trendDays = 14): Observable<AdminPaymentStatsResponse> {
+  getAdminPaymentStats(trendDays: number = 14): Observable<AdminPaymentStatsResponse> {
     const today = new Date();
     const trend = Array.from({ length: trendDays }).map((_, i) => {
       const d = new Date(today);

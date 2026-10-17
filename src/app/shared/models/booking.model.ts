@@ -2,7 +2,6 @@ export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' 
 
 export interface BookingRequest {
   stationId: string;
-  gameId: string; // required – backend rejects without it
   bookingDate: string; // YYYY-MM-DD
   startTime: string; // HH:mm
   endTime: string; // HH:mm
@@ -16,8 +15,6 @@ export interface BookingResponse {
   userId: string;
   stationId: string;
   stationName: string;
-  gameId?: string;
-  gameTitle?: string;
   bookingDate: string;
   startTime: string;
   endTime: string;

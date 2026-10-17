@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { BookingService, BackendStationResponse, BackendSlotResponse, BackendBookingResponse, BackendGameResponse } from './booking.service';
+import { BookingService, BackendStationResponse, BackendSlotResponse, BackendBookingResponse } from './booking.service';
 import { ApiService } from './api.service';
 import { MockDataService } from './mock/mock-data.service';
 import { AuthService } from './auth.service';
@@ -70,7 +70,6 @@ describe('BookingService', () => {
     apiSpy = jasmine.createSpyObj('ApiService', ['get', 'post', 'put', 'patch', 'delete']);
     mockDataSpy = jasmine.createSpyObj('MockDataService', [
       'getStations',
-      'getStationGames',
       'getStationAvailability',
       'getGames',
       'getLoyaltyBalance',
@@ -79,7 +78,6 @@ describe('BookingService', () => {
     authSpy = jasmine.createSpyObj('AuthService', ['currentUser']);
 
     mockDataSpy.getStations.and.returnValue(of(mockStationsData));
-    mockDataSpy.getStationGames.and.returnValue(of(mockGamesData));
     mockDataSpy.getStationAvailability.and.returnValue(of(mockSlotsData));
     mockDataSpy.getGames.and.returnValue(of(mockGamesData));
     mockDataSpy.getLoyaltyBalance.and.returnValue(of(mockLoyalty));
@@ -317,165 +315,53 @@ describe('BookingService', () => {
     });
   });
 
-  describe('getStationGames', () => {
-    it('should return games mapping coverUrl to coverImage and filtering inactive games given API returns games', (done) => {
-      const orig = environment.useMocks;
-      environment.useMocks = false;
-
-      const backendGames: BackendGameResponse[] = [
-        {
-          id: 'g-1',
-          title: 'Spider-Man 2',
-          genre: 'Action',
-          coverUrl: 'https://example.com/spiderman.jpg',
-          platforms: ['PS5'],
-          active: true,
-          featured: true
-        },
-        {
-          id: 'g-2',
-          title: 'Inactive Game',
-          active: false
-        },
-        {
-          id: 'g-3',
-          title: 'Game Without Cover',
-          active: true
-        }
-      ];
-
-      apiSpy.get.and.returnValue(of(backendGames));
-
-      service.getStationGames('st-01').subscribe((games) => {
-        expect(apiSpy.get).toHaveBeenCalledWith('/stations/st-01/games');
-        expect(games.length).toBe(2);
-        expect(games[0].id).toBe('g-1');
-        expect(games[0].coverImage).toBe('https://example.com/spiderman.jpg');
-        expect(games[1].id).toBe('g-3');
-        expect(games[1].coverImage).toBe('/assets/images/ps5_console_01.jpg');
-        environment.useMocks = orig;
-        done();
-      });
-    });
-
-    it('should fallback to mockData.getStationGames given API fails', (done) => {
-      const orig = environment.useMocks;
-      environment.useMocks = false;
-
-      apiSpy.get.and.returnValue(throwError(() => new Error('API Failure')));
-
-      service.getStationGames('st-01').subscribe((games) => {
-        expect(mockDataSpy.getStationGames).toHaveBeenCalledWith('st-01');
-        expect(games).toEqual(mockGamesData);
-        environment.useMocks = orig;
-        done();
-      });
-    });
-
-    it('should delegate to mockData when useMocks is true', (done) => {
-      const orig = environment.useMocks;
-      environment.useMocks = true;
-
-      service.getStationGames('st-01').subscribe((games) => {
-        expect(mockDataSpy.getStationGames).toHaveBeenCalledWith('st-01');
-        expect(apiSpy.get).not.toHaveBeenCalled();
-        expect(games).toEqual(mockGamesData);
-        environment.useMocks = orig;
-        done();
-      });
-    });
-  });
-
   describe('getGames', () => {
-    it('should delegate to mockData.getGames given useMocks is true', (done) => {
-      const orig = environment.useMocks;
-      environment.useMocks = true;
-
+    it('should delegate to mockData.getGames', (done) => {
       service.getGames().subscribe((games) => {
         expect(games).toEqual(mockGamesData);
         expect(mockDataSpy.getGames).toHaveBeenCalled();
-        environment.useMocks = orig;
-        done();
-      });
-    });
-
-    it('should fetch featured games with params given { featured: true } and useMocks is false', (done) => {
-      const orig = environment.useMocks;
-      environment.useMocks = false;
-
-      const backendGames: BackendGameResponse[] = [
-        { id: 'g-feat', title: 'Featured Game', active: true, featured: true, coverUrl: 'feat.jpg' }
-      ];
-
-      apiSpy.get.and.returnValue(of(backendGames));
-
-      service.getGames({ featured: true }).subscribe((games) => {
-        expect(apiSpy.get).toHaveBeenCalledWith('/games', { params: { active: 'true', featured: 'true' } });
-        expect(games.length).toBe(1);
-        expect(games[0].title).toBe('Featured Game');
-        expect(games[0].coverImage).toBe('feat.jpg');
-        environment.useMocks = orig;
-        done();
-      });
-    });
-
-    it('should fallback to mockData.getGames given API error', (done) => {
-      const orig = environment.useMocks;
-      environment.useMocks = false;
-
-      apiSpy.get.and.returnValue(throwError(() => new Error('Failed to load games')));
-
-      service.getGames().subscribe((games) => {
-        expect(mockDataSpy.getGames).toHaveBeenCalled();
-        expect(games).toEqual(mockGamesData);
-        environment.useMocks = orig;
         done();
       });
     });
   });
 
-  describe('getGameStations', () => {
-    it('should fetch stations for game from API and map them given gameId and useMocks is false', (done) => {
-      const orig = environment.useMocks;
-      environment.useMocks = false;
-
-      const backendStations: BackendStationResponse[] = [
-        { id: 'st-uuid-1', stationCode: 'PS5-01', type: 'CONSOLE', hourlyRate: 600, active: true }
-      ];
-
-      apiSpy.get.and.returnValue(of(backendStations));
-
-      service.getGameStations('game-01').subscribe((stations) => {
-        expect(apiSpy.get).toHaveBeenCalledWith('/games/game-01/stations');
-        expect(stations.length).toBe(1);
-        expect(stations[0].id).toBe('st-uuid-1');
-        expect(stations[0].name).toBe('PS5 PS5-01');
-        environment.useMocks = orig;
-        done();
-      });
-    });
-
-    it('should delegate to mockData.getStations given useMocks is true or gameId is empty', (done) => {
+  describe('getLoyaltyBalance', () => {
+    it('should return mock data when useMocks is true', (done) => {
       const orig = environment.useMocks;
       environment.useMocks = true;
 
-      service.getGameStations('').subscribe((stations) => {
-        expect(mockDataSpy.getStations).toHaveBeenCalled();
-        expect(stations).toEqual(mockStationsData);
+      service.getLoyaltyBalance().subscribe((balance) => {
+        expect(balance).toEqual(mockLoyalty);
+        expect(mockDataSpy.getLoyaltyBalance).toHaveBeenCalledWith('usr-test-123');
         environment.useMocks = orig;
         done();
       });
     });
 
-    it('should fallback to mockData.getStations given API error', (done) => {
+    it('should fetch from API when useMocks is false and fallback user when not authenticated', (done) => {
+      const orig = environment.useMocks;
+      environment.useMocks = false;
+      authSpy.currentUser.and.returnValue(null);
+
+      apiSpy.get.and.returnValue(of(mockLoyalty));
+
+      service.getLoyaltyBalance().subscribe((balance) => {
+        expect(apiSpy.get).toHaveBeenCalledWith('/loyalty/balance/usr-customer-1');
+        expect(balance).toEqual(mockLoyalty);
+        environment.useMocks = orig;
+        done();
+      });
+    });
+
+    it('should fallback to mock data when api call fails', (done) => {
       const orig = environment.useMocks;
       environment.useMocks = false;
 
-      apiSpy.get.and.returnValue(throwError(() => new Error('Failed to load game stations')));
+      apiSpy.get.and.returnValue(throwError(() => new Error('API Error')));
 
-      service.getGameStations('game-01').subscribe((stations) => {
-        expect(mockDataSpy.getStations).toHaveBeenCalled();
-        expect(stations).toEqual(mockStationsData);
+      service.getLoyaltyBalance().subscribe((balance) => {
+        expect(mockDataSpy.getLoyaltyBalance).toHaveBeenCalled();
+        expect(balance).toEqual(mockLoyalty);
         environment.useMocks = orig;
         done();
       });
@@ -491,7 +377,6 @@ describe('BookingService', () => {
 
       service.createBooking({
         stationId: 'st-01',
-        gameId: 'game-01',
         bookingDate: '2026-10-16',
         startTime: '10:00',
         endTime: '11:00',
@@ -499,7 +384,6 @@ describe('BookingService', () => {
       }).subscribe((res) => {
         expect(mockDataSpy.createBooking).toHaveBeenCalledWith({
           stationId: 'st-01',
-          gameId: 'game-01',
           bookingDate: '2026-10-16',
           startTime: '10:00',
           endTime: '11:00'
@@ -510,7 +394,7 @@ describe('BookingService', () => {
       });
     });
 
-    it('should handle future booking request with API and assert outgoing HTTP payload contains gameId', (done) => {
+    it('should handle future booking request with API', (done) => {
       const orig = environment.useMocks;
       environment.useMocks = false;
 
@@ -520,7 +404,6 @@ describe('BookingService', () => {
         userId: 'usr-1',
         stationId: validUuid,
         stationCode: 'PS5-01',
-        gameId: 'game-01',
         startTime: `${futureDate}T10:00:00.000Z`,
         endTime: `${futureDate}T11:00:00.000Z`,
         status: 'CONFIRMED',
@@ -534,7 +417,6 @@ describe('BookingService', () => {
 
       service.createBooking({
         stationId: validUuid,
-        gameId: 'game-01',
         bookingDate: futureDate,
         startTime: '10:00',
         endTime: '11:00',
@@ -542,13 +424,7 @@ describe('BookingService', () => {
         pointsToRedeem: 100
       }).subscribe((res) => {
         expect(apiSpy.post).toHaveBeenCalled();
-        const postCall = apiSpy.post.calls.mostRecent();
-        const payload = postCall.args[1] as { gameId: string; stationId: string };
-        expect(postCall.args[0]).toBe('/bookings');
-        expect(payload.gameId).toBe('game-01');
-        expect(payload.stationId).toBe(validUuid);
         expect(res.id).toBe(backendBooking.id);
-        expect(res.gameId).toBe('game-01');
         expect(res.bookingReference).toContain('GC-12345678');
         expect(res.stationName).toBe('PS5 PS5-01');
         expect(res.totalAmount).toBe(1000);
@@ -560,7 +436,7 @@ describe('BookingService', () => {
       });
     });
 
-    it('should handle startTime/endTime already formatted as ISO string, send gameId, and roll past date forward', (done) => {
+    it('should handle startTime/endTime already formatted as ISO string and roll past date forward', (done) => {
       const orig = environment.useMocks;
       environment.useMocks = false;
 
@@ -572,7 +448,6 @@ describe('BookingService', () => {
         id: '',
         userId: 'usr-1',
         stationId: validUuid,
-        gameId: 'game-02',
         startTime: '',
         endTime: '',
         status: ''
@@ -582,15 +457,13 @@ describe('BookingService', () => {
 
       service.createBooking({
         stationId: validUuid,
-        gameId: 'game-02',
         bookingDate: '2020-01-01',
         startTime: pastStartIso,
         endTime: pastEndIso,
         paymentMethod: 'CARD'
       }).subscribe((res) => {
         expect(apiSpy.post).toHaveBeenCalled();
-        const callArgs = apiSpy.post.calls.mostRecent().args[1] as { startTime: string; endTime: string; gameId: string };
-        expect(callArgs.gameId).toBe('game-02');
+        const callArgs = apiSpy.post.calls.mostRecent().args[1] as { startTime: string; endTime: string };
         // Should have rolled forward to tomorrow or after
         expect(new Date(callArgs.startTime).getTime()).toBeGreaterThan(Date.now());
         expect(res.stationName).toBe(validUuid);

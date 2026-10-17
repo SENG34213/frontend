@@ -4,9 +4,6 @@ import { provideRouter, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
 import { AdminBookingsComponent } from './admin-bookings.component';
 import { BookingAdminService, PagedAdminBookings } from './booking-admin.service';
-import { StationAdminService } from '../stations/station-admin.service';
-import { UserAdminService } from '../users/user-admin.service';
-import { NotificationSocketService } from '../../../core/services/notification-socket.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { AdminBookingRow } from '../../../shared/models';
 
@@ -73,9 +70,6 @@ describe('AdminBookingsComponent', () => {
   let component: AdminBookingsComponent;
   let fixture: ComponentFixture<AdminBookingsComponent>;
   let svcSpy: jasmine.SpyObj<BookingAdminService>;
-  let stationAdminServiceSpy: jasmine.SpyObj<StationAdminService>;
-  let userAdminServiceSpy: jasmine.SpyObj<UserAdminService>;
-  let notificationSocketServiceSpy: jasmine.SpyObj<NotificationSocketService>;
   let toastSpy: jasmine.SpyObj<ToastService>;
 
   beforeEach(async () => {
@@ -90,28 +84,11 @@ describe('AdminBookingsComponent', () => {
     svcSpy.createWalkIn.and.returnValue(of({ ...mockRows[0], source: 'WALK_IN' as const, status: 'PENDING' as const }));
     svcSpy.exportCsv.and.returnValue('/api/bookings/admin/export.csv');
 
-    stationAdminServiceSpy = jasmine.createSpyObj('StationAdminService', ['getAllStations']);
-    stationAdminServiceSpy.getAllStations.and.returnValue(of([]));
-
-    userAdminServiceSpy = jasmine.createSpyObj('UserAdminService', ['getUsers']);
-    userAdminServiceSpy.getUsers.and.returnValue(of({
-      content: [],
-      totalElements: 0,
-      totalPages: 0,
-      size: 100,
-      number: 0
-    }));
-
-    notificationSocketServiceSpy = jasmine.createSpyObj('NotificationSocketService', ['sendNotification']);
-
     await TestBed.configureTestingModule({
       imports: [AdminBookingsComponent, ReactiveFormsModule],
       providers: [
         provideRouter([]),
         { provide: BookingAdminService, useValue: svcSpy },
-        { provide: StationAdminService, useValue: stationAdminServiceSpy },
-        { provide: UserAdminService, useValue: userAdminServiceSpy },
-        { provide: NotificationSocketService, useValue: notificationSocketServiceSpy },
         { provide: ToastService, useValue: toastSpy },
         {
           provide: ActivatedRoute,

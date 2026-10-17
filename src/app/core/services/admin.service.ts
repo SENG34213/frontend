@@ -26,7 +26,7 @@ export class AdminService {
     );
   }
 
-  getPaymentStats(trendDays = 14): Observable<AdminPaymentStatsResponse> {
+  getPaymentStats(trendDays: number = 14): Observable<AdminPaymentStatsResponse> {
     if (environment.useMocks) {
       return this.mock.getAdminPaymentStats(trendDays);
     }
@@ -53,7 +53,7 @@ export class AdminService {
     );
   }
 
-  getRecentBookings(limit = 5): Observable<AdminBookingRow[]> {
+  getRecentBookings(limit: number = 5): Observable<AdminBookingRow[]> {
     if (environment.useMocks) {
       return this.mock.getAdminRecentBookings().pipe(
         map((rows) => rows.slice(0, limit))

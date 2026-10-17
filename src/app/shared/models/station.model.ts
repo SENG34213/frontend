@@ -54,12 +54,7 @@ export interface Game {
   id: string;
   title: string;
   genre?: string;
-  coverImage: string; // canonical — mapped from backend coverUrl
+  coverImage: string;
   badge?: string;
   publisher?: string;
-  platforms?: string[];
-  ageRating?: string;
-  maxPlayers?: number;
-  featured?: boolean;
-  active?: boolean;
 }
