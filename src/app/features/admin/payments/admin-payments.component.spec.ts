@@ -63,20 +63,21 @@ describe('AdminPaymentsComponent', () => {
       'success', 'error', 'warning'
     ]);
     const userSpy = jasmine.createSpyObj<UserAdminService>('UserAdminService', ['getUsers', 'getUserById']);
+    const mockCustomer = {
+      id: 'usr-001',
+      email: 'kasun@test.lk',
+      fullName: 'Kasun Perera',
+      role: 'CUSTOMER' as const,
+      enabled: true
+    };
     userSpy.getUsers.and.returnValue(of({
-      content: [{
-        id: 'usr-001',
-        email: 'kasun@test.lk',
-        fullName: 'Kasun Perera',
-        role: 'CUSTOMER',
-        enabled: true
-      }],
+      content: [mockCustomer],
       totalElements: 1,
       totalPages: 1,
       size: 100,
       number: 0
     }));
-    userSpy.getUserById.and.returnValue(of(null as any));
+    userSpy.getUserById.and.returnValue(of(mockCustomer));
 
     paymentSpy.getPayments.and.returnValue(of(mockPage));
     paymentSpy.getPaymentStats.and.returnValue(of(mockStats));
