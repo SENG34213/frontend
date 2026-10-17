@@ -1,0 +1,158 @@
+<section class="sgp-root" aria-label="Select a station and game">
+
+  <!-- ── STATION LIST ────────────────────────────────────────────────── -->
+  <div class="sgp-stations-section">
+    <h2 class="sgp-section-title">
+      <span class="sgp-title-icon">🏟️</span> CHOOSE YOUR STATION
+    </h2>
+    <p class="sgp-section-sub">Select a station to see the games available on it.</p>
+
+    @if (stationsLoading()) {
+      <div class="sgp-skeletons-row">
+        @for (n of [1,2,3,4]; track n) {
+          <div class="sgp-station-skeleton">
+            <gc-skeleton shape="rect" width="100%" height="120px"></gc-skeleton>
+            <gc-skeleton shape="text" width="70%" height="16px"></gc-skeleton>
+            <gc-skeleton shape="text" width="50%" height="12px"></gc-skeleton>
+          </div>
+        }
+      </div>
+    } @else if (activeStations().length === 0) {
+      <gc-empty-state
+        icon="🏟️"
+        title="No Stations Available"
+        description="There are no active game stations at the moment. Please check back later.">
+      </gc-empty-state>
+    } @else {
+      <div class="sgp-stations-grid" role="list">
+        @for (station of activeStations(); track station.id) {
+          <div
+            class="sgp-station-card"
+            [class.sgp-station-selected]="station.id === selectedStationId()"
+            role="button"
+            tabindex="0"
+            [attr.aria-pressed]="station.id === selectedStationId()"
+            [attr.aria-label]="station.name + ' — ' + (station.hourlyRate | number) + ' LKR/hr'"
+            (click)="selectStation(station.id)"
+            (keydown.enter)="selectStation(station.id)"
+            (keydown.space)="selectStation(station.id); $event.preventDefault()">
+
+            <!-- Station image -->
+            <div class="sgp-station-image-wrap">
+              <img
+                [src]="station.imageUrl || '/assets/images/ps5_console_01.jpg'"
+                [alt]="station.name"
+                class="sgp-station-img"
+                loading="lazy" />
+              <gc-badge
+                class="sgp-type-badge"
+                [variant]="getStationBadgeVariant(station.type)"
+                [showDot]="false">
+                {{ getStationTypeLabel(station.type) }}
+              </gc-badge>
+              @if (station.id === selectedStationId()) {
+                <div class="sgp-selected-ring" aria-hidden="true"></div>
+              }
+            </div>
+
+            <!-- Station info -->
+            <div class="sgp-station-info">
+              <h3 class="sgp-station-name">{{ station.name }}</h3>
+              <p class="sgp-station-specs">{{ station.specifications }}</p>
+              <div class="sgp-station-footer">
+                <span class="sgp-rate">LKR {{ station.hourlyRate | number }}<span class="sgp-rate-unit">/hr</span></span>
+                <span class="sgp-active-dot" [class.sgp-inactive]="!station.active">
+                  {{ station.active ? 'ACTIVE' : 'OFFLINE' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- ── GAME LIST ──────────────────────────────────────────────────── -->
+  @if (selectedStationId()) {
+    <div class="sgp-games-section" aria-live="polite" aria-label="Games available on selected station">
+      <h2 class="sgp-section-title">
+        <span class="sgp-title-icon">🎮</span> GAMES ON THIS STATION
+      </h2>
+      <p class="sgp-section-sub">Click a game to proceed to booking.</p>
+
+      @if (gamesLoading()) {
+        <div class="sgp-skeletons-row">
+          @for (n of [1,2,3,4]; track n) {
+            <div class="sgp-game-skeleton">
+              <gc-skeleton shape="rect" width="100%" height="200px"></gc-skeleton>
+              <gc-skeleton shape="text" width="80%" height="14px"></gc-skeleton>
+            </div>
+          }
+        </div>
+      } @else if (stationGames().length === 0) {
+        <gc-empty-state
+          icon="🎮"
+          title="No Games Installed"
+          description="This station does not have any games assigned yet.">
+        </gc-empty-state>
+      } @else {
+        <div class="sgp-games-grid" role="list">
+          @for (game of stationGames(); track game.id) {
+            <div
+              class="sgp-game-card"
+              [class.sgp-game-selected]="game.id === selectedGameId()"
+              role="button"
+              tabindex="0"
+              [attr.aria-pressed]="game.id === selectedGameId()"
+              [attr.aria-label]="game.title + ' — click to book'"
+              (click)="selectGame(game.id)"
+              (keydown.enter)="selectGame(game.id)"
+              (keydown.space)="selectGame(game.id); $event.preventDefault()">
+
+              <div class="sgp-game-cover-wrap">
+                <img
+                  [src]="game.coverImage"
+                  [alt]="game.title"
+                  class="sgp-game-cover"
+                  loading="lazy"
+                  (error)="$any($event.target).src='/assets/images/ps5_console_01.jpg'" />
+
+                <div class="sgp-game-overlay">
+                  <div class="sgp-game-meta">
+                    @if (game.genre) {
+                      <span class="sgp-game-genre">{{ game.genre }}</span>
+                    }
+                    @if (game.platforms && game.platforms.length > 0) {
+                      <div class="sgp-platforms">
+                        @for (p of game.platforms; track p) {
+                          <span class="sgp-platform-chip">{{ getPlatformIcon(p) }}</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <div class="sgp-game-bottom">
+                    <span class="sgp-game-title">{{ game.title }}</span>
+                    @if (game.ageRating) {
+                      <span class="sgp-age-badge">{{ game.ageRating | slice:5 }}</span>
+                    }
+                  </div>
+                </div>
+
+                @if (game.id === selectedGameId()) {
+                  <div class="sgp-game-check" aria-label="Selected">
+                    <span class="sgp-check-icon">✓</span>
+                  </div>
+                }
+
+                <div class="sgp-book-prompt">
+                  <span>BOOK NOW →</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+</section>
