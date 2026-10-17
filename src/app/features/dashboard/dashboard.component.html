@@ -1,46 +1,210 @@
-<div class="dashboard-page container">
-  <header class="dashboard-welcome">
-    <div>
-      <span class="welcome-badge">Active Session</span>
-      <h1>Welcome back, <span class="text-gradient">{{ authService.currentUser()?.email || 'Player' }}</span></h1>
-      <p class="subtitle">Reserve game consoles, compete in tournament brackets, and manage your Gaming Castle experience.</p>
+<main class="home-page">
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!--  HERO SECTION                                                   -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-bg" aria-hidden="true">
+      <div class="hero-glow hero-glow-1"></div>
+      <div class="hero-glow hero-glow-2"></div>
     </div>
-    <div class="welcome-status">
-      <gc-badge [variant]="authService.isAdmin() ? 'accent' : 'available'">
-        Role: {{ authService.role() }}
-      </gc-badge>
+
+    <div class="hero-content container">
+      <div class="hero-left">
+        <!-- Live badge -->
+        <div class="hero-live-badge" role="status" aria-live="polite">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span>LIVE IN JAFFNA</span>
+        </div>
+
+        <!-- Welcome chip for authenticated user -->
+        <div class="hero-user-chip">
+          <gc-badge [variant]="authService.isAdmin() ? 'accent' : 'available'" [showDot]="true">
+            {{ authService.currentUser()?.fullName || authService.currentUser()?.email || 'Player' }} · {{ authService.role() }}
+          </gc-badge>
+        </div>
+
+        <h1 id="hero-title" class="hero-headline">
+          THE ULTIMATE<br>
+          <span class="hero-accent">PS5</span><br>
+          <span class="hero-gradient">EXPERIENCE</span>
+        </h1>
+
+        <p class="hero-sub">
+          Step into a sanctuary of high-performance gaming.<br>
+          DualSense immersion, 4K visuals, and the most<br>
+          competitive community in the North.
+        </p>
+
+        <div class="hero-ctas">
+          <gc-button
+            id="hero-book-btn"
+            variant="primary"
+            size="lg"
+            (btnClick)="bookSlot()">
+            BOOK A SLOT NOW
+          </gc-button>
+          <gc-button
+            id="hero-tournament-btn"
+            variant="outline"
+            size="lg"
+            (btnClick)="joinTournament()">
+            JOIN A TOURNAMENT
+          </gc-button>
+        </div>
+      </div>
+
+      <div class="hero-right" aria-hidden="true">
+        <!-- Event card overlay -->
+        <div class="hero-event-card">
+          <span class="event-label">CURRENT EVENT</span>
+          <p class="event-name">FC24 OPEN CUP</p>
+          <p class="event-time">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Starts Saturday, 4PM
+          </p>
+        </div>
+      </div>
     </div>
-  </header>
+  </section>
 
-  <div class="grid grid-cols-3 gap-lg">
-    <gc-card title="Game Stations & Slots" subtitle="PS5 Pro • Xbox Series X • PC Arena" [interactive]="true" glow="blue">
-      <p>Browse live availability, reserve high-performance consoles, and enjoy seamless lounge gaming.</p>
-      <div card-footer class="flex justify-between items-center">
-        <span class="text-available font-mono">Real-time availability</span>
-        <a routerLink="/bookings">
-          <gc-button size="sm" variant="primary">Book a Slot</gc-button>
-        </a>
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!--  FEATURED GAMES CAROUSEL                                        -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section class="featured-section container" aria-labelledby="featured-title">
+    <div class="section-header">
+      <div>
+        <h2 id="featured-title" class="section-title-lg">FEATURED GAMES</h2>
+        <p class="section-desc">Experience the latest blockbusters on crystal-clear displays.</p>
       </div>
-    </gc-card>
+      <div class="carousel-controls" aria-label="Featured games navigation">
+        <button
+          id="featured-prev-btn"
+          type="button"
+          class="carousel-btn"
+          [disabled]="!canPrevFeatured()"
+          [attr.aria-disabled]="!canPrevFeatured()"
+          (click)="prevFeatured()"
+          aria-label="Previous featured games">
+          ←
+        </button>
+        <button
+          id="featured-next-btn"
+          type="button"
+          class="carousel-btn"
+          [disabled]="!canNextFeatured()"
+          [attr.aria-disabled]="!canNextFeatured()"
+          (click)="nextFeatured()"
+          aria-label="Next featured games">
+          →
+        </button>
+      </div>
+    </div>
 
-    <gc-card title="Tournament Arena" subtitle="Weekly Knockouts & Cash Prizes" [interactive]="true" glow="purple">
-      <p>Join EA FC 25, Tekken 8, and Valorant brackets. Track real-time knockout progression.</p>
-      <div card-footer class="flex justify-between items-center">
-        <span class="text-accent font-mono">Registration Open</span>
-        <a routerLink="/styleguide">
-          <gc-button size="sm" variant="secondary">View Brackets</gc-button>
-        </a>
-      </div>
-    </gc-card>
+    <div class="featured-grid" aria-label="Featured games list">
+      @if (featuredLoading()) {
+        @for (n of [1, 2, 3]; track n) {
+          <div class="featured-card-skeleton">
+            <gc-skeleton shape="rect" width="100%" height="260px"></gc-skeleton>
+            <gc-skeleton shape="text" width="60%" height="16px"></gc-skeleton>
+          </div>
+        }
+      } @else {
+        @for (game of visibleFeaturedGames; track game.id) {
+          <article
+            class="featured-card"
+            role="button"
+            tabindex="0"
+            [attr.aria-label]="game.title + ' — click to book'"
+            (click)="onFeaturedGameClick(game)"
+            (keydown.enter)="onFeaturedGameClick(game)"
+            (keydown.space)="onFeaturedGameClick(game); $event.preventDefault()">
 
-    <gc-card title="UI Kit & Styleguide" subtitle="FE-01 Design System" [interactive]="true">
-      <p>Explore all dark cyber theme tokens, form controls, modals, and responsive layout components.</p>
-      <div card-footer class="flex justify-between items-center">
-        <span class="text-muted font-mono">Dev Preview</span>
-        <a routerLink="/styleguide">
-          <gc-button size="sm" variant="outline">Open UI Kit</gc-button>
-        </a>
+            <div class="featured-card-img-wrap">
+              <img
+                [src]="game.coverImage"
+                [alt]="game.title"
+                class="featured-card-img"
+                loading="lazy"
+                (error)="$any($event.target).src='/assets/images/ps5_console_01.jpg'" />
+              <div class="featured-card-overlay" aria-hidden="true"></div>
+            </div>
+
+            <div class="featured-card-body">
+              @if (game.badge) {
+                <span class="featured-badge">{{ game.badge }}</span>
+              } @else if (game.featured) {
+                <span class="featured-badge">POPULAR CHOICE</span>
+              }
+              <h3 class="featured-card-title">{{ game.title }}</h3>
+              @if (game.genre) {
+                <span class="featured-card-genre">{{ game.genre }}</span>
+              }
+            </div>
+          </article>
+        }
+      }
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!--  STATION + GAME BROWSER                                          -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section class="browse-section container" aria-labelledby="browse-title">
+    <div class="section-header">
+      <div>
+        <h2 id="browse-title" class="section-title-lg">BROWSE STATIONS &amp; GAMES</h2>
+        <p class="section-desc">Select a station to see its game library. Click a game to jump straight to booking.</p>
       </div>
-    </gc-card>
-  </div>
-</div>
+    </div>
+
+    <gc-station-game-picker
+      (gameSelected)="onGameSelected($event)">
+    </gc-station-game-picker>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!--  WHY GAMING CASTLE                                              -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section class="why-section container" aria-labelledby="why-title">
+    <h2 id="why-title" class="why-heading">
+      WHY <span class="why-brand">GAMING CASTLE?</span>
+    </h2>
+
+    <div class="why-grid">
+      @for (item of whyItems; track item.title) {
+        <article class="why-card" [class.why-card-accent]="item.accent">
+          <span class="why-icon" aria-hidden="true">{{ item.icon }}</span>
+          <h3 class="why-card-title">{{ item.title }}</h3>
+          <p class="why-card-desc">{{ item.description }}</p>
+        </article>
+      }
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!--  CTA SECTION                                                    -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section class="cta-section" aria-labelledby="cta-title">
+    <div class="cta-inner container">
+      <h2 id="cta-title" class="cta-headline">
+        READY TO CLAIM YOUR<br>
+        <span class="cta-accent">THRONE?</span>
+      </h2>
+      <p class="cta-sub">Join 2,000+ gamers in Jaffna's premier gaming hub. Slots fill up fast during weekends.</p>
+
+      <div class="cta-form" role="search">
+        <input
+          id="cta-email-input"
+          type="email"
+          class="cta-input"
+          placeholder="Enter your email for tournament alerts"
+          aria-label="Email for tournament alerts" />
+        <gc-button id="cta-alert-btn" variant="primary" (btnClick)="joinTournament()">GET ALERTS</gc-button>
+      </div>
+    </div>
+  </section>
+
+</main>
