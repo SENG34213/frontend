@@ -5,12 +5,14 @@ import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { BookingsComponent } from './bookings.component';
 import { BookingService } from '../../core/services/booking.service';
+import { NotificationSocketService } from '../../core/services/notification-socket.service';
 import { Station, Game, SlotAvailability } from '../../shared/models';
 
 describe('BookingsComponent', () => {
   let component: BookingsComponent;
   let fixture: ComponentFixture<BookingsComponent>;
   let mockBookingService: jasmine.SpyObj<BookingService>;
+  let mockNotificationSocketService: jasmine.SpyObj<NotificationSocketService>;
 
   const testStations: Station[] = [
     {
@@ -65,6 +67,9 @@ describe('BookingsComponent', () => {
       'getLoyaltyBalance',
       'createBooking'
     ]);
+    mockNotificationSocketService = jasmine.createSpyObj<NotificationSocketService>('NotificationSocketService', [
+      'sendNotification'
+    ]);
 
     mockBookingService.getStations.and.returnValue(of(testStations));
     mockBookingService.getStationGames.and.callFake((id: string) => {
@@ -103,6 +108,7 @@ describe('BookingsComponent', () => {
         provideHttpClient(),
         provideRouter([]),
         { provide: BookingService, useValue: mockBookingService },
+        { provide: NotificationSocketService, useValue: mockNotificationSocketService },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { queryParams: {} } }
@@ -417,6 +423,21 @@ describe('BookingsComponent', () => {
         'The selected game could not be found. Please choose another game.'
       );
       expect(mockBookingService.getStationGames).toHaveBeenCalledWith('st-01');
+    });
+
+    it('should emit real-time notification on successful booking confirmation', () => {
+      // Act
+      component.confirmPayment();
+
+      // Assert
+      expect(mockBookingService.createBooking).toHaveBeenCalled();
+      expect(mockNotificationSocketService.sendNotification).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: 'BOOKING_CREATED',
+          category: 'BOOKING'
+        })
+      );
+      expect(component.bookingSuccessReceipt()).toBeTruthy();
     });
   });
 });

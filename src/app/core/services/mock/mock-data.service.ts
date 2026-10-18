@@ -756,6 +756,53 @@ export class MockDataService {
     return of(list).pipe(delay(200));
   }
 
+  registerForTournament(
+    tournamentId: string,
+    gamerTag?: string,
+    userId?: string,
+    userName?: string
+  ): Observable<RegistrationResponse> {
+    const t = this.tournaments.find((item) => item.id === tournamentId);
+    if (!t) return throwError(() => new Error('Tournament not found'));
+
+    const currentList = this.mockRegistrations[tournamentId] || [];
+    const uid = userId || 'usr-customer-1';
+    if (currentList.some((r) => r.userId === uid && r.status !== 'CANCELLED')) {
+      return throwError(() => new Error('You are already registered for this tournament'));
+    }
+
+    const newReg: RegistrationResponse = {
+      id: 'reg-' + Math.floor(Math.random() * 90000 + 10000),
+      tournamentId,
+      tournamentName: t.name || t.title,
+      userId: uid,
+      userName: userName || 'Player',
+      gamerTag: gamerTag || 'Gamer_' + Math.floor(Math.random() * 999),
+      status: 'CONFIRMED',
+      paymentId: 'pay-' + Math.floor(Math.random() * 90000 + 10000),
+      registeredAt: new Date().toISOString()
+    };
+
+    if (!this.mockRegistrations[tournamentId]) {
+      this.mockRegistrations[tournamentId] = [];
+    }
+    this.mockRegistrations[tournamentId].push(newReg);
+    t.participantCount = (t.participantCount || 0) + 1;
+    if (t.currentParticipants !== undefined) {
+      t.currentParticipants = t.participantCount;
+    }
+    return of(newReg).pipe(delay(250));
+  }
+
+  getMyTournamentRegistrations(userId?: string): Observable<RegistrationResponse[]> {
+    const uid = userId || 'usr-customer-1';
+    const allRegs: RegistrationResponse[] = [];
+    Object.values(this.mockRegistrations).forEach((regs) => {
+      regs.filter((r) => r.userId === uid).forEach((r) => allRegs.push(r));
+    });
+    return of(allRegs).pipe(delay(200));
+  }
+
   generateBracket(tournamentId: string): Observable<BracketResponse> {
     const bracket: BracketResponse = {
       id: 'brk-' + Math.floor(Math.random() * 90000 + 10000),

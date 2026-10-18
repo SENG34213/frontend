@@ -119,7 +119,7 @@ export class DashboardComponent implements OnInit {
   }
 
   joinTournament(): void {
-    this.router.navigate(['/bookings']); // placeholder until tournaments page exists
+    this.router.navigate(['/tournaments']);
   }
 
   onFeaturedGameClick(game: Game): void {

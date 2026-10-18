@@ -20,13 +20,29 @@
       <nav class="nav-links" [class.mobile-open]="mobileMenuOpen()">
         <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">HOME</a>
         <a routerLink="/bookings" routerLinkActive="active" (click)="closeMobileMenu()">BOOKINGS</a>
-        <a routerLink="/dashboard" (click)="closeMobileMenu()">TOURNAMENTS</a>
+        <a routerLink="/tournaments" routerLinkActive="active" (click)="closeMobileMenu()">TOURNAMENTS</a>
         <a routerLink="/dashboard" (click)="closeMobileMenu()">PROFILE</a>
         <a routerLink="/styleguide" routerLinkActive="active" class="dev-nav-link" (click)="closeMobileMenu()">UI KIT</a>
       </nav>
 
       <!-- User Controls -->
       <div class="user-actions">
+        <!-- Real-Time Notification Bell Button -->
+        <button
+          type="button"
+          class="nav-notif-btn"
+          id="customer-nav-notif-btn"
+          (click)="notifService.toggleDrawer()"
+          [attr.aria-expanded]="notifService.isDrawerOpen()"
+          aria-label="Toggle real-time notifications">
+          <span class="bell-icon" [class.ringing]="notifService.unreadCount() > 0">🔔</span>
+          @if (notifService.unreadCount() > 0) {
+            <span class="nav-unread-badge">
+              {{ notifService.unreadCount() > 99 ? '99+' : notifService.unreadCount() }}
+            </span>
+          }
+        </button>
+
         @if (authService.currentUser(); as user) {
           <div class="user-badge-wrapper">
             <span class="user-name">{{ user.email || user.sub }}</span>
@@ -70,4 +86,7 @@
       <p class="copyright">© 2024 Gaming Castle Jaffna. Partnered with University of Kelaniya.</p>
     </div>
   </footer>
+
+  <!-- Real-time Customer Notifications Center (Drawer & Launcher) -->
+  <gc-notification-center [mode]="'customer'"></gc-notification-center>
 </div>

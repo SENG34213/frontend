@@ -47,6 +47,11 @@ Client-side Single Page Application (SPA) for the **Gaming Castle** online loung
 | `/login` | `LoginComponent` | Public | `guestGuard` | Customer & Admin login with `returnUrl` support (Fig 2) |
 | `/register` | `RegisterComponent` | Public | `guestGuard` | Customer account registration (Fig 3) |
 | `/dashboard` | `DashboardComponent` | `CustomerLayout` | `authGuard` | Customer primary landing and quick actions (Fig 1) |
+| `/bookings` | `BookingsComponent` | `CustomerLayout` | `authGuard` | Customer slot reservation & grid (Fig 4 / FE-14) |
+| `/tournaments` | `TournamentsListComponent` | `CustomerLayout` | `authGuard` | Customer tournaments list & countdown hero (Fig 5 / FE-19) |
+| `/tournaments/:id` | `TournamentDetailComponent` | `CustomerLayout` | `authGuard` | Tournament overview & entry fee registration (UC-08 / FE-20) |
+| `/tournaments/:id/bracket` | `TournamentBracketComponent` | `CustomerLayout` | `authGuard` | Knockout bracket tree & champion showcase (FR-15 / FE-21) |
+| `/my-tournaments` | Redirect to `/tournaments` | `CustomerLayout` | `authGuard` | Customer tournament registrations shortcut (FE-22) |
 | `/admin` | `AdminDashboardComponent` | `AdminLayout` | `roleGuard` (ADMIN) | Administrative operations overview (Fig C.15 / FE-26) |
 | `/admin/bookings` | `AdminBookingsComponent` | `AdminLayout` | `roleGuard` (ADMIN) | Admin booking management & walk-in desk (Fig C.16 / FE-27) |
 | `/admin/stations` | `AdminStationsComponent` | `AdminLayout` | `roleGuard` (ADMIN) | Game station hardware & rate management (FE-28) |

@@ -143,12 +143,12 @@ describe('DashboardComponent', () => {
       expect(router.navigate).toHaveBeenCalledWith(['/bookings']);
     });
 
-    it('should navigate to /bookings given joinTournament is called', () => {
+    it('should navigate to /tournaments given joinTournament is called', () => {
       // Act
       component.joinTournament();
 
       // Assert
-      expect(router.navigate).toHaveBeenCalledWith(['/bookings']);
+      expect(router.navigate).toHaveBeenCalledWith(['/tournaments']);
     });
   });
 });

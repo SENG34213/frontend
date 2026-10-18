@@ -60,6 +60,37 @@ export const routes: Routes = [
         pathMatch: 'full'
       },
       {
+        path: 'tournaments',
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/tournaments/tournaments-list/tournaments-list.component').then(
+                (m) => m.TournamentsListComponent
+              )
+          },
+          {
+            path: ':id',
+            loadComponent: () =>
+              import('./features/tournaments/tournament-detail/tournament-detail.component').then(
+                (m) => m.TournamentDetailComponent
+              )
+          },
+          {
+            path: ':id/bracket',
+            loadComponent: () =>
+              import('./features/tournaments/tournament-bracket/tournament-bracket.component').then(
+                (m) => m.TournamentBracketComponent
+              )
+          }
+        ]
+      },
+      {
+        path: 'my-tournaments',
+        redirectTo: 'tournaments',
+        pathMatch: 'full'
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'
