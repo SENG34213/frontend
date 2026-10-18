@@ -1,0 +1,435 @@
+<div class="tournaments-page container">
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 1. FEATURED TOURNAMENT HERO BANNER                             -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  @if (featuredTournament(); as featured) {
+    <section class="hero-featured" aria-labelledby="hero-tournament-title">
+      <div class="hero-glow-layer" aria-hidden="true"></div>
+
+      <div class="hero-content">
+        <div class="hero-badge-row">
+          <gc-badge [variant]="tournamentService.getStatusBadgeInfo(featured.status, featured.isFull, featured.isRegistrationOpen).variant" [showDot]="true">
+            {{ tournamentService.getStatusBadgeInfo(featured.status, featured.isFull, featured.isRegistrationOpen).label }}
+          </gc-badge>
+          <span class="game-tag">{{ featured.gameTitle || 'Esports Tournament' }}</span>
+        </div>
+
+        <h1 id="hero-tournament-title" class="hero-title">
+          {{ featured.name }}
+        </h1>
+
+        <p class="hero-meta">
+          <span class="meta-item">
+            <span class="icon" aria-hidden="true">📅</span>
+            <span>{{ formatDate(featured.startDate) }}</span>
+          </span>
+          <span class="meta-item">
+            <span class="icon" aria-hidden="true">📍</span>
+            <span>Gaming Castle Arena (Jaffna)</span>
+          </span>
+          <span class="meta-item fee">
+            <span class="icon" aria-hidden="true">💎</span>
+            <span>Entry Fee: <strong>{{ tournamentService.formatLkr(featured.entryFee) }}</strong></span>
+          </span>
+        </p>
+
+        <!-- Live Countdown Clock -->
+        <div class="countdown-container" aria-label="Countdown to tournament start">
+          <span class="countdown-label">STARTS IN:</span>
+          <div class="countdown-grid">
+            <div class="time-block">
+              <span class="time-val">{{ heroCountdown().days }}</span>
+              <span class="time-unit">DAYS</span>
+            </div>
+            <span class="time-separator" aria-hidden="true">:</span>
+            <div class="time-block">
+              <span class="time-val">{{ heroCountdown().hours | number:'2.0-0' }}</span>
+              <span class="time-unit">HRS</span>
+            </div>
+            <span class="time-separator" aria-hidden="true">:</span>
+            <div class="time-block">
+              <span class="time-val">{{ heroCountdown().minutes | number:'2.0-0' }}</span>
+              <span class="time-unit">MINS</span>
+            </div>
+            <span class="time-separator" aria-hidden="true">:</span>
+            <div class="time-block">
+              <span class="time-val">{{ heroCountdown().seconds | number:'2.0-0' }}</span>
+              <span class="time-unit">SECS</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Actions -->
+        <div class="hero-actions">
+          @if (isUserRegistered(featured.id)) {
+            <gc-button variant="secondary" size="lg" (btnClick)="viewDetails(featured.id)">
+              ✓ REGISTERED · VIEW DETAILS
+            </gc-button>
+          } @else if (featured.isRegistrationOpen && !featured.isFull) {
+            <gc-button variant="primary" size="lg" (btnClick)="openRegisterModal(featured)">
+              ⚡ REGISTER NOW ({{ tournamentService.formatLkr(featured.entryFee) }})
+            </gc-button>
+          } @else {
+            <gc-button variant="outline" size="lg" (btnClick)="viewDetails(featured.id)">
+              VIEW TOURNAMENT DETAILS
+            </gc-button>
+          }
+
+          <gc-button variant="ghost" size="lg" (btnClick)="viewBracket(featured.id)">
+            VIEW BRACKET & RULES →
+          </gc-button>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 2. NAVIGATION TABS                                              -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <nav class="tournament-tabs" aria-label="Tournament filters">
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'all'"
+      (click)="setTab('all')">
+      ALL TOURNAMENTS
+      <span class="tab-count">{{ tournaments().length }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'upcoming'"
+      (click)="setTab('upcoming')">
+      UPCOMING & OPEN
+    </button>
+
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'ongoing'"
+      (click)="setTab('ongoing')">
+      LIVE NOW
+    </button>
+
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'completed'"
+      (click)="setTab('completed')">
+      COMPLETED
+    </button>
+
+    @if (authService.isAuthenticated()) {
+      <button
+        type="button"
+        class="tab-btn tab-my"
+        [class.active]="activeTab() === 'my-registrations'"
+        (click)="setTab('my-registrations')">
+        🎮 MY REGISTRATIONS
+        @if (myRegistrations().length > 0) {
+          <span class="tab-count count-highlight">{{ myRegistrations().length }}</span>
+        }
+      </button>
+    }
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 3. SEARCH & CONTROLS TOOLBAR                                    -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section class="filter-toolbar" aria-label="Search and filter controls">
+    <div class="search-box">
+      <span class="search-icon" aria-hidden="true">🔍</span>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search tournament name or game..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearchChange($event)"
+        aria-label="Search tournaments"
+      />
+      @if (searchQuery()) {
+        <button type="button" class="clear-btn" (click)="onSearchChange('')" aria-label="Clear search">✕</button>
+      }
+    </div>
+
+    <div class="controls-group">
+      <!-- Game selector -->
+      <div class="select-wrapper">
+        <label for="game-select" class="control-label">GAME:</label>
+        <select
+          id="game-select"
+          class="custom-select"
+          [ngModel]="selectedGame()"
+          (ngModelChange)="selectedGame.set($event)">
+          <option value="ALL">All Games</option>
+          @for (game of availableGames(); track game) {
+            <option [value]="game">{{ game }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Sort selector -->
+      <div class="select-wrapper">
+        <label for="sort-select" class="control-label">SORT:</label>
+        <select
+          id="sort-select"
+          class="custom-select"
+          [ngModel]="sortBy()"
+          (ngModelChange)="sortBy.set($event)">
+          <option value="date_asc">Start Date (Earliest)</option>
+          <option value="date_desc">Start Date (Latest)</option>
+          <option value="fee_asc">Entry Fee (Low to High)</option>
+          <option value="fee_desc">Entry Fee (High to Low)</option>
+          <option value="spots_asc">Spots Left (Filling Fast)</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 4. TOURNAMENT CARDS GRID / STATES                              -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <main class="tournaments-grid-section" aria-live="polite">
+
+    <!-- Loading State: Skeleton Cards -->
+    @if (isLoading()) {
+      <div class="cards-grid">
+        @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+          <div class="skeleton-card">
+            <gc-skeleton width="100%" height="160px"></gc-skeleton>
+            <div style="padding: 1.25rem;">
+              <gc-skeleton width="60%" height="24px"></gc-skeleton>
+              <div style="margin-top: 0.75rem;">
+                <gc-skeleton width="90%" height="16px"></gc-skeleton>
+              </div>
+              <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem;">
+                <gc-skeleton width="48%" height="38px"></gc-skeleton>
+                <gc-skeleton width="48%" height="38px"></gc-skeleton>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Error State -->
+    @else if (errorMessage()) {
+      <div class="error-banner" role="alert">
+        <span class="error-icon" aria-hidden="true">⚠️</span>
+        <div class="error-text">
+          <p class="error-msg">{{ errorMessage() }}</p>
+          <p class="error-hint">NFR-08: Check your network connection or verify tournament service status.</p>
+        </div>
+        <gc-button variant="outline" size="sm" (btnClick)="loadData()">
+          TRY AGAIN
+        </gc-button>
+      </div>
+    }
+
+    <!-- Empty State -->
+    @else if (filteredTournaments().length === 0) {
+      <gc-empty-state
+        icon="🏆"
+        title="No Tournaments Found"
+        [description]="activeTab() === 'my-registrations'
+          ? 'You have not registered for any tournaments yet. Join an open tournament today to climb the leaderboard!'
+          : 'No tournaments match your current filters. Try resetting search query or selecting All Tournaments.'"
+        [actionLabel]="activeTab() === 'my-registrations' ? 'BROWSE OPEN TOURNAMENTS' : 'CLEAR FILTERS'"
+        (actionClick)="onResetFilters()">
+      </gc-empty-state>
+    }
+
+    <!-- Cards Grid -->
+    @else {
+      <div class="cards-grid">
+        @for (tournament of filteredTournaments(); track tournament.id) {
+          <article class="tournament-card" [class.card-registered]="isUserRegistered(tournament.id)">
+            <!-- Top Banner / Game Header -->
+            <div class="card-header">
+              <div class="game-badge">
+                <span class="controller-icon" aria-hidden="true">🎮</span>
+                <span class="game-name">{{ tournament.gameTitle || 'Esports' }}</span>
+              </div>
+
+              <gc-badge [variant]="tournamentService.getStatusBadgeInfo(tournament.status, tournament.isFull, tournament.isRegistrationOpen).variant" [showDot]="true">
+                {{ tournamentService.getStatusBadgeInfo(tournament.status, tournament.isFull, tournament.isRegistrationOpen).label }}
+              </gc-badge>
+            </div>
+
+            <!-- Card Body -->
+            <div class="card-body">
+              <h2 class="tournament-title" (click)="viewDetails(tournament.id)">
+                {{ tournament.name }}
+              </h2>
+
+              <p class="card-schedule">
+                <span class="icon" aria-hidden="true">📅</span>
+                <span>{{ formatDate(tournament.startDate) }}</span>
+              </p>
+
+              <!-- Capacity / Spots Meter -->
+              <div class="capacity-section">
+                <div class="capacity-labels">
+                  <span class="players-count">
+                    {{ tournament.participantCount }} / {{ tournament.maxParticipants }} Players
+                  </span>
+                  @if (tournament.isFull) {
+                    <span class="spots-full">CAPACITY REACHED</span>
+                  } @else {
+                    <span class="spots-left">{{ tournament.spotsLeft }} SPOTS LEFT</span>
+                  }
+                </div>
+                <div class="progress-bar-bg" role="progressbar" [attr.aria-valuenow]="tournament.participantCount" [attr.aria-valuemin]="0" [attr.aria-valuemax]="tournament.maxParticipants">
+                  <div
+                    class="progress-fill"
+                    [class.fill-full]="tournament.isFull"
+                    [style.width.%]="tournament.progressPercent">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Entry Fee & Pricing -->
+              <div class="price-row">
+                <span class="price-label">ENTRY FEE:</span>
+                <span class="price-value">{{ tournamentService.formatLkr(tournament.entryFee) }}</span>
+              </div>
+
+              <!-- Explanatory State (NFR-08: plain English corrective action) -->
+              @if (tournament.isFull && !isUserRegistered(tournament.id)) {
+                <p class="disabled-explanation">
+                  🔒 Registration is full. Follow the bracket and results as matches progress.
+                </p>
+              } @else if (tournament.status === 'COMPLETED') {
+                <p class="disabled-explanation">
+                  🏁 This tournament has completed. View the bracket to see final match results and the champion.
+                </p>
+              } @else if (tournament.isClosingSoon) {
+                <p class="warning-explanation">
+                  ⚡ Registration deadline closing soon! Secure your bracket slot now.
+                </p>
+              }
+            </div>
+
+            <!-- Card Actions Footer -->
+            <footer class="card-footer">
+              @if (isUserRegistered(tournament.id)) {
+                <div class="registered-chip">
+                  <span>✓ REGISTERED</span>
+                </div>
+                <gc-button variant="outline" size="sm" (btnClick)="viewDetails(tournament.id)">
+                  DETAILS
+                </gc-button>
+                <gc-button variant="ghost" size="sm" (btnClick)="viewBracket(tournament.id)">
+                  BRACKET
+                </gc-button>
+              } @else if (tournament.isRegistrationOpen && !tournament.isFull) {
+                <gc-button variant="primary" size="sm" (btnClick)="openRegisterModal(tournament)">
+                  REGISTER NOW
+                </gc-button>
+                <gc-button variant="outline" size="sm" (btnClick)="viewDetails(tournament.id)">
+                  DETAILS
+                </gc-button>
+              } @else {
+                <gc-button variant="outline" size="sm" (btnClick)="viewDetails(tournament.id)">
+                  DETAILS
+                </gc-button>
+                <gc-button variant="ghost" size="sm" (btnClick)="viewBracket(tournament.id)">
+                  BRACKET
+                </gc-button>
+              }
+            </footer>
+          </article>
+        }
+      </div>
+    }
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 5. QUICK REGISTRATION MODAL                                    -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  @if (registerModalOpen(); as open) {
+    <gc-modal
+      [isOpen]="open"
+      [title]="'Register for ' + (selectedTournamentForRegister()?.name || 'Tournament')"
+      (close)="closeRegisterModal()">
+
+      @if (selectedTournamentForRegister(); as tournament) {
+        <div class="registration-form">
+          <div class="tournament-summary-box">
+            <div class="summary-line">
+              <span class="label">GAME:</span>
+              <span class="val">{{ tournament.gameTitle }}</span>
+            </div>
+            <div class="summary-line">
+              <span class="label">START TIME:</span>
+              <span class="val">{{ formatDate(tournament.startDate) }}</span>
+            </div>
+            <div class="summary-line">
+              <span class="label">FORMAT:</span>
+              <span class="val">Single Elimination Knockout (1v1)</span>
+            </div>
+            <div class="summary-line highlight-line">
+              <span class="label">ENTRY FEE:</span>
+              <span class="val price">{{ tournamentService.formatLkr(tournament.entryFee) }}</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="gamer-tag-input" class="input-label">
+              GAMER TAG / IN-GAME NAME <span class="required">*</span>
+            </label>
+            <input
+              id="gamer-tag-input"
+              type="text"
+              class="form-control"
+              placeholder="e.g. ShadowStrikerLK"
+              [ngModel]="gamerTag()"
+              (ngModelChange)="gamerTag.set($event)"
+              [disabled]="isRegistering()"
+              maxlength="30"
+              autocomplete="off"
+            />
+            <span class="help-text">This name will be displayed on the tournament bracket and scoreboards.</span>
+          </div>
+
+          @if (registrationError()) {
+            <div class="modal-error" role="alert">
+              <span>⚠️ {{ registrationError() }}</span>
+            </div>
+          }
+
+          <div class="payment-notice">
+            <span class="notice-icon">💳</span>
+            <p>
+              By clicking "Confirm & Pay", your entry fee of
+              <strong>{{ tournamentService.formatLkr(tournament.entryFee) }}</strong>
+              will be processed and your spot reserved in the bracket.
+            </p>
+          </div>
+
+          <div class="modal-actions">
+            <gc-button
+              variant="outline"
+              size="md"
+              [disabled]="isRegistering()"
+              (btnClick)="closeRegisterModal()">
+              CANCEL
+            </gc-button>
+
+            <gc-button
+              variant="primary"
+              size="md"
+              [loading]="isRegistering()"
+              [disabled]="isRegistering()"
+              (btnClick)="submitRegistration()">
+              CONFIRM & PAY ({{ tournamentService.formatLkr(tournament.entryFee) }})
+            </gc-button>
+          </div>
+        </div>
+      }
+    </gc-modal>
+  }
+
+</div>
