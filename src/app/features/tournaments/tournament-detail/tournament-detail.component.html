@@ -1,0 +1,352 @@
+<div class="tournament-detail-page container">
+
+  <!-- Back Navigation Button -->
+  <div class="nav-back-row">
+    <button type="button" class="back-link" (click)="goBack()">
+      ← BACK TO ALL TOURNAMENTS
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="skeleton-container">
+      <gc-skeleton width="100%" height="240px"></gc-skeleton>
+      <div style="margin-top: 2rem; display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <gc-skeleton width="100%" height="350px"></gc-skeleton>
+        <gc-skeleton width="100%" height="350px"></gc-skeleton>
+      </div>
+    </div>
+  }
+
+  <!-- Error State -->
+  @else if (errorMessage()) {
+    <div class="error-banner" role="alert">
+      <span class="error-icon" aria-hidden="true">⚠️</span>
+      <div class="error-text">
+        <p class="error-msg">{{ errorMessage() }}</p>
+        <p class="error-hint">NFR-08: Check if the tournament ID is valid and that you have network access.</p>
+      </div>
+      <gc-button variant="outline" size="sm" (btnClick)="loadTournament(tournamentId())">
+        TRY AGAIN
+      </gc-button>
+    </div>
+  }
+
+  <!-- Tournament Content -->
+  @else {
+    @if (tournament(); as t) {
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- HERO HEADER BANNER                                             -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <header class="detail-hero" aria-labelledby="detail-title">
+      <div class="hero-bg-layer" aria-hidden="true"></div>
+
+      <div class="hero-top-row">
+        <div class="badge-group">
+          <gc-badge [variant]="tournamentService.getStatusBadgeInfo(t.status, t.isFull, t.isRegistrationOpen).variant" [showDot]="true">
+            {{ tournamentService.getStatusBadgeInfo(t.status, t.isFull, t.isRegistrationOpen).label }}
+          </gc-badge>
+          <span class="game-chip">{{ t.gameTitle || 'Console Esports' }}</span>
+        </div>
+
+        <div class="entry-fee-chip">
+          <span class="fee-label">ENTRY FEE:</span>
+          <span class="fee-amount">{{ tournamentService.formatLkr(t.entryFee) }}</span>
+        </div>
+      </div>
+
+      <h1 id="detail-title" class="detail-title">{{ t.name }}</h1>
+
+      <div class="detail-meta-grid">
+        <div class="meta-card">
+          <span class="meta-icon" aria-hidden="true">📅</span>
+          <div class="meta-info">
+            <span class="meta-label">START DATE & TIME</span>
+            <span class="meta-val">{{ formatDate(t.startDate) }}</span>
+          </div>
+        </div>
+
+        <div class="meta-card">
+          <span class="meta-icon" aria-hidden="true">⏱️</span>
+          <div class="meta-info">
+            <span class="meta-label">REGISTRATION DEADLINE</span>
+            <span class="meta-val">{{ formatDate(t.registrationDeadline) }}</span>
+          </div>
+        </div>
+
+        <div class="meta-card">
+          <span class="meta-icon" aria-hidden="true">📍</span>
+          <div class="meta-info">
+            <span class="meta-label">VENUE</span>
+            <span class="meta-val">Gaming Castle PS5 Pro Arena (Jaffna)</span>
+          </div>
+        </div>
+
+        <div class="meta-card">
+          <span class="meta-icon" aria-hidden="true">🏆</span>
+          <div class="meta-info">
+            <span class="meta-label">TOURNAMENT FORMAT</span>
+            <span class="meta-val">Single Elimination Knockout</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Countdown Banner -->
+      @if (!countdown().isPast) {
+        <div class="hero-countdown-strip">
+          <span class="strip-label">COUNTDOWN TO BATTLE:</span>
+          <div class="strip-clock">
+            <span class="clock-unit"><strong>{{ countdown().days }}</strong>d</span>
+            <span class="clock-unit"><strong>{{ countdown().hours | number:'2.0-0' }}</strong>h</span>
+            <span class="clock-unit"><strong>{{ countdown().minutes | number:'2.0-0' }}</strong>m</span>
+            <span class="clock-unit"><strong>{{ countdown().seconds | number:'2.0-0' }}</strong>s</span>
+          </div>
+        </div>
+      }
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- CONTENT LAYOUT (2 COLUMNS: DETAILS + REGISTRATION/BRACKET)     -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="content-columns">
+
+      <!-- LEFT COLUMN: Overview, Rules, and Capacity -->
+      <section class="left-column">
+
+        <!-- Capacity & Progression -->
+        <div class="detail-section-card">
+          <h2 class="section-heading">Player Capacity & Slots</h2>
+
+          <div class="capacity-box">
+            <div class="cap-header">
+              <span class="registered-count">
+                <strong>{{ t.participantCount }}</strong> of {{ t.maxParticipants }} Registered
+              </span>
+              @if (t.isFull) {
+                <span class="status-full">TOURNAMENT FULL</span>
+              } @else {
+                <span class="status-open">{{ t.spotsLeft }} SPOTS REMAINING</span>
+              }
+            </div>
+
+            <div class="progress-track" role="progressbar" [attr.aria-valuenow]="t.participantCount" [attr.aria-valuemin]="0" [attr.aria-valuemax]="t.maxParticipants">
+              <div class="progress-bar" [class.bar-full]="t.isFull" [style.width.%]="t.progressPercent"></div>
+            </div>
+
+            <p class="cap-hint">
+              @if (t.isFull) {
+                Registration for this tournament has reached its full limit of {{ t.maxParticipants }} participants.
+              } @else {
+                Registrations are accepted on a first-come, first-served basis until {{ formatDate(t.registrationDeadline) }}.
+              }
+            </p>
+          </div>
+        </div>
+
+        <!-- Rules & Guidelines -->
+        <div class="detail-section-card">
+          <h2 class="section-heading">Tournament Rules & Guidelines</h2>
+
+          <ul class="rules-list">
+            <li>
+              <span class="rule-bullet">⚡</span>
+              <div>
+                <strong>Check-In Requirement:</strong> All players must arrive at the Gaming Castle front desk at least 15 minutes before the scheduled match time.
+              </div>
+            </li>
+            <li>
+              <span class="rule-bullet">🎮</span>
+              <div>
+                <strong>Hardware & Settings:</strong> All matches are hosted on PlayStation 5 Pro consoles with DualSense Edge controllers. Standard default esports competitive settings apply.
+              </div>
+            </li>
+            <li>
+              <span class="rule-bullet">⚖️</span>
+              <div>
+                <strong>Fair Play & Conduct:</strong> Unsportsmanlike conduct, pause abuse, or offensive gamer tags result in immediate disqualification without refund.
+              </div>
+            </li>
+            <li>
+              <span class="rule-bullet">🏆</span>
+              <div>
+                <strong>Advancement:</strong> Winners immediately advance to the next round in the live single-elimination bracket.
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Quick Bracket Preview CTA -->
+        <div class="detail-section-card bracket-preview-card">
+          <div class="bracket-preview-content">
+            <div>
+              <h2 class="section-heading" style="margin-bottom: 0.35rem;">Tournament Bracket</h2>
+              <p class="preview-desc">
+                @if (bracket() && bracket()!.matches.length > 0) {
+                  The live knockout bracket is published with {{ bracket()!.matches.length }} scheduled matches.
+                } @else {
+                  The bracket will be automatically drawn once registration closes.
+                }
+              </p>
+            </div>
+            <gc-button variant="secondary" size="md" (btnClick)="goToBracket()">
+              VIEW LIVE BRACKET →
+            </gc-button>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- RIGHT COLUMN: Registration or Status Card -->
+      <aside class="right-column">
+
+        <!-- 1. USER ALREADY REGISTERED STATUS CARD -->
+        @if (isRegistered()) {
+          <div class="status-card registered-status-card" role="region" aria-label="Registration confirmed">
+            <div class="status-header">
+              <span class="check-icon" aria-hidden="true">✓</span>
+              <div>
+                <h3 class="status-title">YOU ARE REGISTERED!</h3>
+                <span class="status-sub">Your bracket slot is confirmed.</span>
+              </div>
+            </div>
+
+            <div class="registration-meta">
+              <div class="reg-row">
+                <span class="r-label">GAMER TAG:</span>
+                <span class="r-val">{{ userRegistration()?.gamerTag || authService.currentUser()?.fullName || 'Player' }}</span>
+              </div>
+              <div class="reg-row">
+                <span class="r-label">STATUS:</span>
+                <span class="r-val highlight">CONFIRMED</span>
+              </div>
+              @if (userRegistration()?.paymentId) {
+                <div class="reg-row">
+                  <span class="r-label">PAYMENT REF:</span>
+                  <span class="r-val mono">{{ userRegistration()?.paymentId }}</span>
+                </div>
+              }
+              <div class="reg-row">
+                <span class="r-label">REGISTERED AT:</span>
+                <span class="r-val">{{ formatDate(userRegistration()?.registeredAt) }}</span>
+              </div>
+            </div>
+
+            <div class="registered-actions">
+              <gc-button variant="secondary" size="lg" [fullWidth]="true" (btnClick)="goToBracket()">
+                VIEW MATCH BRACKET
+              </gc-button>
+            </div>
+          </div>
+        }
+
+        <!-- 2. REGISTRATION OPEN: ACTIVE FORM -->
+        @else if (canRegister()) {
+          <div class="status-card registration-active-card" role="form" aria-labelledby="register-box-title">
+            <h3 id="register-box-title" class="reg-box-title">Join this Tournament</h3>
+            <p class="reg-box-desc">Enter your gamer tag and confirm entry to claim your place in the bracket.</p>
+
+            <div class="form-content">
+              <div class="input-group">
+                <label for="detail-gamer-tag" class="field-label">
+                  GAMER TAG / IN-GAME NAME <span class="required">*</span>
+                </label>
+                <input
+                  id="detail-gamer-tag"
+                  type="text"
+                  class="field-input"
+                  placeholder="e.g. NeoApexLK"
+                  [ngModel]="gamerTag()"
+                  (ngModelChange)="gamerTag.set($event)"
+                  [disabled]="isRegistering()"
+                  maxlength="30"
+                  autocomplete="off"
+                />
+              </div>
+
+              <!-- Price Breakdown -->
+              <div class="price-breakdown">
+                <div class="p-line">
+                  <span>Entry Fee</span>
+                  <span>{{ tournamentService.formatLkr(t.entryFee) }}</span>
+                </div>
+                <div class="p-line">
+                  <span>Arena & Hardware Fee</span>
+                  <span class="free-text">INCLUDED</span>
+                </div>
+                <div class="p-line total-line">
+                  <span>TOTAL PAYABLE</span>
+                  <span class="total-amount">{{ tournamentService.formatLkr(t.entryFee) }}</span>
+                </div>
+              </div>
+
+              <!-- Rules agreement -->
+              <div class="checkbox-group">
+                <input
+                  id="agree-rules"
+                  type="checkbox"
+                  class="checkbox-input"
+                  [ngModel]="agreedToRules()"
+                  (ngModelChange)="agreedToRules.set($event)"
+                  [disabled]="isRegistering()"
+                />
+                <label for="agree-rules" class="checkbox-label">
+                  I agree to the tournament fair-play rules and agree to check in 15 mins before match time.
+                </label>
+              </div>
+
+              <!-- Error Alert (NFR-08) -->
+              @if (registrationError()) {
+                <div class="error-msg-box" role="alert">
+                  <span>⚠️ {{ registrationError() }}</span>
+                </div>
+              }
+
+              <!-- Submit Button -->
+              <gc-button
+                variant="primary"
+                size="lg"
+                [fullWidth]="true"
+                [loading]="isRegistering()"
+                [disabled]="isRegistering()"
+                (btnClick)="submitRegistration()">
+                CONFIRM & PAY ({{ tournamentService.formatLkr(t.entryFee) }})
+              </gc-button>
+
+              <p class="secure-checkout-text">
+                🔒 Secure Instant Confirmation · DualSense Edge Provided
+              </p>
+            </div>
+          </div>
+        }
+
+        <!-- 3. REGISTRATION CLOSED / FULL / COMPLETED -->
+        @else {
+          <div class="status-card closed-card" role="region" aria-label="Registration closed">
+            <div class="closed-header">
+              <span class="lock-icon" aria-hidden="true">🔒</span>
+              <h3 class="closed-title">REGISTRATION UNAVAILABLE</h3>
+            </div>
+
+            <p class="closed-desc">
+              @if (t.isFull) {
+                This tournament has reached the maximum capacity of {{ t.maxParticipants }} participants.
+              } @else if (t.status === 'COMPLETED') {
+                This tournament has ended. Check out the final bracket and winner!
+              } @else {
+                Registration for this tournament has concluded. You can still follow the live bracket.
+              }
+            </p>
+
+            <gc-button variant="secondary" size="lg" [fullWidth]="true" (btnClick)="goToBracket()">
+              VIEW BRACKET & MATCHES
+            </gc-button>
+          </div>
+        }
+
+      </aside>
+
+    </div>
+    }
+  }
+
+</div>
