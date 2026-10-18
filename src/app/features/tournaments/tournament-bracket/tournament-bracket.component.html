@@ -1,0 +1,137 @@
+<div class="bracket-page container">
+
+  <!-- Header & Back Navigation -->
+  <div class="bracket-nav-row">
+    <button type="button" class="back-link" (click)="goBack()">
+      ← BACK TO TOURNAMENT DETAILS
+    </button>
+
+    <gc-button variant="outline" size="sm" (btnClick)="refreshBracket()">
+      🔄 REFRESH BRACKET
+    </gc-button>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="bracket-skeleton">
+      <gc-skeleton width="100%" height="90px"></gc-skeleton>
+      <div style="margin-top: 2rem; display: flex; gap: 2rem; overflow-x: auto;">
+        <gc-skeleton width="280px" height="420px"></gc-skeleton>
+        <gc-skeleton width="280px" height="420px"></gc-skeleton>
+        <gc-skeleton width="280px" height="420px"></gc-skeleton>
+      </div>
+    </div>
+  }
+
+  <!-- Error State -->
+  @else if (errorMessage()) {
+    <div class="error-banner" role="alert">
+      <span class="error-icon" aria-hidden="true">⚠️</span>
+      <div class="error-text">
+        <p class="error-msg">{{ errorMessage() }}</p>
+      </div>
+      <gc-button variant="outline" size="sm" (btnClick)="refreshBracket()">
+        TRY AGAIN
+      </gc-button>
+    </div>
+  }
+
+  @else {
+    <!-- Title Header -->
+    <header class="bracket-header">
+      <div class="header-content">
+        <span class="sub-label">KNOCKOUT BRACKET & MATCHES</span>
+        <h1 class="tournament-name">{{ tournament()?.name || 'Tournament Bracket' }}</h1>
+        <p class="game-info">🎮 {{ tournament()?.gameTitle }} · Single Elimination Format</p>
+      </div>
+    </header>
+
+    <!-- Champion Showcase Banner (if tournament finished / champion crowned) -->
+    @if (champion(); as champ) {
+      <div class="champion-banner" role="region" aria-label="Tournament Champion">
+        <div class="champ-trophy" aria-hidden="true">🏆</div>
+        <div class="champ-info">
+          <span class="champ-badge">TOURNAMENT CHAMPION</span>
+          <h2 class="champ-name">{{ champ.name }}</h2>
+          <span class="champ-desc">Grand Finals Victor · Gaming Castle Hall of Fame</span>
+        </div>
+      </div>
+    }
+
+    <!-- Empty State: Bracket Not Generated Yet -->
+    @if (roundGroups().length === 0) {
+      <gc-empty-state
+        icon="⚔️"
+        title="Bracket Not Generated Yet"
+        message="The single-elimination tournament bracket will be automatically published once the registration deadline closes. Registered players will be placed into the matchups."
+        actionLabel="BACK TO TOURNAMENT"
+        (actionClicked)="goBack()">
+      </gc-empty-state>
+    }
+
+    <!-- Live Bracket Rounds Tree -->
+    @else {
+      <div class="bracket-scroll-wrapper" role="region" aria-label="Tournament knockout rounds">
+        <div class="bracket-tree">
+
+          @for (group of roundGroups(); track group.roundNumber) {
+            <div class="bracket-round-column">
+              <!-- Round Header -->
+              <div class="round-header">
+                <span class="round-title">{{ group.roundName }}</span>
+                <span class="round-matches-count">{{ group.matches.length }} Matches</span>
+              </div>
+
+              <!-- Matches in this Round -->
+              <div class="round-matches-list">
+                @for (match of group.matches; track match.id) {
+                  <article class="match-card" [class.match-completed]="match.status === 'COMPLETED'">
+                    <!-- Match Status Header -->
+                    <div class="match-meta">
+                      <span class="match-status-pill" [class.status-live]="match.status === 'IN_PROGRESS'" [class.status-done]="match.status === 'COMPLETED'">
+                        {{ match.status || 'SCHEDULED' }}
+                      </span>
+                      @if (match.scheduledTime) {
+                        <span class="match-time">{{ match.scheduledTime | date:'shortTime' }}</span>
+                      }
+                    </div>
+
+                    <!-- Participant 1 -->
+                    <div
+                      class="player-slot"
+                      [class.is-winner]="isWinner(match, match.participant1Id)"
+                      [class.is-bye]="!match.participant1Id">
+                      <span class="player-avatar" aria-hidden="true">👤</span>
+                      <span class="player-name">{{ getParticipantName(match.participant1Name, match.participant1Id) }}</span>
+                      @if (isWinner(match, match.participant1Id)) {
+                        <span class="winner-crown" title="Winner">👑</span>
+                      }
+                    </div>
+
+                    <div class="match-vs-divider">
+                      <span>VS</span>
+                    </div>
+
+                    <!-- Participant 2 -->
+                    <div
+                      class="player-slot"
+                      [class.is-winner]="isWinner(match, match.participant2Id)"
+                      [class.is-bye]="!match.participant2Id">
+                      <span class="player-avatar" aria-hidden="true">👤</span>
+                      <span class="player-name">{{ getParticipantName(match.participant2Name, match.participant2Id) }}</span>
+                      @if (isWinner(match, match.participant2Id)) {
+                        <span class="winner-crown" title="Winner">👑</span>
+                      }
+                    </div>
+                  </article>
+                }
+              </div>
+            </div>
+          }
+
+        </div>
+      </div>
+    }
+  }
+
+</div>
