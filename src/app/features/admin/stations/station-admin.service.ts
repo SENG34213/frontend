@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
-import { Observable, of, map, catchError } from 'rxjs';
+import { Observable, map, catchError } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 import { MockDataService } from '../../../core/services/mock/mock-data.service';
 import { environment } from '../../../../environments/environment';

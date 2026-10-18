@@ -9,7 +9,8 @@ import {
   CreateGameRequest,
   UpdateGameRequest,
   GameFilter,
-  AdminGameStatsResponse
+  AdminGameStatsResponse,
+  Station
 } from '../../../shared/models';
 
 @Injectable({ providedIn: 'root' })
@@ -165,12 +166,12 @@ export class GameAdminService {
    * Get all stations where this game is installed.
    * Maps to GET /api/games/{gameId}/stations
    */
-  getStationsForGame(gameId: string): Observable<any[]> {
+  getStationsForGame(gameId: string): Observable<Station[]> {
     if (environment.useMocks) {
       return of([]);
     }
 
-    return this.api.get<any[]>(`${this.gamesEndpoint}/${gameId}/stations`).pipe(
+    return this.api.get<Station[]>(`${this.gamesEndpoint}/${gameId}/stations`).pipe(
       catchError(() => of([]))
     );
   }
@@ -179,12 +180,12 @@ export class GameAdminService {
    * Update stations where this game is installed.
    * Maps to PUT /api/games/{gameId}/stations
    */
-  updateStationsForGame(gameId: string, stationIds: string[]): Observable<any[]> {
+  updateStationsForGame(gameId: string, stationIds: string[]): Observable<Station[]> {
     if (environment.useMocks) {
       return of([]);
     }
 
-    return this.api.put<any[]>(`${this.gamesEndpoint}/${gameId}/stations`, stationIds).pipe(
+    return this.api.put<Station[]>(`${this.gamesEndpoint}/${gameId}/stations`, stationIds).pipe(
       catchError(() => of([]))
     );
   }

@@ -7,7 +7,6 @@ import { environment } from '../../../../environments/environment';
 import {
   AdminReportResponse,
   ReportFilter,
-  ReportSummaryKpi,
   ReportDataPoint,
   ReportBreakdownItem,
   ReportTableColumn,
@@ -16,7 +15,10 @@ import {
   AdminUserStatsResponse,
   Station,
   PagedPayments,
-  PagedUsers
+  PagedUsers,
+  PaymentResponse,
+  AdminBookingRow,
+  UserSummaryResponse
 } from '../../../shared/models';
 import { PagedAdminBookings } from '../bookings/booking-admin.service';
 
@@ -68,10 +70,12 @@ export class ReportAdminService {
     if (type === 'revenue') {
       return forkJoin({
         stats: this.api.get<AdminPaymentStatsResponse>(`/payments/admin/stats?trendDays=${numDays}`).pipe(catchError(() => of(null))),
-        payments: this.api.get<PagedPayments | any>('/payments/admin/all?size=100').pipe(catchError(() => of({ content: [] })))
+        payments: this.api.get<PagedPayments | PaymentResponse[]>('/payments/admin/all?size=100').pipe(catchError(() => of({ content: [] })))
       }).pipe(
         map(({ stats, payments }) => {
-          const content: any[] = payments?.content || (Array.isArray(payments) ? payments : []);
+          const content: PaymentResponse[] = (payments && 'content' in payments && Array.isArray(payments.content))
+            ? payments.content
+            : (Array.isArray(payments) ? payments : []);
           const totalRev = stats?.monthRevenue || content.reduce((sum, p) => sum + (Number(p.amount) || 0), 0) || 0;
           const avgDaily = numDays > 0 ? Math.round(totalRev / numDays) : totalRev;
           const successfulCount = stats?.totalPaymentsSuccess ?? content.filter(p => p.status === 'SUCCESS').length;
@@ -149,11 +153,13 @@ export class ReportAdminService {
     if (type === 'utilization') {
       return forkJoin({
         stations: this.api.get<Station[]>('/stations').pipe(catchError(() => of([]))),
-        bookings: this.api.get<PagedAdminBookings | any>('/bookings/admin/all?size=100').pipe(catchError(() => of({ content: [] }))),
+        bookings: this.api.get<PagedAdminBookings | AdminBookingRow[]>('/bookings/admin/all?size=100').pipe(catchError(() => of({ content: [] }))),
         bookingStats: this.api.get<AdminBookingStatsResponse>('/bookings/admin/stats').pipe(catchError(() => of(null)))
       }).pipe(
         map(({ stations, bookings, bookingStats }) => {
-          const bkList: any[] = bookings?.content || (Array.isArray(bookings) ? bookings : []);
+          const bkList: AdminBookingRow[] = (bookings && 'content' in bookings && Array.isArray(bookings.content))
+            ? bookings.content
+            : (Array.isArray(bookings) ? bookings : []);
           const activeStations = stations.filter(s => s.active !== false);
 
           const stationStatsMap = new Map<string, { hours: number; count: number; rev: number }>();
@@ -247,10 +253,12 @@ export class ReportAdminService {
     if (type === 'bookings') {
       return forkJoin({
         stats: this.api.get<AdminBookingStatsResponse>('/bookings/admin/stats').pipe(catchError(() => of(null))),
-        bookings: this.api.get<PagedAdminBookings | any>('/bookings/admin/all?size=100').pipe(catchError(() => of({ content: [] })))
+        bookings: this.api.get<PagedAdminBookings | AdminBookingRow[]>('/bookings/admin/all?size=100').pipe(catchError(() => of({ content: [] })))
       }).pipe(
         map(({ stats, bookings }) => {
-          const content: any[] = bookings?.content || (Array.isArray(bookings) ? bookings : []);
+          const content: AdminBookingRow[] = (bookings && 'content' in bookings && Array.isArray(bookings.content))
+            ? bookings.content
+            : (Array.isArray(bookings) ? bookings : []);
           const totalBookings = stats?.allTimeTotalBookings ?? content.length;
           const monthBookings = stats?.monthTotalBookings ?? content.length;
           const confirmedCount = stats?.todayConfirmedBookings ?? content.filter(b => b.status === 'CONFIRMED').length;
@@ -315,10 +323,12 @@ export class ReportAdminService {
     // Default 'users' report
     return forkJoin({
       stats: this.api.get<AdminUserStatsResponse>('/users/admin/stats').pipe(catchError(() => of(null))),
-      users: this.api.get<PagedUsers | any>('/users?size=100').pipe(catchError(() => of({ content: [] })))
+      users: this.api.get<PagedUsers | UserSummaryResponse[]>('/users?size=100').pipe(catchError(() => of({ content: [] })))
     }).pipe(
       map(({ stats, users }) => {
-        const content: any[] = users?.content || (Array.isArray(users) ? users : []);
+        const content: UserSummaryResponse[] = (users && 'content' in users && Array.isArray(users.content))
+          ? users.content
+          : (Array.isArray(users) ? users : []);
         const totalUsers = stats?.totalUsers ?? content.length;
         const activeUsers = stats?.activeUsers ?? content.filter(u => u.enabled !== false).length;
         const deactUsers = stats?.deactivatedUsers ?? content.filter(u => u.enabled === false).length;

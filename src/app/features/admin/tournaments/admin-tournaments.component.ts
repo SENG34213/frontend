@@ -457,7 +457,9 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
   }
 
   onSortChange(sort: string): void {
-    this.sortBy.set(sort as any);
+    if (sort === 'date_asc' || sort === 'date_desc' || sort === 'fee_asc' || sort === 'fee_desc') {
+      this.sortBy.set(sort);
+    }
   }
 
   clearFilters(): void {

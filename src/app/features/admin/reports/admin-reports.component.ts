@@ -10,8 +10,7 @@ import {
   ReportType,
   DateRangePreset,
   ReportFilter,
-  AdminReportResponse,
-  ReportDataPoint
+  AdminReportResponse
 } from '../../../shared/models';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
@@ -194,11 +193,21 @@ export class AdminReportsComponent implements OnInit, OnDestroy {
     return Math.max(8, Math.round((val / max) * 100));
   }
 
-  formatCellValue(val: any, format?: string): string {
+  formatCellValue(val: unknown, format?: string): string {
     if (val === null || val === undefined) return '—';
     if (format === 'currency') return `LKR ${Number(val).toLocaleString()}`;
     if (format === 'percentage') return `${val}%`;
     if (format === 'number') return Number(val).toLocaleString();
+    if (format === 'date') {
+      try {
+        const d = new Date(val as string | number | Date);
+        return isNaN(d.getTime()) ? String(val) : d.toLocaleDateString('en-US', {
+          month: 'short', day: 'numeric', year: 'numeric'
+        });
+      } catch {
+        return String(val);
+      }
+    }
     return String(val);
   }
 }

@@ -10,7 +10,7 @@ export interface AdminNotification {
   link?: string;
   read: boolean;
   createdAt: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface NotificationPayload {
@@ -20,6 +20,6 @@ export interface NotificationPayload {
   message: string;
   referenceId?: string;
   link?: string;
-  data?: Record<string, any>;
-  metadata?: Record<string, any>;
+  data?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }

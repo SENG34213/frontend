@@ -2,6 +2,7 @@
   <div class="booking-layout">
     <!-- LEFT COLUMN: Session Date & Time, Console, Games -->
     <div class="booking-content-col">
+
       <!-- 1. SELECT YOUR SESSION -->
       <section class="section-block" aria-labelledby="session-title">
         <h2 id="session-title" class="section-title">SELECT YOUR SESSION</h2>
@@ -31,7 +32,7 @@
               </div>
             </div>
 
-            <!-- Weekday Headers (Mo, Tu, We, Th, Fr, Sa, Su - Sa and Su in purple) -->
+            <!-- Weekday Headers -->
             <div class="weekdays-grid">
               <span class="weekday">Mo</span>
               <span class="weekday">Tu</span>
@@ -67,115 +68,184 @@
 
           <!-- Time Slots Grid -->
           <div class="time-slots-card" role="region" aria-label="Available Time Slots">
-            <div class="slots-grid">
-              @for (slot of availableSlots(); track slot.id) {
-                <button
-                  type="button"
-                  class="slot-btn"
-                  [class.selected]="slot.id === selectedSlotId() && slot.isAvailable"
-                  [class.occupied]="!slot.isAvailable"
-                  [class.booked]="!slot.isAvailable"
-                  [class.deactive]="!slot.isAvailable"
-                  [disabled]="!slot.isAvailable"
-                  [attr.aria-disabled]="!slot.isAvailable"
-                  (click)="selectSlot(slot)"
-                  [attr.aria-pressed]="slot.id === selectedSlotId() && slot.isAvailable"
-                  [attr.aria-label]="slot.startTime + ' to ' + slot.endTime + (!slot.isAvailable ? ' (Booked)' : '')">
-                  <span class="slot-start">{{ slot.startTime }}</span>
-                  <span class="slot-end">{{ slot.endTime }}</span>
-                  @if (!slot.isAvailable) {
-                    <span class="slot-badge booked-badge">Booked</span>
-                  }
-                </button>
-              }
-            </div>
+            @if (slotsLoading()) {
+              <div class="slots-loading-grid">
+                @for (n of [1,2,3,4,5,6]; track n) {
+                  <gc-skeleton shape="rect" height="60px"></gc-skeleton>
+                }
+              </div>
+            } @else {
+              <div class="slots-grid">
+                @for (slot of availableSlots(); track slot.id) {
+                  <button
+                    type="button"
+                    class="slot-btn"
+                    [class.selected]="slot.id === selectedSlotId() && slot.isAvailable"
+                    [class.occupied]="!slot.isAvailable"
+                    [class.booked]="!slot.isAvailable"
+                    [class.deactive]="!slot.isAvailable"
+                    [disabled]="!slot.isAvailable"
+                    [attr.aria-disabled]="!slot.isAvailable"
+                    (click)="selectSlot(slot)"
+                    [attr.aria-pressed]="slot.id === selectedSlotId() && slot.isAvailable"
+                    [attr.aria-label]="slot.startTime + ' to ' + slot.endTime + (!slot.isAvailable ? ' (Booked)' : '')">
+                    <span class="slot-start">{{ slot.startTime }}</span>
+                    <span class="slot-end">{{ slot.endTime }}</span>
+                    @if (!slot.isAvailable) {
+                      <span class="slot-badge booked-badge">Booked</span>
+                    }
+                  </button>
+                }
+              </div>
+            }
           </div>
         </div>
       </section>
 
-      <!-- 2. CHOOSE CONSOLE -->
+      <!-- 2. CHOOSE STATION -->
       <section class="section-block" aria-labelledby="console-title">
-        <h2 id="console-title" class="section-title">CHOOSE CONSOLE</h2>
+        <h2 id="console-title" class="section-title">CHOOSE STATION</h2>
 
-        <div class="consoles-grid">
-          @for (station of activeStations(); track station.id) {
-            <div
-              class="console-card"
-              [class.selected]="station.id === selectedStationId()"
-              (click)="selectStation(station.id)"
-              role="button"
-              tabindex="0"
-              (keydown.enter)="selectStation(station.id)"
-              (keydown.space)="selectStation(station.id); $event.preventDefault()"
-              [attr.aria-pressed]="station.id === selectedStationId()">
-              
-              <!-- Console Card Image with Selected Badge -->
-              <div class="console-image-wrapper">
-                <img
-                  [src]="station.imageUrl || '/assets/images/ps5_console_01.jpg'"
-                  [alt]="station.name"
-                  class="console-img"
-                  loading="lazy" />
-
-                @if (station.id === selectedStationId()) {
-                  <span class="selected-badge">SELECTED</span>
-                }
+        @if (loading()) {
+          <div class="consoles-grid">
+            @for (n of [1,2,3]; track n) {
+              <div class="console-skeleton">
+                <gc-skeleton shape="rect" height="140px"></gc-skeleton>
+                <gc-skeleton shape="text" width="70%" height="16px"></gc-skeleton>
               </div>
+            }
+          </div>
+        } @else if (activeStations().length === 0) {
+          <gc-empty-state
+            icon="🏟️"
+            title="No Stations Available"
+            description="There are no active stations at the moment.">
+          </gc-empty-state>
+        } @else {
+          <div class="consoles-grid">
+            @for (station of activeStations(); track station.id) {
+              <div
+                class="console-card"
+                [class.selected]="station.id === selectedStationId()"
+                (click)="selectStation(station.id)"
+                role="button"
+                tabindex="0"
+                (keydown.enter)="selectStation(station.id)"
+                (keydown.space)="selectStation(station.id); $event.preventDefault()"
+                [attr.aria-pressed]="station.id === selectedStationId()"
+                [attr.aria-label]="station.name + ' — ' + (station.hourlyRate | number) + ' LKR/hr'">
 
-              <!-- Console Card Content -->
-              <div class="console-body">
-                <h3 class="console-name">{{ station.name }}</h3>
-                <p class="console-specs">{{ station.specifications || 'Ultra-High Speed SSD, DualSense™ Wireless Controller' }}</p>
+                <!-- Console Card Image with Selected Badge -->
+                <div class="console-image-wrapper">
+                  <img
+                    [src]="station.imageUrl || '/assets/images/ps5_console_01.jpg'"
+                    [alt]="station.name"
+                    class="console-img"
+                    loading="lazy" />
+                  <gc-badge
+                    class="console-type-badge"
+                    [variant]="getStationBadgeVariant(station.type)"
+                    [showDot]="false">
+                    {{ getStationTypeLabel(station.type) }}
+                  </gc-badge>
+                  @if (station.id === selectedStationId()) {
+                    <span class="selected-badge">SELECTED</span>
+                  }
+                </div>
 
-                <div class="console-footer">
-                  <div class="console-status">
-                    <span class="status-dot"></span>
-                    <span class="status-text">ACTIVE</span>
+                <!-- Console Card Content -->
+                <div class="console-body">
+                  <h3 class="console-name">{{ station.name }}</h3>
+                  <p class="console-specs">{{ station.specifications || 'High-performance gaming station' }}</p>
+
+                  <div class="console-footer">
+                    <div class="console-status">
+                      <span class="status-dot"></span>
+                      <span class="status-text">ACTIVE</span>
+                    </div>
+                    <span class="console-rate">LKR {{ station.hourlyRate | number }}/hr</span>
                   </div>
-                  <span class="controller-count">{{ station.controllersCount || 4 }} Controllers</span>
                 </div>
               </div>
-            </div>
-          }
-        </div>
+            }
+          </div>
+        }
       </section>
 
-      <!-- 3. AVAILABLE GAMES -->
-      <section class="section-block" aria-labelledby="games-title">
+      <!-- 3. AVAILABLE GAMES (station-specific) -->
+      <section class="section-block" aria-labelledby="games-title" aria-live="polite">
         <h2 id="games-title" class="section-title">AVAILABLE GAMES</h2>
 
-        <div class="games-grid">
-          @for (game of games(); track game.id) {
-            <div
-              class="game-card"
-              [class.selected]="game.id === selectedGameId()"
-              (click)="selectGame(game.id)"
-              role="button"
-              tabindex="0"
-              (keydown.enter)="selectGame(game.id)"
-              (keydown.space)="selectGame(game.id); $event.preventDefault()"
-              [attr.aria-pressed]="game.id === selectedGameId()">
-              
-              <div class="game-cover-wrapper">
-                <img
-                  [src]="game.coverImage"
-                  [alt]="game.title"
-                  class="game-cover-img"
-                  loading="lazy" />
-                
-                <div class="game-overlay">
-                  <span class="game-title">{{ game.title }}</span>
-                </div>
-
-                @if (game.id === selectedGameId()) {
-                  <div class="game-selected-indicator" aria-label="Game Selected">
-                    <span class="check-icon">✓</span>
-                  </div>
-                }
+        @if (!selectedStationId()) {
+          <gc-empty-state
+            icon="🎮"
+            title="Select a Station First"
+            description="Choose a station above to see the games installed on it.">
+          </gc-empty-state>
+        } @else if (gamesLoading()) {
+          <div class="games-grid">
+            @for (n of [1,2,3,4]; track n) {
+              <div class="game-skeleton">
+                <gc-skeleton shape="rect" height="200px"></gc-skeleton>
+                <gc-skeleton shape="text" width="75%" height="14px"></gc-skeleton>
               </div>
-            </div>
-          }
-        </div>
+            }
+          </div>
+        } @else if (stationGames().length === 0) {
+          <gc-empty-state
+            icon="🎮"
+            title="No Games on This Station"
+            description="This station does not have any games installed yet. Try a different station.">
+          </gc-empty-state>
+        } @else {
+          <div class="games-grid">
+            @for (game of stationGames(); track game.id) {
+              <div
+                class="game-card"
+                [class.selected]="game.id === selectedGameId()"
+                (click)="selectGame(game.id)"
+                role="button"
+                tabindex="0"
+                (keydown.enter)="selectGame(game.id)"
+                (keydown.space)="selectGame(game.id); $event.preventDefault()"
+                [attr.aria-pressed]="game.id === selectedGameId()"
+                [attr.aria-label]="game.title + (game.genre ? ' (' + game.genre + ')' : '')">
+
+                <div class="game-cover-wrapper">
+                  <img
+                    [src]="game.coverImage"
+                    [alt]="game.title"
+                    class="game-cover-img"
+                    loading="lazy"
+                    (error)="$any($event.target).src='/assets/images/ps5_console_01.jpg'" />
+
+                  <div class="game-overlay">
+                    @if (game.genre) {
+                      <span class="game-genre-tag">{{ game.genre }}</span>
+                    }
+                    <span class="game-title">{{ game.title }}</span>
+                    @if (game.ageRating) {
+                      <span class="game-age">{{ game.ageRating | slice:5 }}</span>
+                    }
+                  </div>
+
+                  @if (game.id === selectedGameId()) {
+                    <div class="game-selected-indicator" aria-label="Game Selected">
+                      <span class="check-icon">✓</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Validation hint when game is not selected -->
+        @if (selectedStationId() && !selectedGameId() && stationGames().length > 0) {
+          <p class="game-required-hint" role="alert" aria-live="polite">
+            ⚠️ Please select a game to proceed to payment.
+          </p>
+        }
       </section>
     </div>
 
@@ -184,21 +254,26 @@
       <div class="summary-panel" role="complementary" aria-label="Booking Summary">
         <h2 class="summary-title">BOOKING SUMMARY</h2>
 
+        <!-- Global error/info banner -->
+        @if (bookingErrorMessage() && !paymentModalOpen()) {
+          <div class="booking-error-banner" role="alert" aria-live="assertive">
+            <span>⚠️ {{ bookingErrorMessage() }}</span>
+          </div>
+        }
+
         <div class="summary-details">
           <!-- DATE & TIME -->
           <div class="summary-section">
             <div class="section-header-row">
-              <span class="section-meta-label">DATE & TIME</span>
-              <button type="button" class="edit-icon-btn" aria-label="Edit Date and Time">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-              </button>
+              <span class="section-meta-label">DATE &amp; TIME</span>
             </div>
             <p class="summary-highlight-text">{{ formattedSelectedDate() }}</p>
             <p class="summary-subtext">
-              {{ selectedSlot()?.startTime }} - {{ selectedSlot()?.endTime }} ({{ sessionHours() }} {{ sessionHours() === 1 ? 'hour' : 'hours' }})
+              @if (selectedSlot()) {
+                {{ selectedSlot()?.startTime }} - {{ selectedSlot()?.endTime }} ({{ sessionHours() }} {{ sessionHours() === 1 ? 'hour' : 'hours' }})
+              } @else {
+                No slot selected
+              }
             </p>
           </div>
 
@@ -206,14 +281,12 @@
           <div class="summary-section">
             <div class="section-header-row">
               <span class="section-meta-label">HARDWARE</span>
-              <button type="button" class="edit-icon-btn" aria-label="Edit Hardware">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-              </button>
             </div>
-            <p class="summary-highlight-text">{{ selectedStation().name }}</p>
+            @if (selectedStation()) {
+              <p class="summary-highlight-text">{{ selectedStation()?.name }}</p>
+            } @else {
+              <p class="summary-subtext summary-placeholder">No station selected</p>
+            }
           </div>
 
           <!-- SELECTED GAME -->
@@ -221,7 +294,20 @@
             <div class="section-header-row">
               <span class="section-meta-label">SELECTED GAME</span>
             </div>
-            <p class="summary-game-title">{{ selectedGame().title }}</p>
+            @if (selectedGame()) {
+              <p class="summary-game-title">{{ selectedGame()?.title }}</p>
+              @if (selectedGame()?.genre) {
+                <p class="summary-subtext">{{ selectedGame()?.genre }}</p>
+              }
+            } @else {
+              <p class="summary-subtext summary-placeholder">
+                @if (selectedStationId()) {
+                  Choose a game from the list
+                } @else {
+                  Select a station first
+                }
+              </p>
+            }
           </div>
 
           <!-- LOYALTY REWARD TOGGLE -->
@@ -270,16 +356,29 @@
             <span class="total-val">LKR {{ totalAmount() | number:'1.2-2' }}</span>
           </div>
 
-          <!-- CTA BUTTON -->
+          <!-- CTA BUTTON — disabled until station + game + slot are all selected -->
           <button
             type="button"
             class="proceed-btn"
-            [disabled]="!selectedSlot() || !selectedSlot()?.isAvailable"
+            [disabled]="!canProceedToPayment()"
+            [attr.aria-disabled]="!canProceedToPayment()"
             (click)="onProceedToPayment()"
             aria-label="Proceed to checkout and payment">
             PROCEED TO PAYMENT
             <span class="arrow-icon">→</span>
           </button>
+
+          @if (!canProceedToPayment()) {
+            <p class="proceed-hint" role="status">
+              @if (!selectedStation()) {
+                Select a station to continue
+              } @else if (!selectedGame()) {
+                Select a game to continue
+              } @else if (!selectedSlot()) {
+                Select a time slot to continue
+              }
+            </p>
+          }
 
           <!-- SECURITY BADGE -->
           <p class="security-note">
@@ -291,26 +390,31 @@
   </div>
 </div>
 
-<!-- CHECKOUT / PAYMENT MODAL (UC-03 & UC-06 & SDS 6.3.3) -->
+<!-- CHECKOUT / PAYMENT MODAL -->
 <gc-modal
   [isOpen]="paymentModalOpen()"
   [title]="bookingSuccessReceipt() ? 'Booking Confirmed' : 'Complete Reservation & Payment'"
   (closed)="closePaymentModal()">
-  
+
   @if (!bookingSuccessReceipt()) {
     <div class="payment-modal-body">
-      <!-- Order Quick Recalculation -->
+      <!-- Order Quick Summary -->
       <div class="modal-order-summary">
         <div class="flex justify-between items-center mb-sm">
-          <span class="text-secondary font-medium">{{ selectedStation().name }} • {{ sessionHours() }} {{ sessionHours() === 1 ? 'hour' : 'hours' }}</span>
+          <span class="text-secondary font-medium">{{ selectedStation()?.name }} • {{ sessionHours() }} {{ sessionHours() === 1 ? 'hour' : 'hours' }}</span>
           <span class="text-primary font-bold">LKR {{ totalAmount() | number:'1.2-2' }}</span>
         </div>
         <div class="text-xs text-muted">
           {{ formattedSelectedDate() }} • {{ selectedSlot()?.startTime }} - {{ selectedSlot()?.endTime }}
         </div>
+        @if (selectedGame()) {
+          <div class="modal-game-chip">
+            🎮 {{ selectedGame()?.title }}
+          </div>
+        }
       </div>
 
-      <!-- Payment Method (Card Payments Only) -->
+      <!-- Payment Method -->
       <div class="payment-method-selector mb-md">
         <span class="section-meta-label mb-xs block">PAYMENT METHOD</span>
         <div class="single-payment-method">
@@ -352,7 +456,7 @@
       </form>
 
       @if (bookingErrorMessage()) {
-        <div class="booking-error-banner mt-md mb-sm">
+        <div class="booking-error-banner mt-md mb-sm" role="alert" aria-live="assertive">
           <span>⚠️ {{ bookingErrorMessage() }}</span>
         </div>
       }
@@ -363,12 +467,12 @@
           (btnClick)="closePaymentModal()">
           Cancel
         </gc-button>
-        
+
         <gc-button
           variant="primary"
           [loading]="isProcessingPayment()"
           (btnClick)="confirmPayment()">
-          Pay LKR {{ totalAmount() | number:'1.2-2' }} & Confirm
+          Pay LKR {{ totalAmount() | number:'1.2-2' }} &amp; Confirm
         </gc-button>
       </div>
     </div>
@@ -389,12 +493,12 @@
           <span class="font-bold text-white">{{ bookingSuccessReceipt()?.stationName }}</span>
         </div>
         <div class="receipt-row">
-          <span class="text-muted">Date & Time:</span>
-          <span class="text-white">{{ bookingSuccessReceipt()?.bookingDate }} • {{ bookingSuccessReceipt()?.startTime }} - {{ bookingSuccessReceipt()?.endTime }}</span>
+          <span class="text-muted">Game:</span>
+          <span class="text-accent font-semibold">{{ bookingSuccessReceipt()?.gameTitle || selectedGame()?.title || '—' }}</span>
         </div>
         <div class="receipt-row">
-          <span class="text-muted">Game:</span>
-          <span class="text-accent font-semibold">{{ selectedGame().title }}</span>
+          <span class="text-muted">Date &amp; Time:</span>
+          <span class="text-white">{{ bookingSuccessReceipt()?.bookingDate }} • {{ bookingSuccessReceipt()?.startTime }} - {{ bookingSuccessReceipt()?.endTime }}</span>
         </div>
         <div class="receipt-row total-highlight">
           <span class="font-bold text-white">Amount Paid:</span>
@@ -411,4 +515,5 @@
       </div>
     </div>
   }
+
 </gc-modal>
