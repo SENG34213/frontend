@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { BookingService } from '../../core/services/booking.service';
 import { AuthService } from '../../core/services/auth.service';
+import { NotificationSocketService } from '../../core/services/notification-socket.service';
 import { Station, Game, BookingResponse } from '../../shared/models';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { ModalComponent } from '../../shared/ui/modal/modal.component';
@@ -59,6 +60,7 @@ export interface DisplaySlot {
 })
 export class BookingsComponent implements OnInit {
   private readonly bookingService = inject(BookingService);
+  private readonly notifSocketService = inject(NotificationSocketService);
   private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
   readonly authService = inject(AuthService);
@@ -512,6 +514,14 @@ export class BookingsComponent implements OnInit {
         };
         this.isProcessingPayment.set(false);
         this.bookingSuccessReceipt.set(enriched);
+        this.notifSocketService.sendNotification({
+          type: 'BOOKING_CREATED',
+          category: 'BOOKING',
+          title: 'Booking Confirmed! 🎮',
+          message: `${enriched.stationName || 'Station'} reserved for ${slot.startTime} - ${slot.endTime} (${enriched.gameTitle || 'Game'})`,
+          referenceId: enriched.id,
+          link: '/bookings'
+        });
         this.loadSlotsForDate();
         this.loadLoyalty();
         this.cdr.markForCheck();

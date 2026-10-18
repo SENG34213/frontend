@@ -74,6 +74,66 @@
   gap: 1rem;
 }
 
+.nav-notif-btn {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid var(--gc-border-default, #263554);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--gc-transition-fast, 150ms ease);
+  outline: none;
+
+  &:hover {
+    background: rgba(37, 99, 235, 0.15);
+    border-color: var(--gc-primary, #2563eb);
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  .bell-icon {
+    font-size: 1.15rem;
+    transition: transform 0.2s ease;
+
+    &.ringing {
+      animation: bellShake 3s infinite ease-in-out;
+    }
+  }
+
+  .nav-unread-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #0f172a;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+  }
+}
+
+@keyframes bellShake {
+  0%, 100% { transform: rotate(0deg); }
+  2%, 6%, 10% { transform: rotate(14deg); }
+  4%, 8%, 12% { transform: rotate(-14deg); }
+  14% { transform: rotate(0deg); }
+}
+
 .user-badge-wrapper {
   display: flex;
   align-items: center;

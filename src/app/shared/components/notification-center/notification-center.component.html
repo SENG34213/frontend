@@ -1,19 +1,21 @@
 <!-- Floating Real-Time Notification Trigger Button (Bottom-Right) -->
-<aside class="floating-notification-anchor" aria-label="Real-time Admin Notifications">
-  <button
-    type="button"
-    class="notification-trigger-btn"
-    (click)="notifService.toggleDrawer()"
-    [attr.aria-expanded]="notifService.isDrawerOpen()"
-    aria-label="Open notifications center">
-    <span class="bell-icon" [class.ringing]="notifService.unreadCount() > 0">🔔</span>
-    
-    @if (notifService.unreadCount() > 0) {
-      <span class="unread-badge animate-pulse" aria-label="Unread notifications count">
-        {{ notifService.unreadCount() > 99 ? '99+' : notifService.unreadCount() }}
-      </span>
-    }
-  </button>
+<aside class="floating-notification-anchor" [attr.aria-label]="mode === 'customer' ? 'Real-time Customer Notifications' : 'Real-time Admin Notifications'">
+  @if (showFloatingTrigger) {
+    <button
+      type="button"
+      class="notification-trigger-btn"
+      (click)="notifService.toggleDrawer()"
+      [attr.aria-expanded]="notifService.isDrawerOpen()"
+      aria-label="Open notifications center">
+      <span class="bell-icon" [class.ringing]="notifService.unreadCount() > 0">🔔</span>
+      
+      @if (notifService.unreadCount() > 0) {
+        <span class="unread-badge animate-pulse" aria-label="Unread notifications count">
+          {{ notifService.unreadCount() > 99 ? '99+' : notifService.unreadCount() }}
+        </span>
+      }
+    </button>
+  }
 
   <!-- Flyout Notification Drawer / Window -->
   @if (notifService.isDrawerOpen()) {
@@ -23,7 +25,7 @@
         <div class="header-left">
           <span class="panel-icon">🔔</span>
           <div class="title-group">
-            <h3 class="panel-title">Notifications</h3>
+            <h3 class="panel-title">{{ mode === 'customer' ? 'Notifications' : 'Admin Notifications' }}</h3>
             <div class="socket-status" [class.connected]="notifService.isConnected()">
               <span class="status-dot"></span>
               <span class="status-text">{{ notifService.isConnected() ? 'Socket.IO Live' : 'Reconnecting...' }}</span>
@@ -87,7 +89,7 @@
         <button
           type="button"
           class="btn-test-alert"
-          (click)="notifService.sendTestAlert()"
+          (click)="onTestAlert()"
           title="Send a sample real-time notification to test socket broadcast">
           ⚡ Test Alert
         </button>
@@ -127,7 +129,7 @@
                   <div class="item-footer">
                     @if (item.link) {
                       <a
-                        [routerLink]="item.link"
+                        [routerLink]="getNotificationLink(item)"
                         class="item-link-btn"
                         (click)="notifService.closeDrawer()">
                         View Page →

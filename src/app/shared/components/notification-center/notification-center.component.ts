@@ -1,8 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NotificationSocketService } from '../../../core/services/notification-socket.service';
-import { NotificationCategory } from '../../models/notification.model';
+import { NotificationCategory, AdminNotification } from '../../models/notification.model';
 
 @Component({
   selector: 'gc-notification-center',
@@ -13,6 +13,23 @@ import { NotificationCategory } from '../../models/notification.model';
 })
 export class NotificationCenterComponent {
   readonly notifService = inject(NotificationSocketService);
+
+  @Input() mode: 'admin' | 'customer' = 'customer';
+  @Input() showFloatingTrigger = true;
+
+  getNotificationLink(notif: AdminNotification): string {
+    if (this.mode === 'customer') {
+      if (notif.link?.startsWith('/admin/bookings')) return '/bookings';
+      if (notif.link?.startsWith('/admin/tournaments')) return '/tournaments';
+      if (notif.link?.startsWith('/admin')) return '/dashboard';
+      return notif.link || '/dashboard';
+    }
+    return notif.link || '/admin';
+  }
+
+  onTestAlert(): void {
+    this.notifService.sendTestAlert(this.mode === 'customer');
+  }
 
   getCategoryIcon(category: NotificationCategory): string {
     switch (category) {

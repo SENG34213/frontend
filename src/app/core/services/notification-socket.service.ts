@@ -248,12 +248,17 @@ export class NotificationSocketService {
     if (t.includes('CANCEL')) return 'CANCEL';
     if (t.includes('RESCHEDULE')) return 'RESCHEDULE';
     if (t.includes('BOOKING') || t.includes('SLOT')) return 'BOOKING';
-    if (t.includes('TOURNAMENT')) return 'TOURNAMENT';
-    if (t.includes('PAYMENT')) return 'PAYMENT';
+    if (t.includes('TOURNAMENT') || t.includes('MATCH')) return 'TOURNAMENT';
+    if (t.includes('PAYMENT') || t.includes('LOYALTY') || t.includes('XP') || t.includes('POINTS')) return 'PAYMENT';
     return 'SYSTEM';
   }
 
-  sendTestAlert(): void {
+  sendTestAlert(isCustomer = false): void {
+    if (isCustomer) {
+      this.sendCustomerTestAlert();
+      return;
+    }
+
     const types: NotificationPayload[] = [
       {
         type: 'BOOKING_CREATED',
@@ -282,6 +287,49 @@ export class NotificationSocketService {
         title: 'Booking Slot Cancelled',
         message: 'Station VR-01 booking cancelled by customer',
         link: '/admin/bookings'
+      }
+    ];
+
+    const pick = types[Math.floor(Math.random() * types.length)];
+    this.sendNotification(pick);
+  }
+
+  sendCustomerTestAlert(): void {
+    const types: NotificationPayload[] = [
+      {
+        type: 'BOOKING_CONFIRMED',
+        category: 'BOOKING',
+        title: 'Booking Confirmed! 🎮',
+        message: 'Station PS5-02 reserved for 2 hours today at 16:00 (LKR 1,600.00)',
+        link: '/bookings'
+      },
+      {
+        type: 'TOURNAMENT_ENROLLED',
+        category: 'TOURNAMENT',
+        title: 'Tournament Enrolled! 🏆',
+        message: 'You have entered Tekken 8 Knockout Championship Arena. View your bracket!',
+        link: '/tournaments'
+      },
+      {
+        type: 'MATCH_REMINDER',
+        category: 'TOURNAMENT',
+        title: 'Match Starting Soon ⚡',
+        message: 'Your Round 1 match begins in 15 minutes at Station PC-04!',
+        link: '/tournaments'
+      },
+      {
+        type: 'BOOKING_REMINDER',
+        category: 'BOOKING',
+        title: 'Session Reminder ⏰',
+        message: 'Your gaming session starts in 30 minutes at Gaming Castle Jaffna.',
+        link: '/bookings'
+      },
+      {
+        type: 'LOYALTY_AWARD',
+        category: 'PAYMENT',
+        title: 'Loyalty XP Rewarded! 🎁',
+        message: 'You earned +250 XP for completing your session. Keep leveling up!',
+        link: '/dashboard'
       }
     ];
 
