@@ -86,9 +86,24 @@ export const routes: Routes = [
         ]
       },
       {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/profile.component').then((m) => m.ProfileComponent)
+      },
+      {
+        path: 'my-bookings',
+        loadComponent: () =>
+          import('./features/my-bookings/my-bookings.component').then((m) => m.MyBookingsComponent)
+      },
+      {
         path: 'my-tournaments',
-        redirectTo: 'tournaments',
-        pathMatch: 'full'
+        loadComponent: () =>
+          import('./features/my-tournaments/my-tournaments.component').then((m) => m.MyTournamentsComponent)
+      },
+      {
+        path: 'loyalty',
+        loadComponent: () =>
+          import('./features/loyalty/loyalty.component').then((m) => m.LoyaltyComponent)
       },
       {
         path: '',

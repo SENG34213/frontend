@@ -249,7 +249,7 @@
 
 .admin-content {
   flex: 1 1 auto;
-  padding: 2rem;
+  padding: 2rem 2rem calc(var(--gc-spacing-2xl) + var(--gc-spacing-xl));
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
@@ -270,7 +270,7 @@
   }
 
   .admin-content {
-    padding: 1.5rem;
+    padding: 1.5rem 1.5rem calc(var(--gc-spacing-2xl) + var(--gc-spacing-xl));
   }
 }
 

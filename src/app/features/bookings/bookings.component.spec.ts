@@ -125,6 +125,17 @@ describe('BookingsComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('should render the calendar, available slots, and booking summary', () => {
+    expect(fixture.nativeElement.querySelector('.calendar-card')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[aria-label="Available Time Slots"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.summary-panel')).toBeTruthy();
+  });
+
+  it('should keep the calendar card in normal document flow', () => {
+    const calendarCard = fixture.nativeElement.querySelector('.calendar-card');
+    expect(getComputedStyle(calendarCard).position).toBe('static');
+  });
+
   it('should initialize with current month selected by default', () => {
     const now = new Date();
     const monthNames = [

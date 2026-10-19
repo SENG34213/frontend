@@ -176,6 +176,19 @@ describe('NotificationSocketService', () => {
 
     const postReq = httpMock.expectOne('http://localhost:5001/api/notify');
     expect(postReq.request.method).toBe('POST');
-    postReq.flush({ success: true, notification: {} as AdminNotification, unreadCount: 1 });
+    postReq.flush({
+      success: true,
+      notification: {
+        id: 'notif-test-123',
+        type: 'BOOKING_CONFIRMED',
+        category: 'BOOKING',
+        title: 'Booking Confirmed!',
+        message: 'Station PC-02 booked',
+        link: '/bookings',
+        read: false,
+        createdAt: new Date().toISOString()
+      } satisfies AdminNotification,
+      unreadCount: 1
+    });
   });
 });
