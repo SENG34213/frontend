@@ -438,6 +438,13 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.toast.success(`Pre-tournament reminders sent to registered players`);
+          this.notifSocketService.sendNotification({
+            type: 'MATCH_REMINDER',
+            category: 'TOURNAMENT',
+            title: 'Match Starting Soon ⚡',
+            message: `2-Hour Reminder: Upcoming match for ${t.name} (${t.gameTitle}) is starting soon!`,
+            link: '/tournaments'
+          });
         },
         error: () => {
           this.toast.error('Failed to dispatch notifications');
