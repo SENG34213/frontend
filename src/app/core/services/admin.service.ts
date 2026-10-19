@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin, map, catchError } from 'rxjs';
+import { Observable, forkJoin, map } from 'rxjs';
 import { ApiService } from './api.service';
-import { MockDataService } from './mock/mock-data.service';
 import { environment } from '../../../environments/environment';
 import {
   AdminBookingStatsResponse,
@@ -15,50 +14,24 @@ import {
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private readonly api = inject(ApiService);
-  private readonly mock = inject(MockDataService);
 
   getBookingStats(): Observable<AdminBookingStatsResponse> {
-    if (environment.useMocks) {
-      return this.mock.getAdminBookingStats();
-    }
-    return this.api.get<AdminBookingStatsResponse>('/bookings/admin/stats').pipe(
-      catchError(() => this.mock.getAdminBookingStats())
-    );
+    return this.api.get<AdminBookingStatsResponse>('/bookings/admin/stats');
   }
 
   getPaymentStats(trendDays = 14): Observable<AdminPaymentStatsResponse> {
-    if (environment.useMocks) {
-      return this.mock.getAdminPaymentStats(trendDays);
-    }
-    return this.api.get<AdminPaymentStatsResponse>(`/payments/admin/stats?trendDays=${trendDays}`).pipe(
-      catchError(() => this.mock.getAdminPaymentStats(trendDays))
-    );
+    return this.api.get<AdminPaymentStatsResponse>(`/payments/admin/stats?trendDays=${trendDays}`);
   }
 
   getUserStats(): Observable<AdminUserStatsResponse> {
-    if (environment.useMocks) {
-      return this.mock.getAdminUserStats();
-    }
-    return this.api.get<AdminUserStatsResponse>('/users/admin/stats').pipe(
-      catchError(() => this.mock.getAdminUserStats())
-    );
+    return this.api.get<AdminUserStatsResponse>('/users/admin/stats');
   }
 
   getTournamentStats(): Observable<AdminTournamentStatsResponse> {
-    if (environment.useMocks) {
-      return this.mock.getAdminTournamentStats();
-    }
-    return this.api.get<AdminTournamentStatsResponse>('/tournaments/admin/stats').pipe(
-      catchError(() => this.mock.getAdminTournamentStats())
-    );
+    return this.api.get<AdminTournamentStatsResponse>('/tournaments/admin/stats');
   }
 
   getRecentBookings(limit = 5): Observable<AdminBookingRow[]> {
-    if (environment.useMocks) {
-      return this.mock.getAdminRecentBookings().pipe(
-        map((rows) => rows.slice(0, limit))
-      );
-    }
     return this.api.get<{ content?: AdminBookingRow[] } | AdminBookingRow[]>(
       `/bookings/admin/all?size=${limit}&sort=createdAt,desc`
     ).pipe(
@@ -66,8 +39,7 @@ export class AdminService {
         if (Array.isArray(res)) return res.slice(0, limit);
         if (res && Array.isArray(res.content)) return res.content.slice(0, limit);
         return [];
-      }),
-      catchError(() => this.mock.getAdminRecentBookings().pipe(map((rows) => rows.slice(0, limit))))
+      })
     );
   }
 

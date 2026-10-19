@@ -1,7 +1,7 @@
 export const environment = {
   production: false,
   apiUrl: '/api',
-  useMocks: true,
+  useMocks: false,
   pollIntervalMs: 5000,
   sessionWarningWindowMs: 120000
 };

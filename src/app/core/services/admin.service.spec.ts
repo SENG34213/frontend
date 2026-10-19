@@ -98,19 +98,10 @@ describe('AdminService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should retrieve booking stats from API or fallback to mock', (done) => {
+  it('should retrieve booking stats from API', (done) => {
     apiSpy.get.and.returnValue(of(mockBookingStats));
     service.getBookingStats().subscribe((res) => {
       expect(res.todayTotalBookings).toBe(10);
-      done();
-    });
-  });
-
-  it('should fallback to mock booking stats when API fails', (done) => {
-    apiSpy.get.and.returnValue(throwError(() => new Error('Network error')));
-    service.getBookingStats().subscribe((res) => {
-      expect(res.todayTotalBookings).toBe(10);
-      expect(mockSpy.getAdminBookingStats).toHaveBeenCalled();
       done();
     });
   });

@@ -1,8 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
-import { Observable, of, map, catchError } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
-import { MockDataService } from '../../../core/services/mock/mock-data.service';
 import { environment } from '../../../../environments/environment';
 import { AdminBookingRow } from '../../../shared/models';
 
@@ -42,21 +41,8 @@ export interface RescheduleRequest {
 @Injectable({ providedIn: 'root' })
 export class BookingAdminService {
   private readonly api = inject(ApiService);
-  private readonly mock = inject(MockDataService);
 
   getBookings(filter: BookingFilter): Observable<PagedAdminBookings> {
-    if (environment.useMocks) {
-      return this.mock.getAdminRecentBookings().pipe(
-        map((rows) => ({
-          content: rows,
-          totalElements: rows.length,
-          totalPages: 1,
-          number: 0,
-          size: filter.size
-        }))
-      );
-    }
-
     let params = new HttpParams()
       .set('page', filter.page)
       .set('size', filter.size)
@@ -69,87 +55,23 @@ export class BookingAdminService {
     if (filter.from) params = params.set('from', filter.from);
     if (filter.to) params = params.set('to', filter.to);
 
-    return this.api.get<PagedAdminBookings>('/bookings/admin/all', { params }).pipe(
-      catchError(() =>
-        this.mock.getAdminRecentBookings().pipe(
-          map((rows) => ({
-            content: rows,
-            totalElements: rows.length,
-            totalPages: 1,
-            number: 0,
-            size: filter.size
-          }))
-        )
-      )
-    );
+    return this.api.get<PagedAdminBookings>('/bookings/admin/all', { params });
   }
 
   cancelBooking(bookingId: string): Observable<AdminBookingRow> {
-    if (environment.useMocks) {
-      return this.mock.getAdminRecentBookings().pipe(
-        map((rows) => {
-          const found = rows.find((r) => r.id === bookingId);
-          return found ? { ...found, status: 'CANCELLED' as const } : rows[0];
-        })
-      );
-    }
-    return this.api.patch<AdminBookingRow>(`/bookings/${bookingId}/cancel`, {}).pipe(
-      catchError((err) => { throw err; })
-    );
+    return this.api.patch<AdminBookingRow>(`/bookings/${bookingId}/cancel`, {});
   }
 
   rescheduleBooking(bookingId: string, body: RescheduleRequest): Observable<AdminBookingRow> {
-    if (environment.useMocks) {
-      return this.mock.getAdminRecentBookings().pipe(
-        map((rows) => {
-          const found = rows.find((r) => r.id === bookingId);
-          return found ? { ...found, startTime: body.startTime, endTime: body.endTime } : rows[0];
-        })
-      );
-    }
-    return this.api.patch<AdminBookingRow>(`/bookings/${bookingId}/reschedule`, body).pipe(
-      catchError((err) => { throw err; })
-    );
+    return this.api.patch<AdminBookingRow>(`/bookings/${bookingId}/reschedule`, body);
   }
 
   confirmBooking(bookingId: string, paymentId: string): Observable<AdminBookingRow> {
-    if (environment.useMocks) {
-      return this.mock.getAdminRecentBookings().pipe(
-        map((rows) => {
-          const found = rows.find((r) => r.id === bookingId);
-          return found ? { ...found, status: 'CONFIRMED' as const } : rows[0];
-        })
-      );
-    }
-    return this.api.patch<AdminBookingRow>(`/bookings/${bookingId}/confirm`, { paymentId }).pipe(
-      catchError((err) => { throw err; })
-    );
+    return this.api.patch<AdminBookingRow>(`/bookings/${bookingId}/confirm`, { paymentId });
   }
 
   createWalkIn(body: WalkInRequest): Observable<AdminBookingRow> {
-    if (environment.useMocks) {
-      const today = new Date().toISOString();
-      const mock: AdminBookingRow = {
-        id: 'bk-walkin-' + Date.now(),
-        userId: body.targetUserId,
-        stationId: body.stationId,
-        stationCode: 'MOCK-01',
-        stationType: 'PS5',
-        hourlyRate: 650,
-        startTime: body.startTime,
-        endTime: body.endTime,
-        durationMinutes: 60,
-        status: 'PENDING',
-        source: 'WALK_IN',
-        totalAmount: 650,
-        payableAmount: 650,
-        createdAt: today
-      };
-      return of(mock);
-    }
-    return this.api.post<AdminBookingRow>('/bookings/walk-in', body).pipe(
-      catchError((err) => { throw err; })
-    );
+    return this.api.post<AdminBookingRow>('/bookings/walk-in', body);
   }
 
   exportCsv(filter: Omit<BookingFilter, 'page' | 'size' | 'sort'>): string {
