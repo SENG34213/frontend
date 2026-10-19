@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { AdminService } from './admin.service';
 import { ApiService } from './api.service';
 import { MockDataService } from './mock/mock-data.service';

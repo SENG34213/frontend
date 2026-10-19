@@ -4,6 +4,7 @@ import { of, throwError } from 'rxjs';
 
 import { AdminLoyaltyComponent } from './admin-loyalty.component';
 import { LoyaltyAdminService } from './loyalty-admin.service';
+import { UserAdminService } from '../users/user-admin.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import {
   LoyaltyRules,
@@ -16,6 +17,7 @@ describe('AdminLoyaltyComponent', () => {
   let component: AdminLoyaltyComponent;
   let fixture: ComponentFixture<AdminLoyaltyComponent>;
   let mockLoyaltyService: jasmine.SpyObj<LoyaltyAdminService>;
+  let mockUserAdminService: jasmine.SpyObj<UserAdminService>;
   let mockToastService: jasmine.SpyObj<ToastService>;
   let mockRouter: jasmine.SpyObj<Router>;
 
@@ -86,6 +88,9 @@ describe('AdminLoyaltyComponent', () => {
     ]);
     mockToastService = jasmine.createSpyObj('ToastService', ['success', 'error', 'info', 'warning']);
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
+    mockUserAdminService = jasmine.createSpyObj('UserAdminService', ['getUsers', 'getUserById']);
+    mockUserAdminService.getUsers.and.returnValue(of({ content: [], totalElements: 0, totalPages: 0, size: 200, number: 0 }));
+    mockUserAdminService.getUserById.and.returnValue(of(null as unknown as import('../../../shared/models').UserSummaryResponse));
 
     mockLoyaltyService.getStats.and.returnValue(of(mockStats));
     mockLoyaltyService.getAccounts.and.returnValue(of(mockPagedAccounts));
@@ -105,6 +110,7 @@ describe('AdminLoyaltyComponent', () => {
       imports: [AdminLoyaltyComponent],
       providers: [
         { provide: LoyaltyAdminService, useValue: mockLoyaltyService },
+        { provide: UserAdminService, useValue: mockUserAdminService },
         { provide: ToastService, useValue: mockToastService },
         { provide: Router, useValue: mockRouter },
         {

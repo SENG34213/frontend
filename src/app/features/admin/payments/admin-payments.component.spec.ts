@@ -27,17 +27,24 @@ const mockPayment: PaymentResponse = {
   createdAt: '2026-10-01T10:00:00Z'
 };
 
+const today = new Date();
+const getOffsetDate = (daysAgo: number) => {
+  const d = new Date(today);
+  d.setDate(d.getDate() - daysAgo);
+  return d.toISOString().split('T')[0];
+};
+
 const mockStats: AdminPaymentStatsResponse = {
   todayRevenue: 15000,
   monthRevenue: 320000,
   totalPaymentsSuccess: 210,
   totalPaymentsFailed: 8,
   revenueTrend: [
-    { date: '2026-10-09', revenue: 12000 },
-    { date: '2026-10-10', revenue: 18000 },
-    { date: '2026-10-11', revenue: 9500 },
-    { date: '2026-10-12', revenue: 22000 },
-    { date: '2026-10-13', revenue: 15000 }
+    { date: getOffsetDate(4), revenue: 12000 },
+    { date: getOffsetDate(3), revenue: 18000 },
+    { date: getOffsetDate(2), revenue: 9500 },
+    { date: getOffsetDate(1), revenue: 22000 },
+    { date: getOffsetDate(0), revenue: 15000 }
   ]
 };
 

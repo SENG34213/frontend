@@ -21,7 +21,6 @@ import { RegistrationResponse, BracketResponse } from '../../../shared/models';
 
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
-import { CardComponent } from '../../../shared/ui/card/card.component';
 import { SkeletonComponent } from '../../../shared/ui/skeleton/skeleton.component';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 

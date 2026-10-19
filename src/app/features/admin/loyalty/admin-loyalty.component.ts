@@ -146,7 +146,7 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
   }
 
   private enrichAccounts(rawAccounts: LoyaltyAccountResponse[]): LoyaltyAccountResponse[] {
-    return (rawAccounts || []).map((acc: any) => {
+    return (rawAccounts || []).map((acc: LoyaltyAccountResponse) => {
       const uId = acc.userId || acc.id || '';
       const u = this.userMap.get(uId);
       const points = Number(acc.pointsBalance) || 0;
@@ -245,9 +245,9 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
 
   loadTransactions(): void {
     this.loyaltyService.getTransactions().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (res: any) => {
+      next: (res: LoyaltyTransactionDto[] | { content: LoyaltyTransactionDto[] }) => {
         const rawList = Array.isArray(res) ? res : (res?.content || []);
-        const enriched = rawList.map((tx: any) => {
+        const enriched = rawList.map((tx: LoyaltyTransactionDto) => {
           const u = this.userMap.get(tx.userId);
           return {
             ...tx,

@@ -165,14 +165,14 @@ export class AdminGamesComponent implements OnInit, OnDestroy {
         const stMap: Record<string, Station[]> = {};
         data.forEach(g => {
           if (g.stations && g.stations.length > 0) {
-            stMap[g.id] = g.stations.map((st: any) => ({
+            stMap[g.id] = g.stations.map((st: Station) => ({
               ...st,
               name: st.stationCode || st.name || `Station ${st.type || ''}`
             }));
           } else {
             this.gameService.getStationsForGame(g.id).pipe(takeUntil(this.destroy$)).subscribe({
               next: stations => {
-                const mappedStations = stations.map((st: any) => ({
+                const mappedStations = stations.map((st: Station) => ({
                   ...st,
                   name: st.stationCode || st.name || `Station ${st.type || ''}`
                 }));
