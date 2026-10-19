@@ -2,8 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
 import { Observable, forkJoin, map, catchError, of } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
-import { MockDataService } from '../../../core/services/mock/mock-data.service';
-import { environment } from '../../../../environments/environment';
 import {
   AdminReportResponse,
   ReportFilter,
@@ -25,7 +23,6 @@ import { PagedAdminBookings } from '../bookings/booking-admin.service';
 @Injectable({ providedIn: 'root' })
 export class ReportAdminService {
   private readonly api = inject(ApiService);
-  private readonly mock = inject(MockDataService);
 
   private readonly reportsEndpoint = '/admin/reports';
 
@@ -33,10 +30,6 @@ export class ReportAdminService {
    * Fetch aggregated analytics report by type and date range using real backend data.
    */
   getReport(filter: ReportFilter): Observable<AdminReportResponse> {
-    if (environment.useMocks) {
-      return this.mock.getAdminReport(filter);
-    }
-
     // Try dedicated reports endpoint first if provided by backend, else synthesize from microservices
     let params = new HttpParams()
       .set('type', filter.type)
@@ -402,8 +395,7 @@ export class ReportAdminService {
         );
         const csvContent = [headers, ...rows].join('\n');
         return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      }),
-      catchError(() => this.mock.exportReportCsv(filter))
+      })
     );
   }
 }

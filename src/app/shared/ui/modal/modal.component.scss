@@ -87,6 +87,54 @@
   }
 }
 
+@media (max-width: 480px) {
+  .gc-modal-dialog {
+    width: min(96vw, 640px);
+  }
+
+  .gc-modal-header {
+    padding: 0.85rem 1rem;
+  }
+
+  .gc-modal-title {
+    font-size: 1.1rem;
+  }
+
+  .gc-modal-body {
+    padding: 1rem;
+    max-height: calc(88vh - 110px);
+  }
+
+  .gc-modal-footer {
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    ::ng-deep button, ::ng-deep .gc-button {
+      flex: 1 1 auto;
+      min-width: 120px;
+    }
+  }
+}
+
+@media (max-width: 360px) {
+  .gc-modal-header {
+    padding: 0.75rem 0.75rem;
+  }
+
+  .gc-modal-body {
+    padding: 0.75rem;
+  }
+
+  .gc-modal-footer {
+    padding: 0.75rem;
+
+    ::ng-deep button, ::ng-deep .gc-button {
+      width: 100%;
+    }
+  }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

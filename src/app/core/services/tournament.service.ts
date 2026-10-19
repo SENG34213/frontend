@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, map, of, throwError } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ApiService } from './api.service';
-import { MockDataService } from './mock/mock-data.service';
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
 import {
@@ -28,7 +27,6 @@ export interface TournamentViewItem extends TournamentResponse {
 @Injectable({ providedIn: 'root' })
 export class TournamentService {
   private readonly api = inject(ApiService);
-  private readonly mock = inject(MockDataService);
   private readonly auth = inject(AuthService);
 
   private readonly endpoint = '/tournaments';
@@ -38,22 +36,11 @@ export class TournamentService {
    * Maps to GET /api/tournaments
    */
   getTournaments(): Observable<TournamentViewItem[]> {
-    if (environment.useMocks) {
-      return this.mock.getTournaments().pipe(
-        map((list) => list.map((t) => this.enrichTournament(t)))
-      );
-    }
-
     return this.api.get<TournamentResponse[]>(this.endpoint).pipe(
       map((list) => {
         const raw = Array.isArray(list) ? list : [];
         return raw.map((t) => this.enrichTournament(t));
-      }),
-      catchError(() =>
-        this.mock.getTournaments().pipe(
-          map((list) => list.map((t) => this.enrichTournament(t)))
-        )
-      )
+      })
     );
   }
 
@@ -62,19 +49,8 @@ export class TournamentService {
    * Maps to GET /api/tournaments/{id}
    */
   getTournamentById(id: string): Observable<TournamentViewItem> {
-    if (environment.useMocks) {
-      return this.mock.getTournamentById(id).pipe(
-        map((t) => this.enrichTournament(t))
-      );
-    }
-
     return this.api.get<TournamentResponse>(`${this.endpoint}/${id}`).pipe(
-      map((t) => this.enrichTournament(t)),
-      catchError(() =>
-        this.mock.getTournamentById(id).pipe(
-          map((t) => this.enrichTournament(t))
-        )
-      )
+      map((t) => this.enrichTournament(t))
     );
   }
 
@@ -86,25 +62,9 @@ export class TournamentService {
     tournamentId: string,
     gamerTag?: string
   ): Observable<RegistrationResponse> {
-    const user = this.auth.currentUser();
-    const userId = user?.userId || user?.sub || 'usr-customer-1';
-    const userName = user?.fullName || user?.email || 'Player';
-
-    if (environment.useMocks) {
-      return this.mock.registerForTournament(tournamentId, gamerTag, userId, userName);
-    }
-
     return this.api.post<RegistrationResponse>(`${this.endpoint}/${tournamentId}/register`, {
       gamerTag
-    }).pipe(
-      catchError((err) => {
-        // Fallback to mock in dev/offline mode if backend unavailable
-        if (err?.status === 0 || err?.status === 504) {
-          return this.mock.registerForTournament(tournamentId, gamerTag, userId, userName);
-        }
-        return throwError(() => err);
-      })
-    );
+    });
   }
 
   /**
@@ -112,13 +72,7 @@ export class TournamentService {
    * Maps to GET /api/tournaments/{id}/bracket
    */
   getBracket(tournamentId: string): Observable<BracketResponse> {
-    if (environment.useMocks) {
-      return this.mock.getBracket(tournamentId);
-    }
-
-    return this.api.get<BracketResponse>(`${this.endpoint}/${tournamentId}/bracket`).pipe(
-      catchError(() => this.mock.getBracket(tournamentId))
-    );
+    return this.api.get<BracketResponse>(`${this.endpoint}/${tournamentId}/bracket`);
   }
 
   /**
@@ -126,16 +80,7 @@ export class TournamentService {
    * Maps to GET /api/tournaments/my-registrations
    */
   getMyRegistrations(): Observable<RegistrationResponse[]> {
-    const user = this.auth.currentUser();
-    const userId = user?.userId || user?.sub || 'usr-customer-1';
-
-    if (environment.useMocks) {
-      return this.mock.getMyTournamentRegistrations(userId);
-    }
-
-    return this.api.get<RegistrationResponse[]>(`${this.endpoint}/my-registrations`).pipe(
-      catchError(() => this.mock.getMyTournamentRegistrations(userId))
-    );
+    return this.api.get<RegistrationResponse[]>(`${this.endpoint}/my-registrations`);
   }
 
   /**

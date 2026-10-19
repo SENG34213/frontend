@@ -2,9 +2,19 @@
   padding: 1.5rem 1rem;
   max-width: 1400px;
   margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 
   @media (min-width: 768px) {
     padding: 2rem 1.5rem;
+  }
+
+  @media (max-width: 425px) {
+    padding: 1rem 0.75rem;
+  }
+
+  @media (max-width: 360px) {
+    padding: 0.75rem 0.5rem;
   }
 }
 
@@ -21,7 +31,7 @@
   }
 
   .page-title {
-    font-size: 1.875rem;
+    font-size: clamp(1.4rem, 4.5vw, 1.875rem);
     font-weight: 800;
     margin: 0 0 0.35rem;
     letter-spacing: -0.025em;
@@ -33,6 +43,10 @@
     font-size: 0.9375rem;
     color: var(--color-text-muted, #94a3b8);
     max-width: 650px;
+
+    @media (max-width: 425px) {
+      font-size: 0.875rem;
+    }
   }
 
   .header-actions {
@@ -40,6 +54,14 @@
     gap: 0.75rem;
     align-items: center;
     flex-wrap: wrap;
+
+    @media (max-width: 425px) {
+      width: 100%;
+
+      ::ng-deep button, ::ng-deep .gc-button {
+        flex: 1 1 auto;
+      }
+    }
   }
 }
 
@@ -68,7 +90,7 @@
 /* Stat Grid */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 1rem;
   align-items: stretch;
   margin-bottom: 1.5rem;
@@ -221,7 +243,7 @@
 /* Stations Grid */
 .stations-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   gap: 1.25rem;
   align-items: stretch;
   margin-top: 1.75rem;
@@ -661,5 +683,114 @@
         color: var(--color-text-muted, #94a3b8);
       }
     }
+  }
+}
+
+/* ── Targeted Responsive Breakpoints (1024px, 768px, 425px, 375px, 320px) ── */
+
+@media (max-width: 1024px) {
+  .filter-card .filter-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    gap: 0.75rem;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 425px) {
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card .stat-inner {
+    gap: 0.75rem;
+  }
+
+  .stat-card .stat-val {
+    font-size: 1.5rem;
+  }
+
+  .filter-card .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-actions {
+    flex-direction: column;
+    align-items: stretch;
+
+    .total-count {
+      text-align: center;
+    }
+
+    ::ng-deep button, ::ng-deep .gc-button {
+      width: 100%;
+    }
+  }
+
+  .stations-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .station-card .card-actions {
+    flex-wrap: wrap;
+
+    ::ng-deep button, ::ng-deep .gc-button {
+      flex: 1 1 auto;
+    }
+  }
+
+  .availability-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .slots-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+
+  .station-games-selection-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-footer-actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+
+    ::ng-deep button, ::ng-deep .gc-button {
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: 375px) {
+  .page-title {
+    font-size: 1.45rem;
+  }
+
+  .station-card .station-code {
+    font-size: 1.05rem;
+  }
+}
+
+@media (max-width: 320px) {
+  .admin-stations {
+    padding: 0.75rem 0.4rem;
+  }
+
+  .page-title {
+    font-size: 1.35rem;
+  }
+
+  .stat-card .stat-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.6rem;
   }
 }

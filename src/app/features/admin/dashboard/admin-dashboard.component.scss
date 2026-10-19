@@ -2,9 +2,19 @@
   padding: 1.5rem 1rem;
   max-width: 1400px;
   margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 
   @media (min-width: 768px) {
     padding: 2rem 1.5rem;
+  }
+
+  @media (max-width: 425px) {
+    padding: 1rem 0.75rem;
+  }
+
+  @media (max-width: 360px) {
+    padding: 0.75rem 0.5rem;
   }
 }
 
@@ -27,6 +37,7 @@
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .sync-time {
@@ -37,15 +48,11 @@
 
 .page-title {
   font-family: var(--gc-font-display);
-  font-size: 1.85rem;
+  font-size: clamp(1.4rem, 4.5vw, 2.25rem);
   font-weight: 800;
   color: var(--gc-text-primary);
   margin: 0 0 0.4rem 0;
   line-height: 1.2;
-
-  @media (min-width: 768px) {
-    font-size: 2.25rem;
-  }
 }
 
 .subtitle {
@@ -54,12 +61,24 @@
   max-width: 680px;
   margin: 0;
   line-height: 1.5;
+
+  @media (max-width: 425px) {
+    font-size: 0.875rem;
+  }
 }
 
 .header-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+
+  @media (max-width: 425px) {
+    width: 100%;
+
+    ::ng-deep button, ::ng-deep .gc-button {
+      flex: 1 1 auto;
+    }
+  }
 }
 
 /* Error Banner */
@@ -105,6 +124,10 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   @media (min-width: 1200px) {
     grid-template-columns: repeat(4, 1fr);
   }
@@ -123,6 +146,10 @@
     .gc-card-header {
       min-height: 82px;
       align-items: flex-start;
+
+      @media (max-width: 640px) {
+        min-height: auto;
+      }
     }
 
     .gc-card-body {
@@ -322,6 +349,16 @@
   padding-top: 0.75rem;
   border-top: 1px solid var(--gc-border-subtle);
 
+  @media (max-width: 640px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+
+  @media (max-width: 425px) {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
   .summary-stat {
     display: flex;
     flex-direction: column;
@@ -460,6 +497,7 @@
 
 .gc-table {
   width: 100%;
+  min-width: 640px;
   border-collapse: collapse;
   text-align: left;
   font-size: 0.875rem;
@@ -530,5 +568,121 @@
 
   .text-right {
     text-align: right;
+  }
+}
+
+/* ── Targeted Responsive Breakpoints (1024px, 768px, 425px, 375px, 320px) ── */
+
+@media (max-width: 1024px) {
+  .analytics-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .analytics-row {
+    gap: 1.25rem;
+  }
+
+  .filter-toolbar {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 425px) {
+  .badge-row {
+    gap: 0.5rem;
+  }
+
+  .kpi-main .kpi-value {
+    font-size: 1.65rem;
+  }
+
+  .kpi-meta {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .trend-tabs {
+    width: 100%;
+    display: flex;
+    justify-content: stretch;
+
+    .trend-btn {
+      flex: 1;
+      text-align: center;
+      padding: 0.35rem 0.5rem;
+    }
+  }
+
+  .op-item {
+    padding: 0.65rem;
+
+    .op-icon {
+      width: 32px;
+      height: 32px;
+      font-size: 1rem;
+    }
+
+    .op-title {
+      font-size: 0.85rem;
+    }
+  }
+
+  .filter-chips {
+    width: 100%;
+
+    .chip-btn {
+      padding: 0.25rem 0.65rem;
+      font-size: 0.75rem;
+    }
+  }
+}
+
+@media (max-width: 375px) {
+  .page-title {
+    font-size: 1.45rem;
+  }
+
+  .kpi-main .kpi-value {
+    font-size: 1.5rem;
+  }
+
+  .chart-tooltip {
+    right: 0.5rem;
+    top: 0.5rem;
+    padding: 0.3rem 0.5rem;
+  }
+}
+
+@media (max-width: 320px) {
+  .admin-dashboard {
+    padding: 0.75rem 0.4rem;
+  }
+
+  .page-title {
+    font-size: 1.35rem;
+  }
+
+  .kpi-main {
+    flex-wrap: wrap;
+    gap: 0.3rem;
+
+    .kpi-value {
+      font-size: 1.4rem;
+    }
+  }
+
+  .chart-summary-footer .stat-num {
+    font-size: 0.95rem;
+  }
+
+  .op-item {
+    gap: 0.6rem;
   }
 }

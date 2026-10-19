@@ -1,9 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
-import { Observable, catchError } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
-import { MockDataService } from '../../../core/services/mock/mock-data.service';
-import { environment } from '../../../../environments/environment';
 import {
   PaymentResponse,
   PagedPayments,
@@ -14,7 +12,6 @@ import {
 @Injectable({ providedIn: 'root' })
 export class PaymentAdminService {
   private readonly api = inject(ApiService);
-  private readonly mock = inject(MockDataService);
 
   private readonly paymentsEndpoint = '/payments/admin';
 
@@ -23,10 +20,6 @@ export class PaymentAdminService {
    * Maps to GET /api/payments/admin/all?status=...&method=...&from=...&to=...&page=...&size=...
    */
   getPayments(filter: PaymentFilter): Observable<PagedPayments> {
-    if (environment.useMocks) {
-      return this.mock.getAdminPayments(filter);
-    }
-
     let params = new HttpParams()
       .set('page', String(filter.page))
       .set('size', String(filter.size));
@@ -39,9 +32,7 @@ export class PaymentAdminService {
     if (filter.to) params = params.set('to', filter.to);
     if (filter.sort) params = params.set('sort', filter.sort);
 
-    return this.api.get<PagedPayments>(`${this.paymentsEndpoint}/all`, { params }).pipe(
-      catchError(() => this.mock.getAdminPayments(filter))
-    );
+    return this.api.get<PagedPayments>(`${this.paymentsEndpoint}/all`, { params });
   }
 
   /**
@@ -49,13 +40,7 @@ export class PaymentAdminService {
    * Maps to GET /api/payments/admin/stats
    */
   getPaymentStats(): Observable<AdminPaymentStatsResponse> {
-    if (environment.useMocks) {
-      return this.mock.getAdminPaymentStats();
-    }
-
-    return this.api.get<AdminPaymentStatsResponse>(`${this.paymentsEndpoint}/stats`).pipe(
-      catchError(() => this.mock.getAdminPaymentStats())
-    );
+    return this.api.get<AdminPaymentStatsResponse>(`${this.paymentsEndpoint}/stats`);
   }
 
   /**
@@ -63,13 +48,7 @@ export class PaymentAdminService {
    * Maps to GET /api/payments/{paymentId}
    */
   getPaymentById(paymentId: string): Observable<PaymentResponse> {
-    if (environment.useMocks) {
-      return this.mock.getAdminPaymentById(paymentId);
-    }
-
-    return this.api.get<PaymentResponse>(`/payments/${paymentId}`).pipe(
-      catchError(() => this.mock.getAdminPaymentById(paymentId))
-    );
+    return this.api.get<PaymentResponse>(`/payments/${paymentId}`);
   }
 
   /**
@@ -77,21 +56,30 @@ export class PaymentAdminService {
    * Maps to PATCH /api/payments/{paymentId}/refund
    */
   refundPayment(paymentId: string): Observable<PaymentResponse> {
-    if (environment.useMocks) {
-      return this.mock.adminRefundPayment(paymentId);
-    }
-
-    return this.api.patch<PaymentResponse>(`/payments/${paymentId}/refund`, {}).pipe(
-      catchError(() => this.mock.adminRefundPayment(paymentId))
-    );
+    return this.api.patch<PaymentResponse>(`/payments/${paymentId}/refund`, {});
   }
 
   /**
-   * Download all payments as CSV blob.
-   * In production, triggers a direct browser download via hidden anchor tag.
-   * In mock mode, returns a pre-built Blob.
+   * Download payments as CSV blob using live backend data.
    */
-  exportCsv(_filter: Omit<PaymentFilter, 'page' | 'size'>): Observable<Blob> {
-    return this.mock.exportPaymentsCsv();
+  exportCsv(filter: Omit<PaymentFilter, 'page' | 'size'>): Observable<Blob> {
+    return this.getPayments({ ...filter, page: 0, size: 500, sort: 'createdAt,desc' }).pipe(
+      map((res) => {
+        const rows = res.content || [];
+        const headers = ['ID', 'Receipt #', 'Customer', 'Reference Type', 'Amount (LKR)', 'Method', 'Status', 'Date'];
+        const lines = rows.map((p) => [
+          `"${p.id}"`,
+          `"${p.receiptNumber || ''}"`,
+          `"${(p.customerName || p.userId || '').replace(/"/g, '""')}"`,
+          `"${p.referenceType || ''}"`,
+          `"${p.amount.toFixed(2)}"`,
+          `"${p.method || p.paymentMethod || ''}"`,
+          `"${p.status}"`,
+          `"${p.createdAt}"`
+        ].join(','));
+        const csvContent = [headers.join(','), ...lines].join('\r\n');
+        return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      })
+    );
   }
 }

@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, of, map } from 'rxjs';
 import { ApiService } from './api.service';
-import { MockDataService } from './mock/mock-data.service';
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
 import {
@@ -68,7 +67,6 @@ const GAME_COVER_PLACEHOLDER = '/assets/images/ps5_console_01.jpg';
 @Injectable({ providedIn: 'root' })
 export class BookingService {
   private readonly api = inject(ApiService);
-  private readonly mockData = inject(MockDataService);
   private readonly auth = inject(AuthService);
 
   private readonly uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -76,17 +74,13 @@ export class BookingService {
   // ─── Stations ────────────────────────────────────────────────────────────────
 
   getStations(): Observable<Station[]> {
-    if (environment.useMocks) {
-      return this.mockData.getStations();
-    }
     return this.api.get<BackendStationResponse[]>('/stations').pipe(
       map((backendStations) => {
         if (!backendStations || !Array.isArray(backendStations) || backendStations.length === 0) {
           return [];
         }
         return backendStations.map((st, idx) => this.mapStation(st, idx));
-      }),
-      catchError(() => this.mockData.getStations())
+      })
     );
   }
 
@@ -136,25 +130,18 @@ export class BookingService {
 
   /** GET /stations/{stationId}/games — returns only active games on that station */
   getStationGames(stationId: string): Observable<Game[]> {
-    if (environment.useMocks) {
-      return this.mockData.getStationGames(stationId);
-    }
     return this.api.get<BackendGameResponse[]>(`/stations/${stationId}/games`).pipe(
       map((games) => {
         if (!games || !Array.isArray(games)) return [];
         return games
           .filter((g) => g.active !== false)
           .map((g) => this.mapGame(g));
-      }),
-      catchError(() => this.mockData.getStationGames(stationId))
+      })
     );
   }
 
   /** GET /games?active=true — all active games (optionally featured) */
   getGames(options?: { featured?: boolean }): Observable<Game[]> {
-    if (environment.useMocks) {
-      return this.mockData.getGames();
-    }
     const params: Record<string, string> = { active: 'true' };
     if (options?.featured) {
       params['featured'] = 'true';
@@ -165,22 +152,17 @@ export class BookingService {
         return games
           .filter((g) => g.active !== false)
           .map((g) => this.mapGame(g));
-      }),
-      catchError(() => this.mockData.getGames())
+      })
     );
   }
 
   /** GET /games/{id}/stations — find stations that have a specific game */
   getGameStations(gameId: string): Observable<Station[]> {
-    if (environment.useMocks || !gameId) {
-      return this.mockData.getStations();
-    }
     return this.api.get<BackendStationResponse[]>(`/games/${gameId}/stations`).pipe(
       map((stations) => {
         if (!stations || !Array.isArray(stations)) return [];
         return stations.map((st, idx) => this.mapStation(st, idx));
-      }),
-      catchError(() => this.mockData.getStations())
+      })
     );
   }
 
@@ -201,9 +183,6 @@ export class BookingService {
   // ─── Availability ─────────────────────────────────────────────────────────────
 
   getStationAvailability(stationId: string, date: string): Observable<SlotAvailability[]> {
-    if (environment.useMocks || !this.uuidRegex.test(stationId)) {
-      return this.mockData.getStationAvailability(stationId, date);
-    }
     return this.api.get<BackendSlotResponse[]>(`/stations/${stationId}/availability`, {
       params: { date }
     }).pipe(
@@ -219,8 +198,7 @@ export class BookingService {
           isAvailable: s.available ?? s.isAvailable ?? true,
           price: 0
         }));
-      }),
-      catchError(() => this.mockData.getStationAvailability(stationId, date))
+      })
     );
   }
 
@@ -229,26 +207,12 @@ export class BookingService {
   getLoyaltyBalance(): Observable<LoyaltyBalanceDto> {
     const user = this.auth.currentUser();
     const userId = user?.sub || 'usr-customer-1';
-    if (environment.useMocks) {
-      return this.mockData.getLoyaltyBalance(userId);
-    }
-    return this.api.get<LoyaltyBalanceDto>(`/loyalty/balance/${userId}`).pipe(
-      catchError(() => this.mockData.getLoyaltyBalance(userId))
-    );
+    return this.api.get<LoyaltyBalanceDto>(`/loyalty/balance/${userId}`);
   }
 
   // ─── Bookings ─────────────────────────────────────────────────────────────────
 
   createBooking(request: BookingRequest): Observable<BookingResponse> {
-    if (environment.useMocks || !this.uuidRegex.test(request.stationId)) {
-      return this.mockData.createBooking({
-        stationId: request.stationId,
-        gameId: request.gameId,
-        bookingDate: request.bookingDate,
-        startTime: request.startTime,
-        endTime: request.endTime
-      });
-    }
 
     // Format ISO Instants for backend BookingRequest
     let startIso: string;
@@ -318,9 +282,6 @@ export class BookingService {
   }
 
   getMyBookings(): Observable<BookingResponse[]> {
-    if (environment.useMocks) {
-      return of([]);
-    }
     return this.api.get<BookingResponse[]>('/bookings/mine').pipe(
       catchError(() => of([]))
     );
