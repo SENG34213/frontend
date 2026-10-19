@@ -80,6 +80,9 @@ export interface LoyaltyAccountResponse {
   pointsBalance: number;
   tier: LoyaltyTier;
   equivalentDiscountLkr: number;
+  equivalentDiscount?: number;
+  lifetimeEarned?: number;
+  pointValue?: number;
   totalEarnedAllTime: number;
   totalRedeemedAllTime: number;
   updatedAt: string;

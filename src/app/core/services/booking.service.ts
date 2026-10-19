@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, of, map } from 'rxjs';
 import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
-import { environment } from '../../../environments/environment';
+
 import {
   Station,
   StationType,

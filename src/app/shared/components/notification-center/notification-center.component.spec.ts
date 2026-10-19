@@ -1,14 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { signal } from '@angular/core';
+import { signal, WritableSignal } from '@angular/core';
 import { NotificationCenterComponent } from './notification-center.component';
 import { NotificationSocketService } from '../../../core/services/notification-socket.service';
-import { AdminNotification, NotificationCategory } from '../../models/notification.model';
+import { AdminNotification } from '../../models/notification.model';
 
 describe('NotificationCenterComponent', () => {
   let component: NotificationCenterComponent;
   let fixture: ComponentFixture<NotificationCenterComponent>;
   let notifSocketSpy: jasmine.SpyObj<NotificationSocketService>;
+  let isDrawerOpenSignal: WritableSignal<boolean>;
+  let filteredNotificationsSignal: WritableSignal<AdminNotification[]>;
 
   const mockNotifications: AdminNotification[] = [
     {
@@ -33,7 +35,15 @@ describe('NotificationCenterComponent', () => {
     }
   ];
 
+  const createNotif = (override: Partial<AdminNotification> = {}): AdminNotification => ({
+    ...mockNotifications[0],
+    ...override
+  });
+
   beforeEach(async () => {
+    isDrawerOpenSignal = signal<boolean>(false);
+    filteredNotificationsSignal = signal<AdminNotification[]>(mockNotifications);
+
     notifSocketSpy = jasmine.createSpyObj('NotificationSocketService', [
       'toggleDrawer',
       'openDrawer',
@@ -48,10 +58,10 @@ describe('NotificationCenterComponent', () => {
       'sendNotification'
     ], {
       notifications: signal<AdminNotification[]>(mockNotifications),
-      filteredNotifications: signal<AdminNotification[]>(mockNotifications),
+      filteredNotifications: filteredNotificationsSignal,
       unreadCount: signal<number>(1),
       isConnected: signal<boolean>(true),
-      isDrawerOpen: signal<boolean>(false),
+      isDrawerOpen: isDrawerOpenSignal,
       activeFilter: signal<'ALL' | 'UNREAD' | 'BOOKING' | 'TOURNAMENT'>('ALL')
     });
 
@@ -88,7 +98,7 @@ describe('NotificationCenterComponent', () => {
   });
 
   it('should open notification panel when isDrawerOpen is true', () => {
-    (notifSocketSpy.isDrawerOpen as any).set(true);
+    isDrawerOpenSignal.set(true);
     fixture.detectChanges();
 
     const panel = fixture.nativeElement.querySelector('.notification-panel');
@@ -96,7 +106,7 @@ describe('NotificationCenterComponent', () => {
   });
 
   it('should close drawer when close button is clicked in panel header', () => {
-    (notifSocketSpy.isDrawerOpen as any).set(true);
+    isDrawerOpenSignal.set(true);
     fixture.detectChanges();
 
     const closeBtn = fixture.nativeElement.querySelector('.btn-close');
@@ -137,17 +147,17 @@ describe('NotificationCenterComponent', () => {
 
   it('should resolve customer links properly in customer mode', () => {
     component.mode = 'customer';
-    expect(component.getNotificationLink({ link: '/admin/bookings' } as any)).toBe('/bookings');
-    expect(component.getNotificationLink({ link: '/admin/tournaments' } as any)).toBe('/tournaments');
-    expect(component.getNotificationLink({ link: '/admin' } as any)).toBe('/dashboard');
-    expect(component.getNotificationLink({ link: '/tournaments/t-101' } as any)).toBe('/tournaments/t-101');
-    expect(component.getNotificationLink({} as any)).toBe('/dashboard');
+    expect(component.getNotificationLink(createNotif({ link: '/admin/bookings' }))).toBe('/bookings');
+    expect(component.getNotificationLink(createNotif({ link: '/admin/tournaments' }))).toBe('/tournaments');
+    expect(component.getNotificationLink(createNotif({ link: '/admin' }))).toBe('/dashboard');
+    expect(component.getNotificationLink(createNotif({ link: '/tournaments/t-101' }))).toBe('/tournaments/t-101');
+    expect(component.getNotificationLink(createNotif({ link: undefined }))).toBe('/dashboard');
   });
 
   it('should resolve admin links in admin mode', () => {
     component.mode = 'admin';
-    expect(component.getNotificationLink({ link: '/admin/bookings' } as any)).toBe('/admin/bookings');
-    expect(component.getNotificationLink({} as any)).toBe('/admin');
+    expect(component.getNotificationLink(createNotif({ link: '/admin/bookings' }))).toBe('/admin/bookings');
+    expect(component.getNotificationLink(createNotif({ link: undefined }))).toBe('/admin');
   });
 
   it('should call sendTestAlert with true when mode is customer', () => {
@@ -163,7 +173,7 @@ describe('NotificationCenterComponent', () => {
   });
 
   it('should call markAllAsRead when Read All button is clicked', () => {
-    (notifSocketSpy.isDrawerOpen as any).set(true);
+    isDrawerOpenSignal.set(true);
     fixture.detectChanges();
 
     const readAllBtn = fixture.nativeElement.querySelector('.btn-text-action');
@@ -173,8 +183,8 @@ describe('NotificationCenterComponent', () => {
   });
 
   it('should render empty state when filteredNotifications is empty', () => {
-    (notifSocketSpy.isDrawerOpen as any).set(true);
-    (notifSocketSpy.filteredNotifications as any).set([]);
+    isDrawerOpenSignal.set(true);
+    filteredNotificationsSignal.set([]);
     fixture.detectChanges();
 
     const emptyDesc = fixture.nativeElement.querySelector('.empty-desc');

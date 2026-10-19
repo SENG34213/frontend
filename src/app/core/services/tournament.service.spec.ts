@@ -104,14 +104,13 @@ describe('TournamentService', () => {
       });
     });
 
-    it('should fallback to mock data if API fails', (done) => {
+    it('should propagate error if API fails', (done) => {
       apiServiceSpy.get.and.returnValue(throwError(() => new Error('Network error')));
-      mockDataSpy.getTournaments.and.returnValue(of([mockTournament]));
 
       service.getTournaments().subscribe({
-        next: (tournaments) => {
-          expect(tournaments.length).toBe(1);
-          expect(tournaments[0].name).toBe('FC 25 Grand Championship');
+        next: () => fail('Should have failed'),
+        error: (err) => {
+          expect(err.message).toBe('Network error');
           done();
         }
       });
@@ -132,13 +131,13 @@ describe('TournamentService', () => {
       });
     });
 
-    it('should fallback to mock data if single tournament API fails', (done) => {
+    it('should propagate error if single tournament API fails', (done) => {
       apiServiceSpy.get.and.returnValue(throwError(() => new Error('Not found')));
-      mockDataSpy.getTournamentById.and.returnValue(of(mockTournament));
 
       service.getTournamentById('t-101').subscribe({
-        next: (t) => {
-          expect(t.id).toBe('t-101');
+        next: () => fail('Should have failed'),
+        error: (err) => {
+          expect(err.message).toBe('Not found');
           done();
         }
       });

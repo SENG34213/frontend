@@ -176,6 +176,6 @@ describe('NotificationSocketService', () => {
 
     const postReq = httpMock.expectOne('http://localhost:5001/api/notify');
     expect(postReq.request.method).toBe('POST');
-    postReq.flush({ success: true, notification: {} as any, unreadCount: 1 });
+    postReq.flush({ success: true, notification: {} as AdminNotification, unreadCount: 1 });
   });
 });

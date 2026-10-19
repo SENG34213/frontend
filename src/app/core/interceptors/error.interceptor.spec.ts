@@ -15,7 +15,9 @@ describe('errorInterceptor', () => {
 
   beforeEach(() => {
     routerSpy = jasmine.createSpyObj('Router', ['navigate'], { url: '/dashboard' });
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['logout']);
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['logout', 'getToken', 'isTokenExpired']);
+    authServiceSpy.getToken.and.returnValue(null);
+    authServiceSpy.isTokenExpired.and.returnValue(true);
     toastServiceSpy = jasmine.createSpyObj('ToastService', ['warning', 'error']);
 
     TestBed.configureTestingModule({

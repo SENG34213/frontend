@@ -2,53 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { BookingService, BackendStationResponse, BackendSlotResponse, BackendBookingResponse, BackendGameResponse } from './booking.service';
 import { ApiService } from './api.service';
-import { MockDataService } from './mock/mock-data.service';
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
-import { Station, SlotAvailability, Game, BookingResponse, LoyaltyBalanceDto } from '../../shared/models';
+import { BookingResponse } from '../../shared/models';
 
 describe('BookingService', () => {
   let service: BookingService;
   let apiSpy: jasmine.SpyObj<ApiService>;
-  let mockDataSpy: jasmine.SpyObj<MockDataService>;
   let authSpy: jasmine.SpyObj<AuthService>;
-
-  const mockStationsData: Station[] = [
-    {
-      id: 'mock-st-1',
-      stationNumber: 1,
-      stationCode: 'PS5-01',
-      name: 'Mock Station',
-      type: 'PS5',
-      hourlyRate: 500,
-      specifications: 'Specs',
-      controllersCount: 2,
-      imageUrl: '/assets/images/ps5_console_01.jpg',
-      active: true
-    }
-  ];
-
-  const mockSlotsData: SlotAvailability[] = [
-    {
-      stationId: 'st-01',
-      date: '2026-10-16',
-      startTime: '10:00',
-      endTime: '11:00',
-      isAvailable: true,
-      price: 500
-    }
-  ];
-
-  const mockGamesData: Game[] = [
-    { id: 'g-1', title: 'Game 1', coverImage: 'img.jpg' }
-  ];
-
-  const mockLoyalty: LoyaltyBalanceDto = {
-    userId: 'usr-1',
-    pointsBalance: 500,
-    tier: 'SILVER',
-    equivalentDiscountLkr: 500
-  };
 
   const mockBookingResp: BookingResponse = {
     id: 'bk-1',
@@ -68,22 +29,7 @@ describe('BookingService', () => {
 
   beforeEach(() => {
     apiSpy = jasmine.createSpyObj('ApiService', ['get', 'post', 'put', 'patch', 'delete']);
-    mockDataSpy = jasmine.createSpyObj('MockDataService', [
-      'getStations',
-      'getStationGames',
-      'getStationAvailability',
-      'getGames',
-      'getLoyaltyBalance',
-      'createBooking'
-    ]);
     authSpy = jasmine.createSpyObj('AuthService', ['currentUser']);
-
-    mockDataSpy.getStations.and.returnValue(of(mockStationsData));
-    mockDataSpy.getStationGames.and.returnValue(of(mockGamesData));
-    mockDataSpy.getStationAvailability.and.returnValue(of(mockSlotsData));
-    mockDataSpy.getGames.and.returnValue(of(mockGamesData));
-    mockDataSpy.getLoyaltyBalance.and.returnValue(of(mockLoyalty));
-    mockDataSpy.createBooking.and.returnValue(of(mockBookingResp));
 
     authSpy.currentUser.and.returnValue({
       sub: 'usr-test-123',
@@ -97,7 +43,6 @@ describe('BookingService', () => {
       providers: [
         BookingService,
         { provide: ApiService, useValue: apiSpy },
-        { provide: MockDataService, useValue: mockDataSpy },
         { provide: AuthService, useValue: authSpy }
       ]
     });
@@ -110,19 +55,6 @@ describe('BookingService', () => {
   });
 
   describe('getStations', () => {
-    it('should return mock data when environment.useMocks is true', (done) => {
-      const orig = environment.useMocks;
-      environment.useMocks = true;
-
-      service.getStations().subscribe((stations) => {
-        expect(stations).toEqual(mockStationsData);
-        expect(mockDataSpy.getStations).toHaveBeenCalled();
-        expect(apiSpy.get).not.toHaveBeenCalled();
-        environment.useMocks = orig;
-        done();
-      });
-    });
-
     it('should fetch from API and map backend response correctly', (done) => {
       const orig = environment.useMocks;
       environment.useMocks = false;
@@ -233,36 +165,25 @@ describe('BookingService', () => {
       });
     });
 
-    it('should fallback to mock data when api fails', (done) => {
+    it('should propagate error when api fails', (done) => {
       const orig = environment.useMocks;
       environment.useMocks = false;
 
       apiSpy.get.and.returnValue(throwError(() => new Error('Network error')));
 
-      service.getStations().subscribe((stations) => {
-        expect(stations).toEqual(mockStationsData);
-        expect(mockDataSpy.getStations).toHaveBeenCalled();
-        environment.useMocks = orig;
-        done();
+      service.getStations().subscribe({
+        next: () => fail('Should have failed'),
+        error: (err) => {
+          expect(err.message).toBe('Network error');
+          environment.useMocks = orig;
+          done();
+        }
       });
     });
   });
 
   describe('getStationAvailability', () => {
     const validUuid = '12345678-1234-1234-1234-123456789abc';
-
-    it('should use mock data if stationId is not a UUID', (done) => {
-      const orig = environment.useMocks;
-      environment.useMocks = false;
-
-      service.getStationAvailability('non-uuid-1', '2026-10-16').subscribe((slots) => {
-        expect(slots).toEqual(mockSlotsData);
-        expect(mockDataSpy.getStationAvailability).toHaveBeenCalledWith('non-uuid-1', '2026-10-16');
-        expect(apiSpy.get).not.toHaveBeenCalled();
-        environment.useMocks = orig;
-        done();
-      });
-    });
 
     it('should call API when stationId is a valid UUID', (done) => {
       const orig = environment.useMocks;
@@ -302,17 +223,19 @@ describe('BookingService', () => {
       });
     });
 
-    it('should fallback to mock data on API error', (done) => {
+    it('should propagate error on API error', (done) => {
       const orig = environment.useMocks;
       environment.useMocks = false;
 
       apiSpy.get.and.returnValue(throwError(() => new Error('Error')));
 
-      service.getStationAvailability(validUuid, '2026-10-16').subscribe((slots) => {
-        expect(mockDataSpy.getStationAvailability).toHaveBeenCalledWith(validUuid, '2026-10-16');
-        expect(slots).toEqual(mockSlotsData);
-        environment.useMocks = orig;
-        done();
+      service.getStationAvailability(validUuid, '2026-10-16').subscribe({
+        next: () => fail('Should have failed'),
+        error: (err) => {
+          expect(err.message).toBe('Error');
+          environment.useMocks = orig;
+          done();
+        }
       });
     });
   });
@@ -358,46 +281,24 @@ describe('BookingService', () => {
       });
     });
 
-    it('should fallback to mockData.getStationGames given API fails', (done) => {
+    it('should propagate error given API fails', (done) => {
       const orig = environment.useMocks;
       environment.useMocks = false;
 
       apiSpy.get.and.returnValue(throwError(() => new Error('API Failure')));
 
-      service.getStationGames('st-01').subscribe((games) => {
-        expect(mockDataSpy.getStationGames).toHaveBeenCalledWith('st-01');
-        expect(games).toEqual(mockGamesData);
-        environment.useMocks = orig;
-        done();
-      });
-    });
-
-    it('should delegate to mockData when useMocks is true', (done) => {
-      const orig = environment.useMocks;
-      environment.useMocks = true;
-
-      service.getStationGames('st-01').subscribe((games) => {
-        expect(mockDataSpy.getStationGames).toHaveBeenCalledWith('st-01');
-        expect(apiSpy.get).not.toHaveBeenCalled();
-        expect(games).toEqual(mockGamesData);
-        environment.useMocks = orig;
-        done();
+      service.getStationGames('st-01').subscribe({
+        next: () => fail('Should have failed'),
+        error: (err) => {
+          expect(err.message).toBe('API Failure');
+          environment.useMocks = orig;
+          done();
+        }
       });
     });
   });
 
   describe('getGames', () => {
-    it('should delegate to mockData.getGames given useMocks is true', (done) => {
-      const orig = environment.useMocks;
-      environment.useMocks = true;
-
-      service.getGames().subscribe((games) => {
-        expect(games).toEqual(mockGamesData);
-        expect(mockDataSpy.getGames).toHaveBeenCalled();
-        environment.useMocks = orig;
-        done();
-      });
-    });
 
     it('should fetch featured games with params given { featured: true } and useMocks is false', (done) => {
       const orig = environment.useMocks;
@@ -419,17 +320,19 @@ describe('BookingService', () => {
       });
     });
 
-    it('should fallback to mockData.getGames given API error', (done) => {
+    it('should propagate error given API error', (done) => {
       const orig = environment.useMocks;
       environment.useMocks = false;
 
       apiSpy.get.and.returnValue(throwError(() => new Error('Failed to load games')));
 
-      service.getGames().subscribe((games) => {
-        expect(mockDataSpy.getGames).toHaveBeenCalled();
-        expect(games).toEqual(mockGamesData);
-        environment.useMocks = orig;
-        done();
+      service.getGames().subscribe({
+        next: () => fail('Should have failed'),
+        error: (err) => {
+          expect(err.message).toBe('Failed to load games');
+          environment.useMocks = orig;
+          done();
+        }
       });
     });
   });
@@ -455,60 +358,25 @@ describe('BookingService', () => {
       });
     });
 
-    it('should delegate to mockData.getStations given useMocks is true or gameId is empty', (done) => {
-      const orig = environment.useMocks;
-      environment.useMocks = true;
-
-      service.getGameStations('').subscribe((stations) => {
-        expect(mockDataSpy.getStations).toHaveBeenCalled();
-        expect(stations).toEqual(mockStationsData);
-        environment.useMocks = orig;
-        done();
-      });
-    });
-
-    it('should fallback to mockData.getStations given API error', (done) => {
+    it('should propagate error given API error', (done) => {
       const orig = environment.useMocks;
       environment.useMocks = false;
 
       apiSpy.get.and.returnValue(throwError(() => new Error('Failed to load game stations')));
 
-      service.getGameStations('game-01').subscribe((stations) => {
-        expect(mockDataSpy.getStations).toHaveBeenCalled();
-        expect(stations).toEqual(mockStationsData);
-        environment.useMocks = orig;
-        done();
+      service.getGameStations('game-01').subscribe({
+        next: () => fail('Should have failed'),
+        error: (err) => {
+          expect(err.message).toBe('Failed to load game stations');
+          environment.useMocks = orig;
+          done();
+        }
       });
     });
   });
 
   describe('createBooking', () => {
     const validUuid = '12345678-1234-1234-1234-123456789abc';
-
-    it('should delegate to mockData when useMocks is true or stationId is non-uuid', (done) => {
-      const orig = environment.useMocks;
-      environment.useMocks = false;
-
-      service.createBooking({
-        stationId: 'st-01',
-        gameId: 'game-01',
-        bookingDate: '2026-10-16',
-        startTime: '10:00',
-        endTime: '11:00',
-        paymentMethod: 'CARD'
-      }).subscribe((res) => {
-        expect(mockDataSpy.createBooking).toHaveBeenCalledWith({
-          stationId: 'st-01',
-          gameId: 'game-01',
-          bookingDate: '2026-10-16',
-          startTime: '10:00',
-          endTime: '11:00'
-        });
-        expect(res).toEqual(mockBookingResp);
-        environment.useMocks = orig;
-        done();
-      });
-    });
 
     it('should handle future booking request with API and assert outgoing HTTP payload contains gameId', (done) => {
       const orig = environment.useMocks;
@@ -602,16 +470,6 @@ describe('BookingService', () => {
   });
 
   describe('getMyBookings', () => {
-    it('should return empty array when useMocks is true', (done) => {
-      const orig = environment.useMocks;
-      environment.useMocks = true;
-
-      service.getMyBookings().subscribe((bookings) => {
-        expect(bookings).toEqual([]);
-        environment.useMocks = orig;
-        done();
-      });
-    });
 
     it('should call API when useMocks is false', (done) => {
       const orig = environment.useMocks;

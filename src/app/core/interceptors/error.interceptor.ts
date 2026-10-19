@@ -27,9 +27,16 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
           // Only redirect if not already on an auth page or performing auth action
           if (!isAuthFlow) {
-            authService.logout(currentUrl);
-            toastService.warning(mappedError.message, 'Session Expired');
-            router.navigate(['/login'], { queryParams: { returnUrl: currentUrl } });
+            const token = authService.getToken();
+            const tokenExpired = authService.isTokenExpired();
+
+            if (!token || tokenExpired) {
+              authService.logout(currentUrl);
+              toastService.warning(mappedError.message || 'Your session has expired. Please log in again.', 'Session Expired');
+              router.navigate(['/login'], { queryParams: { returnUrl: currentUrl } });
+            } else {
+              toastService.error(mappedError.message || 'You do not have permission to perform this action.', 'Unauthorized');
+            }
           }
         } else if (error.status === 403) {
           router.navigate(['/forbidden']);
