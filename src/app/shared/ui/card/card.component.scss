@@ -75,3 +75,37 @@
   border-top: 1px solid var(--gc-border-subtle);
   background: rgba(8, 11, 17, 0.4);
 }
+
+@media (max-width: 480px) {
+  .gc-card-header {
+    padding: 0.85rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .gc-card-title {
+    font-size: 1.05rem;
+  }
+
+  .gc-card-body {
+    padding: 1rem;
+  }
+
+  .gc-card-footer {
+    padding: 0.75rem 1rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .gc-card-header {
+    padding: 0.75rem 0.75rem;
+  }
+
+  .gc-card-body {
+    padding: 0.75rem;
+  }
+
+  .gc-card-footer {
+    padding: 0.65rem 0.75rem;
+  }
+}

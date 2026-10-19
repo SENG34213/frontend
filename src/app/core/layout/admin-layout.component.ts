@@ -19,8 +19,18 @@ export class AdminLayoutComponent {
   private readonly router = inject(Router);
 
   sidebarCollapsed = signal(false);
+  mobileNavOpen = signal(false);
+
+  toggleMobileNav(): void {
+    this.mobileNavOpen.update((v) => !v);
+  }
+
+  closeMobileNav(): void {
+    this.mobileNavOpen.set(false);
+  }
 
   onLogout(): void {
+    this.closeMobileNav();
     this.authService.logout();
     this.router.navigate(['/login']);
   }

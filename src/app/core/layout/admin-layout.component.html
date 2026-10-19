@@ -1,49 +1,67 @@
 <div class="admin-shell">
+  <!-- Mobile Sidebar Backdrop Overlay -->
+  <div
+    class="sidebar-backdrop"
+    [class.show]="mobileNavOpen()"
+    (click)="closeMobileNav()"
+    aria-hidden="true">
+  </div>
+
   <!-- Admin Sidebar -->
-  <aside class="admin-sidebar" [class.collapsed]="sidebarCollapsed()">
+  <aside
+    class="admin-sidebar"
+    [class.collapsed]="sidebarCollapsed()"
+    [class.mobile-open]="mobileNavOpen()">
     <div class="sidebar-header">
-      <a routerLink="/admin" class="brand-link">
+      <a routerLink="/admin" class="brand-link" (click)="closeMobileNav()">
         <span class="logo-icon">👑</span>
         @if (!sidebarCollapsed()) {
           <span class="logo-text">ADMIN <span class="text-gradient">PORTAL</span></span>
         }
       </a>
+      <button
+        type="button"
+        class="mobile-close-btn"
+        (click)="closeMobileNav()"
+        aria-label="Close navigation sidebar">
+        ✕
+      </button>
     </div>
 
     <nav class="sidebar-nav">
-      <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+      <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item" (click)="closeMobileNav()">
         <span class="nav-icon">📊</span>
         @if (!sidebarCollapsed()) { <span>Dashboard</span> }
       </a>
-      <a routerLink="/admin/bookings" routerLinkActive="active" class="nav-item">
+      <a routerLink="/admin/bookings" routerLinkActive="active" class="nav-item" (click)="closeMobileNav()">
         <span class="nav-icon">📅</span>
         @if (!sidebarCollapsed()) { <span>Bookings</span> }
       </a>
-      <a routerLink="/admin/stations" routerLinkActive="active" class="nav-item">
+      <a routerLink="/admin/stations" routerLinkActive="active" class="nav-item" (click)="closeMobileNav()">
         <span class="nav-icon">🎮</span>
         @if (!sidebarCollapsed()) { <span>Stations</span> }
       </a>
-      <a routerLink="/admin/tournaments" routerLinkActive="active" class="nav-item">
+      <a routerLink="/admin/tournaments" routerLinkActive="active" class="nav-item" (click)="closeMobileNav()">
         <span class="nav-icon">🏆</span>
         @if (!sidebarCollapsed()) { <span>Tournaments</span> }
       </a>
-      <a routerLink="/admin/users" routerLinkActive="active" class="nav-item">
+      <a routerLink="/admin/users" routerLinkActive="active" class="nav-item" (click)="closeMobileNav()">
         <span class="nav-icon">👥</span>
         @if (!sidebarCollapsed()) { <span>Users</span> }
       </a>
-      <a routerLink="/admin/payments" routerLinkActive="active" class="nav-item">
+      <a routerLink="/admin/payments" routerLinkActive="active" class="nav-item" (click)="closeMobileNav()">
         <span class="nav-icon">💳</span>
         @if (!sidebarCollapsed()) { <span>Payments</span> }
       </a>
-      <a routerLink="/admin/reports" routerLinkActive="active" class="nav-item">
+      <a routerLink="/admin/reports" routerLinkActive="active" class="nav-item" (click)="closeMobileNav()">
         <span class="nav-icon">📈</span>
         @if (!sidebarCollapsed()) { <span>Reports</span> }
       </a>
-      <a routerLink="/admin/games" routerLinkActive="active" class="nav-item">
+      <a routerLink="/admin/games" routerLinkActive="active" class="nav-item" (click)="closeMobileNav()">
         <span class="nav-icon">🎯</span>
         @if (!sidebarCollapsed()) { <span>Games</span> }
       </a>
-      <a routerLink="/admin/loyalty" routerLinkActive="active" class="nav-item">
+      <a routerLink="/admin/loyalty" routerLinkActive="active" class="nav-item" (click)="closeMobileNav()">
         <span class="nav-icon">🎁</span>
         @if (!sidebarCollapsed()) { <span>Loyalty</span> }
       </a>
@@ -64,13 +82,22 @@
   <div class="admin-main-wrap">
     <header class="admin-topbar">
       <div class="topbar-left">
-        <gc-badge variant="accent">Administrator Access</gc-badge>
-        <span class="topbar-env">Environment: Staging (v0.2.0)</span>
+        <button
+          type="button"
+          class="mobile-menu-btn"
+          (click)="toggleMobileNav()"
+          aria-label="Toggle navigation menu">
+          <span class="hamburger-icon">☰</span>
+        </button>
+        <gc-badge variant="accent" class="topbar-badge">Admin Access</gc-badge>
+        <span class="topbar-env">Staging v0.2.0</span>
       </div>
 
       <div class="topbar-right">
-        <span class="admin-user">{{ authService.currentUser()?.email || 'Admin' }}</span>
-        <gc-button variant="outline" size="sm" (btnClick)="onLogout()">
+        <span class="admin-user" [title]="authService.currentUser()?.email || 'Admin'">
+          {{ authService.currentUser()?.email || 'Admin' }}
+        </span>
+        <gc-button variant="outline" size="sm" (btnClick)="onLogout()" class="logout-btn">
           Logout
         </gc-button>
       </div>
