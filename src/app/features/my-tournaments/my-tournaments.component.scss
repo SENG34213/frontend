@@ -1,0 +1,198 @@
+.page-container {
+  padding-top: var(--gc-spacing-xl);
+  padding-bottom: var(--gc-spacing-2xl);
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--gc-spacing-xl);
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  .page-title {
+    font-family: var(--gc-font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--gc-text-primary);
+    margin: 0 0 0.5rem;
+  }
+
+  .page-subtitle {
+    color: var(--gc-text-muted);
+    font-size: 0.95rem;
+    margin: 0;
+  }
+
+  .browse-tournaments-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.65rem 1.25rem;
+    border-radius: var(--gc-radius-md);
+    background: var(--gc-gradient-primary);
+    color: #ffffff;
+    font-family: var(--gc-font-display);
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    box-shadow: 0 0 15px var(--gc-primary-glow);
+    transition: all var(--gc-transition-fast);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 22px var(--gc-accent-glow);
+      color: #ffffff;
+    }
+  }
+}
+
+.tabs-wrapper {
+  margin-bottom: var(--gc-spacing-lg);
+}
+
+.tournaments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: var(--gc-spacing-lg);
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tournament-card {
+  transition: transform var(--gc-transition-normal), border-color var(--gc-transition-normal);
+
+  &:hover {
+    transform: translateY(-3px);
+    border-color: var(--gc-border-focus);
+  }
+
+  .tourn-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+
+    .tourn-title-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      .tourn-trophy-icon {
+        font-size: 1.5rem;
+        background: rgba(139, 92, 246, 0.15);
+        padding: 0.4rem;
+        border-radius: var(--gc-radius-sm);
+        border: 1px solid var(--gc-border-subtle);
+      }
+
+      .tourn-name {
+        font-family: var(--gc-font-display);
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--gc-text-primary);
+        margin: 0;
+      }
+
+      .tourn-game {
+        font-size: 0.82rem;
+        color: var(--gc-accent-light);
+        font-weight: 500;
+      }
+    }
+  }
+
+  .tourn-card-divider {
+    height: 1px;
+    background: var(--gc-border-subtle);
+    margin: 0.75rem 0 1rem;
+  }
+
+  .tourn-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+    margin-bottom: 1.2rem;
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+
+      .meta-label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--gc-text-muted);
+        font-weight: 600;
+      }
+
+      .meta-value {
+        font-size: 0.9rem;
+        color: var(--gc-text-secondary);
+        font-weight: 500;
+      }
+
+      &.placement-item {
+        grid-column: span 2;
+
+        .result-badge {
+          color: var(--gc-text-primary);
+          font-weight: 600;
+          font-size: 0.88rem;
+        }
+      }
+    }
+  }
+
+  .tourn-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-top: 1px solid var(--gc-border-subtle);
+    padding-top: 0.85rem;
+
+    .details-link {
+      color: var(--gc-primary-light);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    .bracket-link {
+      color: var(--gc-text-muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+
+      &:hover {
+        color: var(--gc-text-primary);
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+.empty-state-card {
+  padding: 2rem;
+}
+
+.tabs-skeleton {
+  margin-bottom: var(--gc-spacing-lg);
+}
+
+.tourn-skeleton-card {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
