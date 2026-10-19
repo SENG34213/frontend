@@ -26,22 +26,6 @@
 
       <!-- User Controls -->
       <div class="user-actions">
-        <!-- Real-Time Notification Bell Button -->
-        <button
-          type="button"
-          class="nav-notif-btn"
-          id="customer-nav-notif-btn"
-          (click)="notifService.toggleDrawer()"
-          [attr.aria-expanded]="notifService.isDrawerOpen()"
-          aria-label="Toggle real-time notifications">
-          <span class="bell-icon" [class.ringing]="notifService.unreadCount() > 0">🔔</span>
-          @if (notifService.unreadCount() > 0) {
-            <span class="nav-unread-badge">
-              {{ notifService.unreadCount() > 99 ? '99+' : notifService.unreadCount() }}
-            </span>
-          }
-        </button>
-
         <!-- User Avatar & Dropdown Menu -->
         <div class="avatar-menu-wrapper">
           <button

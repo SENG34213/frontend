@@ -15,7 +15,6 @@ import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { Subject, takeUntil, filter } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
-import { NotificationSocketService } from '../services/notification-socket.service';
 import { BadgeComponent } from '../../shared/ui/badge/badge.component';
 import { NotificationCenterComponent } from '../../shared/components/notification-center/notification-center.component';
 
@@ -35,7 +34,6 @@ import { NotificationCenterComponent } from '../../shared/components/notificatio
 export class CustomerLayoutComponent implements OnInit, OnDestroy {
   readonly authService = inject(AuthService);
   readonly userService = inject(UserService);
-  readonly notifService = inject(NotificationSocketService);
   private readonly router = inject(Router);
 
   @ViewChild('avatarBtn') avatarBtn?: ElementRef<HTMLButtonElement>;

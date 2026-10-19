@@ -246,17 +246,20 @@ describe('CustomerLayoutComponent', () => {
       expect(component.mobileMenuOpen()).toBeFalse();
     });
 
-    it('should toggle notification drawer when bell is clicked', () => {
-      const notifBtn = fixture.nativeElement.querySelector('#customer-nav-notif-btn');
-      expect(notifBtn).toBeTruthy();
-      notifBtn.click();
-      expect(notifSocketSpy.toggleDrawer).toHaveBeenCalled();
+    it('should not render a notification bell in the header', () => {
+      expect(fixture.nativeElement.querySelector('.nav-notif-btn')).toBeNull();
     });
 
-    it('should display notification badge count', () => {
-      const badge = fixture.nativeElement.querySelector('.nav-unread-badge');
+    it('should render one floating notification bell with the unread count', () => {
+      const notifButtons = fixture.nativeElement.querySelectorAll('.notification-trigger-btn');
+      expect(notifButtons.length).toBe(1);
+
+      const badge = fixture.nativeElement.querySelector('.unread-badge');
       expect(badge).toBeTruthy();
       expect(badge.textContent.trim()).toBe('3');
+
+      notifButtons[0].click();
+      expect(notifSocketSpy.toggleDrawer).toHaveBeenCalled();
     });
   });
 });
