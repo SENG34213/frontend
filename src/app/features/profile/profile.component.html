@@ -1,0 +1,138 @@
+<div class="page-container container">
+  <!-- Page Header -->
+  <header class="page-header">
+    <h1 class="page-title">My <span class="text-gradient">Profile</span></h1>
+    <p class="page-subtitle">View and manage your account details and loyalty status</p>
+  </header>
+
+  <!-- Error State with Retry -->
+  @if (hasError()) {
+    <gc-card [glow]="'none'" class="state-card">
+      <gc-empty-state
+        icon="⚠️"
+        title="Unable to load profile"
+        description="We could not retrieve your account information at this moment. Please check your connection and try again."
+        actionLabel="Retry"
+        (actionClick)="loadProfileData()">
+      </gc-empty-state>
+    </gc-card>
+  } @else if (isLoading()) {
+    <!-- Loading Skeletons -->
+    <div class="profile-grid">
+      <gc-card class="profile-card">
+        <div class="skeleton-profile-header">
+          <gc-skeleton shape="circle" width="100px" height="100px"></gc-skeleton>
+          <div class="skeleton-lines">
+            <gc-skeleton shape="text" width="60%" height="28px"></gc-skeleton>
+            <gc-skeleton shape="text" width="40%" height="18px"></gc-skeleton>
+            <gc-skeleton shape="rect" width="80px" height="24px"></gc-skeleton>
+          </div>
+        </div>
+        <div class="skeleton-details">
+          <gc-skeleton shape="rect" width="100%" height="45px"></gc-skeleton>
+          <gc-skeleton shape="rect" width="100%" height="45px"></gc-skeleton>
+          <gc-skeleton shape="rect" width="100%" height="45px"></gc-skeleton>
+        </div>
+      </gc-card>
+    </div>
+  } @else {
+    @if (profile(); as user) {
+      <!-- Main Profile Content -->
+      <div class="profile-layout">
+      <!-- Account Overview Card -->
+      <gc-card [glow]="'blue'" class="profile-card">
+        <div class="profile-hero">
+          <!-- Large Avatar -->
+          <div class="large-avatar">
+            @if (avatarImageUrl()) {
+              <img
+                [src]="avatarImageUrl()"
+                [alt]="user.fullName"
+                class="avatar-photo"
+                (error)="onImageError()" />
+            } @else {
+              <span class="avatar-letter">{{ userInitial() }}</span>
+            }
+          </div>
+
+          <div class="profile-hero-info">
+            <div class="name-badge-row">
+              <h2 class="user-fullname">{{ user.fullName || 'Gaming Castle Player' }}</h2>
+              <gc-badge [variant]="user.role === 'ADMIN' ? 'accent' : 'primary'" [showDot]="false">
+                {{ user.role }}
+              </gc-badge>
+            </div>
+            <p class="user-email-text">{{ user.email }}</p>
+            <div class="status-row">
+              <gc-badge [variant]="user.enabled !== false ? 'success' : 'danger'">
+                {{ user.enabled !== false ? 'Active Account' : 'Inactive' }}
+              </gc-badge>
+              <span class="member-since">Member since {{ formatDate(user.createdAt) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="details-divider"></div>
+
+        <!-- Details Grid -->
+        <div class="profile-details-grid">
+          <div class="detail-item">
+            <span class="detail-label">Full Name</span>
+            <span class="detail-value">{{ user.fullName || '—' }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Email Address</span>
+            <span class="detail-value">{{ user.email }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Phone Number</span>
+            <span class="detail-value">{{ user.phoneNumber || 'Not provided' }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Account Status</span>
+            <span class="detail-value text-available">
+              {{ user.enabled !== false ? 'Verified & Active' : 'Suspended' }}
+            </span>
+          </div>
+        </div>
+      </gc-card>
+
+      <!-- Small Loyalty Summary Card -->
+      @if (loyalty(); as loy) {
+        <gc-card [glow]="'purple'" class="loyalty-summary-card">
+          <div class="loyalty-header">
+            <span class="loyalty-badge-icon">👑</span>
+            <div class="loyalty-titles">
+              <h3 class="card-title">Loyalty Status</h3>
+              <p class="card-subtitle">Your member tier & rewards</p>
+            </div>
+            <gc-badge [variant]="loy.tier === 'GOLD' || loy.tier === 'VIP' ? 'warning' : 'info'" [showDot]="false">
+              {{ loy.tier }} TIER
+            </gc-badge>
+          </div>
+
+          <div class="loyalty-stats-row">
+            <div class="loy-stat-box">
+              <span class="stat-number">{{ loy.pointsBalance | number }}</span>
+              <span class="stat-label">Points Balance</span>
+            </div>
+            <div class="loy-stat-box">
+              <span class="stat-number text-gradient">LKR {{ (loy.equivalentDiscountLkr || loy.pointsBalance) | number }}</span>
+              <span class="stat-label">Discount Value</span>
+            </div>
+          </div>
+
+          <div class="loyalty-action">
+            <a routerLink="/loyalty" class="view-loyalty-link">
+              View Complete Loyalty History &rarr;
+            </a>
+          </div>
+        </gc-card>
+      }
+    </div>
+    }
+  }
+</div>

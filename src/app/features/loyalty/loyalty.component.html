@@ -1,0 +1,135 @@
+<div class="page-container container">
+  <!-- Page Header -->
+  <header class="page-header">
+    <h1 class="page-title">Loyalty <span class="text-gradient">Rewards</span></h1>
+    <p class="page-subtitle">Earn points with every gaming session and redeem them for exclusive discounts</p>
+  </header>
+
+  <!-- Error State with Retry -->
+  @if (hasError()) {
+    <gc-card class="state-card">
+      <gc-empty-state
+        icon="⚠️"
+        title="Could not load loyalty account"
+        description="We couldn't retrieve your loyalty balance and points history. Please try again."
+        actionLabel="Retry"
+        (actionClick)="loadInitialData()">
+      </gc-empty-state>
+    </gc-card>
+  } @else if (isLoading()) {
+    <!-- Skeletons -->
+    <div class="loyalty-grid">
+      <gc-card class="balance-skeleton-card">
+        <gc-skeleton shape="rect" width="100%" height="140px"></gc-skeleton>
+      </gc-card>
+      <gc-card class="history-skeleton-card">
+        <gc-skeleton shape="text" width="50%" height="24px"></gc-skeleton>
+        <gc-skeleton shape="rect" width="100%" height="220px"></gc-skeleton>
+      </gc-card>
+    </div>
+  } @else {
+    <div class="loyalty-layout">
+      <!-- Balance Card -->
+      @if (balance(); as bal) {
+        <gc-card [glow]="'blue'" class="balance-card">
+          <div class="balance-card-inner">
+            <div class="tier-top-row">
+              <span class="rewards-icon">💎</span>
+              <gc-badge [variant]="getTierBadgeVariant(bal.tier)" [showDot]="false">
+                {{ bal.tier }} TIER
+              </gc-badge>
+            </div>
+
+            <div class="points-display-group">
+              <span class="points-label">AVAILABLE POINTS</span>
+              <div class="points-value text-gradient">
+                {{ bal.pointsBalance | number }}
+              </div>
+            </div>
+
+            <div class="balance-divider"></div>
+
+            <div class="equivalent-discount-box">
+              <div class="discount-subtext">Equivalent Cash Value</div>
+              <div class="discount-amount">
+                LKR {{ (bal.equivalentDiscountLkr || bal.pointsBalance) | number:'1.2-2' }}
+              </div>
+              <div class="redemption-hint">
+                Redeem points directly at checkout (100 pts = LKR 100)
+              </div>
+            </div>
+          </div>
+        </gc-card>
+      }
+
+      <!-- Transaction History Section -->
+      <section class="history-section" aria-labelledby="history-heading">
+        <div class="section-header">
+          <h2 id="history-heading" class="section-title">Points History</h2>
+          <span class="history-count">{{ totalElements() }} transaction{{ totalElements() === 1 ? '' : 's' }}</span>
+        </div>
+
+        @if (transactions().length === 0) {
+          <gc-card class="empty-history-card">
+            <gc-empty-state
+              icon="⭐"
+              title="No transactions yet"
+              description="Play games or enter tournaments to start earning castle loyalty points!">
+            </gc-empty-state>
+          </gc-card>
+        } @else {
+          <gc-card class="transactions-table-card">
+            <div class="table-responsive">
+              <table class="gc-table" aria-label="Loyalty transaction history">
+                <thead>
+                  <tr>
+                    <th scope="col">Type</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Date</th>
+                    <th scope="col" class="text-right">Points</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (t of transactions(); track t.id) {
+                    <tr>
+                      <td class="type-cell">
+                        <gc-badge [variant]="t.badgeVariant">
+                          {{ t.type || 'ADJUST' }}
+                        </gc-badge>
+                      </td>
+                      <td class="desc-cell">
+                        <span class="transaction-desc">{{ t.description }}</span>
+                      </td>
+                      <td class="date-cell">
+                        <span class="transaction-date">{{ t.formattedDate }}</span>
+                      </td>
+                      <td class="points-cell text-right">
+                        <span
+                          class="points-badge"
+                          [class.points-positive]="t.isPositive"
+                          [class.points-negative]="!t.isPositive">
+                          {{ t.pointsDisplay }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (totalPages() > 1) {
+              <div class="pagination-footer">
+                <gc-pagination
+                  [currentPage]="currentPage()"
+                  [totalPages]="totalPages()"
+                  (pageChange)="onPageChange($event)">
+                </gc-pagination>
+              </div>
+            }
+          </gc-card>
+        }
+      </section>
+    </div>
+  }
+</div>

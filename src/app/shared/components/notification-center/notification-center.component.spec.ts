@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 import { NotificationCenterComponent } from './notification-center.component';
 import { NotificationSocketService } from '../../../core/services/notification-socket.service';
-import { AdminNotification, NotificationCategory } from '../../models/notification.model';
+import { AdminNotification } from '../../models/notification.model';
 
 describe('NotificationCenterComponent', () => {
   let component: NotificationCenterComponent;
@@ -88,7 +88,7 @@ describe('NotificationCenterComponent', () => {
   });
 
   it('should open notification panel when isDrawerOpen is true', () => {
-    (notifSocketSpy.isDrawerOpen as any).set(true);
+    (notifSocketSpy.isDrawerOpen as unknown as ReturnType<typeof signal<boolean>>).set(true);
     fixture.detectChanges();
 
     const panel = fixture.nativeElement.querySelector('.notification-panel');
@@ -96,7 +96,7 @@ describe('NotificationCenterComponent', () => {
   });
 
   it('should close drawer when close button is clicked in panel header', () => {
-    (notifSocketSpy.isDrawerOpen as any).set(true);
+    (notifSocketSpy.isDrawerOpen as unknown as ReturnType<typeof signal<boolean>>).set(true);
     fixture.detectChanges();
 
     const closeBtn = fixture.nativeElement.querySelector('.btn-close');
@@ -137,17 +137,17 @@ describe('NotificationCenterComponent', () => {
 
   it('should resolve customer links properly in customer mode', () => {
     component.mode = 'customer';
-    expect(component.getNotificationLink({ link: '/admin/bookings' } as any)).toBe('/bookings');
-    expect(component.getNotificationLink({ link: '/admin/tournaments' } as any)).toBe('/tournaments');
-    expect(component.getNotificationLink({ link: '/admin' } as any)).toBe('/dashboard');
-    expect(component.getNotificationLink({ link: '/tournaments/t-101' } as any)).toBe('/tournaments/t-101');
-    expect(component.getNotificationLink({} as any)).toBe('/dashboard');
+    expect(component.getNotificationLink({ link: '/admin/bookings' } as unknown as AdminNotification)).toBe('/bookings');
+    expect(component.getNotificationLink({ link: '/admin/tournaments' } as unknown as AdminNotification)).toBe('/tournaments');
+    expect(component.getNotificationLink({ link: '/admin' } as unknown as AdminNotification)).toBe('/dashboard');
+    expect(component.getNotificationLink({ link: '/tournaments/t-101' } as unknown as AdminNotification)).toBe('/tournaments/t-101');
+    expect(component.getNotificationLink({} as unknown as AdminNotification)).toBe('/dashboard');
   });
 
   it('should resolve admin links in admin mode', () => {
     component.mode = 'admin';
-    expect(component.getNotificationLink({ link: '/admin/bookings' } as any)).toBe('/admin/bookings');
-    expect(component.getNotificationLink({} as any)).toBe('/admin');
+    expect(component.getNotificationLink({ link: '/admin/bookings' } as unknown as AdminNotification)).toBe('/admin/bookings');
+    expect(component.getNotificationLink({} as unknown as AdminNotification)).toBe('/admin');
   });
 
   it('should call sendTestAlert with true when mode is customer', () => {
@@ -163,7 +163,7 @@ describe('NotificationCenterComponent', () => {
   });
 
   it('should call markAllAsRead when Read All button is clicked', () => {
-    (notifSocketSpy.isDrawerOpen as any).set(true);
+    (notifSocketSpy.isDrawerOpen as unknown as ReturnType<typeof signal<boolean>>).set(true);
     fixture.detectChanges();
 
     const readAllBtn = fixture.nativeElement.querySelector('.btn-text-action');
@@ -173,8 +173,8 @@ describe('NotificationCenterComponent', () => {
   });
 
   it('should render empty state when filteredNotifications is empty', () => {
-    (notifSocketSpy.isDrawerOpen as any).set(true);
-    (notifSocketSpy.filteredNotifications as any).set([]);
+    (notifSocketSpy.isDrawerOpen as unknown as ReturnType<typeof signal<boolean>>).set(true);
+    (notifSocketSpy.filteredNotifications as unknown as ReturnType<typeof signal<AdminNotification[]>>).set([]);
     fixture.detectChanges();
 
     const emptyDesc = fixture.nativeElement.querySelector('.empty-desc');

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TournamentDetailComponent } from './tournament-detail.component';
 import { TournamentService, TournamentViewItem } from '../../../core/services/tournament.service';
@@ -78,7 +78,7 @@ describe('TournamentDetailComponent', () => {
     });
     tournamentServiceSpy.formatLkr.and.callFake((amt: number) => amt === 0 ? 'FREE' : `LKR ${amt}`);
     tournamentServiceSpy.getStatusBadgeInfo.and.returnValue({ label: 'REGISTRATION OPEN', variant: 'available' });
-    tournamentServiceSpy.enrichTournament.and.callFake((t: any) => ({
+    tournamentServiceSpy.enrichTournament.and.callFake((t: TournamentViewItem) => ({
       ...t,
       spotsLeft: (t.maxParticipants || 16) - (t.participantCount || 0),
       progressPercent: 40,

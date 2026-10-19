@@ -1,0 +1,120 @@
+<div class="page-container container">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">My <span class="text-gradient">Bookings</span></h1>
+      <p class="page-subtitle">Track your upcoming reservations and past played sessions</p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/bookings" class="new-booking-btn">
+        + Book New Session
+      </a>
+    </div>
+  </header>
+
+  <!-- Error State with Retry -->
+  @if (hasError()) {
+    <gc-card class="state-card">
+      <gc-empty-state
+        icon="⚠️"
+        title="Could not load bookings"
+        description="Unable to fetch your booking history right now. Please try again."
+        actionLabel="Retry"
+        (actionClick)="loadBookings()">
+      </gc-empty-state>
+    </gc-card>
+  } @else if (isLoading()) {
+    <!-- Skeletons -->
+    <div class="tabs-skeleton">
+      <gc-skeleton shape="rect" width="220px" height="42px"></gc-skeleton>
+    </div>
+    <div class="bookings-grid">
+      @for (i of [1, 2, 3]; track i) {
+        <gc-card class="booking-skeleton-card">
+          <gc-skeleton shape="text" width="60%" height="22px"></gc-skeleton>
+          <gc-skeleton shape="text" width="40%" height="16px"></gc-skeleton>
+          <gc-skeleton shape="rect" width="100%" height="60px"></gc-skeleton>
+        </gc-card>
+      }
+    </div>
+  } @else {
+    <!-- Tabs Navigation -->
+    <div class="tabs-wrapper">
+      <gc-tabs
+        [tabs]="tabs()"
+        [activeTab]="activeTab()"
+        (tabChange)="onTabChange($event)">
+      </gc-tabs>
+    </div>
+
+    <!-- Bookings List -->
+    @if (currentList().length === 0) {
+      <gc-card class="empty-state-card">
+        @if (activeTab() === 'upcoming') {
+          <gc-empty-state
+            icon="🎮"
+            title="No upcoming bookings"
+            description="You don't have any reservations scheduled. Ready to jump into the action?"
+            actionLabel="Book a Station"
+            (actionClick)="loadBookings()">
+          </gc-empty-state>
+        } @else {
+          <gc-empty-state
+            icon="🕹️"
+            title="No played sessions yet"
+            description="Your completed and historical gaming sessions will appear here.">
+          </gc-empty-state>
+        }
+      </gc-card>
+    } @else {
+      <div class="bookings-grid">
+        @for (item of currentList(); track item.id) {
+          <gc-card
+            [glow]="item.isUpcoming ? 'blue' : 'none'"
+            class="booking-card">
+            <!-- Card Header -->
+            <div class="booking-card-header">
+              <div class="game-info">
+                <span class="game-badge-icon">🎮</span>
+                <div>
+                  <h3 class="game-title">{{ item.displayGame }}</h3>
+                  <span class="station-code">{{ item.displayStation }}</span>
+                </div>
+              </div>
+              <gc-badge [variant]="item.badgeVariant">
+                {{ item.status }}
+              </gc-badge>
+            </div>
+
+            <div class="booking-card-divider"></div>
+
+            <!-- Booking Details Info -->
+            <div class="booking-meta-grid">
+              <div class="meta-item">
+                <span class="meta-label">Date</span>
+                <span class="meta-value">{{ item.formattedDate }}</span>
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Time Slot</span>
+                <span class="meta-value">{{ item.formattedTimeSlot }}</span>
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Reference</span>
+                <span class="meta-value font-mono">{{ item.bookingReference || item.id.substring(0, 8).toUpperCase() }}</span>
+              </div>
+
+              <div class="meta-item amount-item">
+                <span class="meta-label">Total Amount</span>
+                <span class="meta-value amount-val text-gradient">
+                  LKR {{ item.displayAmount | number:'1.2-2' }}
+                </span>
+              </div>
+            </div>
+          </gc-card>
+        }
+      </div>
+    }
+  }
+</div>

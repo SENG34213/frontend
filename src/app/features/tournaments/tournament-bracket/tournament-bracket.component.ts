@@ -14,8 +14,6 @@ import { TournamentService, TournamentViewItem } from '../../../core/services/to
 import { BracketResponse, MatchResponse } from '../../../shared/models';
 
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
-import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
-import { CardComponent } from '../../../shared/ui/card/card.component';
 import { SkeletonComponent } from '../../../shared/ui/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.component';
 

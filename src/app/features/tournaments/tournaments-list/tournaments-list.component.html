@@ -260,8 +260,10 @@
 
             <!-- Card Body -->
             <div class="card-body">
-              <h2 class="tournament-title" (click)="viewDetails(tournament.id)">
-                {{ tournament.name }}
+              <h2 class="tournament-title">
+                <a [routerLink]="['/tournaments', tournament.id]" class="tournament-title-link">
+                  {{ tournament.name }}
+                </a>
               </h2>
 
               <p class="card-schedule">

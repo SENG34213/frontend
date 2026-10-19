@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TournamentBracketComponent } from './tournament-bracket.component';
 import { TournamentService, TournamentViewItem } from '../../../core/services/tournament.service';

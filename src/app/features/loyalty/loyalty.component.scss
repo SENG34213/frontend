@@ -1,0 +1,227 @@
+.page-container {
+  padding-top: var(--gc-spacing-xl);
+  padding-bottom: var(--gc-spacing-2xl);
+}
+
+.page-header {
+  margin-bottom: var(--gc-spacing-xl);
+
+  .page-title {
+    font-family: var(--gc-font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--gc-text-primary);
+    margin: 0 0 0.5rem;
+  }
+
+  .page-subtitle {
+    color: var(--gc-text-muted);
+    font-size: 0.95rem;
+    margin: 0;
+  }
+}
+
+.loyalty-layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: var(--gc-spacing-xl);
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Balance Card */
+.balance-card {
+  position: sticky;
+  top: 90px;
+
+  .balance-card-inner {
+    padding: 0.5rem 0;
+
+    .tier-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+
+      .rewards-icon {
+        font-size: 2rem;
+      }
+    }
+
+    .points-display-group {
+      margin-bottom: 1.25rem;
+
+      .points-label {
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--gc-text-muted);
+        font-weight: 700;
+      }
+
+      .points-value {
+        font-family: var(--gc-font-display);
+        font-size: 3rem;
+        font-weight: 900;
+        line-height: 1.1;
+        margin-top: 0.25rem;
+      }
+    }
+
+    .balance-divider {
+      height: 1px;
+      background: var(--gc-border-default);
+      margin: 1.25rem 0;
+    }
+
+    .equivalent-discount-box {
+      background: rgba(15, 21, 35, 0.7);
+      border: 1px solid var(--gc-border-subtle);
+      border-radius: var(--gc-radius-md);
+      padding: 1rem;
+
+      .discount-subtext {
+        font-size: 0.75rem;
+        color: var(--gc-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 600;
+      }
+
+      .discount-amount {
+        font-family: var(--gc-font-display);
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--gc-status-available);
+        margin: 0.25rem 0 0.5rem;
+      }
+
+      .redemption-hint {
+        font-size: 0.78rem;
+        color: var(--gc-text-secondary);
+        line-height: 1.35;
+      }
+    }
+  }
+}
+
+/* History Section */
+.history-section {
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+
+    .section-title {
+      font-family: var(--gc-font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gc-text-primary);
+      margin: 0;
+    }
+
+    .history-count {
+      font-size: 0.85rem;
+      color: var(--gc-text-muted);
+    }
+  }
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.gc-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.88rem;
+
+  thead tr {
+    border-bottom: 1px solid var(--gc-border-default);
+
+    th {
+      padding: 0.75rem 1rem;
+      color: var(--gc-text-muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--gc-border-subtle);
+    transition: background var(--gc-transition-fast);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    td {
+      padding: 0.95rem 1rem;
+      color: var(--gc-text-secondary);
+      vertical-align: middle;
+    }
+  }
+
+  .text-right {
+    text-align: right;
+  }
+
+  .desc-cell {
+    max-width: 320px;
+
+    .transaction-desc {
+      color: var(--gc-text-primary);
+      font-weight: 500;
+      display: block;
+    }
+  }
+
+  .date-cell {
+    font-size: 0.82rem;
+    white-space: nowrap;
+    color: var(--gc-text-muted);
+  }
+
+  .points-badge {
+    font-family: var(--gc-font-display);
+    font-size: 1.05rem;
+    font-weight: 800;
+
+    &.points-positive {
+      color: var(--gc-status-available);
+    }
+
+    &.points-negative {
+      color: var(--gc-status-occupied);
+    }
+  }
+}
+
+.pagination-footer {
+  padding-top: var(--gc-spacing-md);
+  display: flex;
+  justify-content: center;
+}
+
+.empty-history-card {
+  padding: 2rem;
+}
+
+.loyalty-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: var(--gc-spacing-xl);
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}

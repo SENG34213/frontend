@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, map, of, throwError } from 'rxjs';
+import { Observable, catchError, map, throwError } from 'rxjs';
 import { ApiService } from './api.service';
 import { MockDataService } from './mock/mock-data.service';
 import { AuthService } from './auth.service';
