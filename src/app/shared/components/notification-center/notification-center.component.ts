@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, HostListener, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NotificationSocketService } from '../../../core/services/notification-socket.service';
@@ -13,9 +13,26 @@ import { NotificationCategory, AdminNotification } from '../../models/notificati
 })
 export class NotificationCenterComponent {
   readonly notifService = inject(NotificationSocketService);
+  private readonly elementRef = inject(ElementRef);
 
   @Input() mode: 'admin' | 'customer' = 'customer';
   @Input() showFloatingTrigger = true;
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.notifService.isDrawerOpen()) return;
+    const clickedInside = this.elementRef.nativeElement.contains(event.target as Node);
+    if (!clickedInside) {
+      this.notifService.closeDrawer();
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.notifService.isDrawerOpen()) {
+      this.notifService.closeDrawer();
+    }
+  }
 
   getNotificationLink(notif: AdminNotification): string {
     if (this.mode === 'customer') {

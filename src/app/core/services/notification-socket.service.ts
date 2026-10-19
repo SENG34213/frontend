@@ -121,31 +121,10 @@ export class NotificationSocketService {
         }
       },
       error: () => {
-        // Fallback: If socket server is not yet running, prefill mock data
+        // Fallback: socket server not yet available or empty
         if (this.notifications().length === 0) {
-          this.notifications.set([
-            {
-              id: 'local-1',
-              type: 'BOOKING_CREATED',
-              category: 'BOOKING',
-              title: 'New Walk-In Booking',
-              message: 'Station PS5-02 booked for 2 hours (LKR 1,600.00)',
-              link: '/admin/bookings',
-              read: false,
-              createdAt: new Date(Date.now() - 3 * 60000).toISOString()
-            },
-            {
-              id: 'local-2',
-              type: 'TOURNAMENT_REGISTRATION',
-              category: 'TOURNAMENT',
-              title: 'Tournament Enrollment',
-              message: 'Alex Silva enrolled in EA FC 25 Championship Arena',
-              link: '/admin/tournaments',
-              read: false,
-              createdAt: new Date(Date.now() - 15 * 60000).toISOString()
-            }
-          ]);
-          this.unreadCount.set(2);
+          this.notifications.set([]);
+          this.unreadCount.set(0);
         }
       }
     });

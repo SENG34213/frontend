@@ -26,56 +26,8 @@ const io = new Server(server, {
   pingInterval: 15000
 });
 
-// In-memory notifications store (prefilled with recent sample notifications)
-const now = new Date();
-const minutesAgo = (mins) => new Date(now.getTime() - mins * 60000).toISOString();
-
-let notifications = [
-  {
-    id: 'notif-sample-1',
-    type: 'BOOKING_CREATED',
-    category: 'BOOKING',
-    title: 'New Walk-In Booking',
-    message: 'Station PS5-02 booked for 2 hours (LKR 1,600.00)',
-    referenceId: 'BK-1082',
-    link: '/admin/bookings',
-    read: false,
-    createdAt: minutesAgo(4)
-  },
-  {
-    id: 'notif-sample-2',
-    type: 'TOURNAMENT_REGISTRATION',
-    category: 'TOURNAMENT',
-    title: 'Tournament Enrollment',
-    message: 'Kasun Bandara registered for EA FC 25 Championship Arena',
-    referenceId: 'TRN-201',
-    link: '/admin/tournaments',
-    read: false,
-    createdAt: minutesAgo(18)
-  },
-  {
-    id: 'notif-sample-3',
-    type: 'BOOKING_RESCHEDULED',
-    category: 'RESCHEDULE',
-    title: 'Booking Rescheduled',
-    message: 'Station PC-01 booking shifted to 19:30 SLST today',
-    referenceId: 'BK-1077',
-    link: '/admin/bookings',
-    read: true,
-    createdAt: minutesAgo(45)
-  },
-  {
-    id: 'notif-sample-4',
-    type: 'BOOKING_CANCELLED',
-    category: 'CANCEL',
-    title: 'Booking Cancelled',
-    message: 'Station SIM-01 slot was cancelled by user',
-    referenceId: 'BK-1065',
-    link: '/admin/bookings',
-    read: true,
-    createdAt: minutesAgo(120)
-  }
-];
+// In-memory notifications store
+let notifications = [];
 
 function getUnreadCount() {
   return notifications.filter(n => !n.read).length;

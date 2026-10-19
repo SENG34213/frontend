@@ -20,28 +20,28 @@
         <div class="stat-icon">👥</div>
         <div class="stat-info">
           <span class="stat-label">Loyalty Members</span>
-          <span class="stat-value">{{ st.totalAccounts.toLocaleString() }}</span>
+          <span class="stat-value">{{ (st.totalAccounts || 0) | number:'1.0-0' }}</span>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon text-accent">💎</div>
         <div class="stat-info">
           <span class="stat-label">Points in Circulation</span>
-          <span class="stat-value">{{ st.totalPointsInCirculation.toLocaleString() }}</span>
+          <span class="stat-value">{{ (st.totalPointsInCirculation || 0) | number:'1.0-0' }}</span>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon text-success">🎁</div>
         <div class="stat-info">
           <span class="stat-label">All-Time Awarded</span>
-          <span class="stat-value">{{ st.totalPointsAwardedAllTime.toLocaleString() }}</span>
+          <span class="stat-value">{{ (st.totalPointsAwardedAllTime || 0) | number:'1.0-0' }}</span>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon text-warning">🏷️</div>
         <div class="stat-info">
           <span class="stat-label">All-Time Redeemed</span>
-          <span class="stat-value">{{ st.totalPointsRedeemedAllTime.toLocaleString() }}</span>
+          <span class="stat-value">{{ (st.totalPointsRedeemedAllTime || 0) | number:'1.0-0' }}</span>
         </div>
       </div>
     </section>
@@ -80,7 +80,7 @@
         <strong>Error:</strong>
         <p>{{ errorMessage() }}</p>
       </div>
-      <gc-button size="sm" variant="secondary" (click)="loadAccounts()">
+      <gc-button size="sm" variant="secondary" (btnClick)="loadAccounts()" (click)="loadAccounts()">
         Retry
       </gc-button>
     </div>
@@ -116,12 +116,12 @@
           <option value="VIP">VIP Elite</option>
         </select>
 
-        <gc-button size="sm" variant="primary" (click)="applyAccountFilters()">
+        <gc-button size="sm" variant="primary" (btnClick)="applyAccountFilters()" (click)="applyAccountFilters()">
           Filter
         </gc-button>
 
         @if (searchTerm() || selectedTier()) {
-          <gc-button size="sm" variant="secondary" (click)="resetAccountFilters()">
+          <gc-button size="sm" variant="secondary" (btnClick)="resetAccountFilters()" (click)="resetAccountFilters()">
             Clear
           </gc-button>
         }
@@ -152,12 +152,12 @@
             </tr>
           </thead>
           <tbody>
-            @for (acc of accounts(); track acc.id) {
+            @for (acc of accounts(); track (acc.id || acc.userId)) {
               <tr>
                 <td>
                   <div class="user-cell">
-                    <span class="user-name">{{ acc.userName }}</span>
-                    <span class="user-email">{{ acc.userEmail }}</span>
+                    <span class="user-name">{{ acc.userName || ('Player ' + (acc.userId ? acc.userId.slice(0, 8) : '')) }}</span>
+                    <span class="user-email">{{ acc.userEmail || acc.userId }}</span>
                   </div>
                 </td>
                 <td>{{ acc.phoneNumber || '—' }}</td>
@@ -167,20 +167,21 @@
                   </gc-badge>
                 </td>
                 <td style="text-align: right;">
-                  <strong class="points-val">{{ acc.pointsBalance.toLocaleString() }}</strong> pts
+                  <strong class="points-val">{{ (acc.pointsBalance || 0) | number:'1.0-0' }}</strong> pts
                 </td>
                 <td style="text-align: right; color: #34d399;">
-                  LKR {{ acc.equivalentDiscountLkr.toLocaleString() }}
+                  LKR {{ (acc.equivalentDiscountLkr || 0) | number:'1.2-2' }}
                 </td>
                 <td style="text-align: center;">
-                  <span class="life-stat">Earned: {{ acc.totalEarnedAllTime }}</span> ·
-                  <span class="life-stat">Used: {{ acc.totalRedeemedAllTime }}</span>
+                  <span class="life-stat">Earned: {{ (acc.totalEarnedAllTime || 0) | number:'1.0-0' }}</span> ·
+                  <span class="life-stat">Used: {{ (acc.totalRedeemedAllTime || 0) | number:'1.0-0' }}</span>
                 </td>
                 <td>{{ acc.updatedAt | date:'shortDate' }}</td>
                 <td style="text-align: right;">
                   <gc-button
                     size="sm"
                     variant="secondary"
+                    (btnClick)="openAdjustModal(acc)"
                     (click)="openAdjustModal(acc)"
                     aria-label="Adjust player points">
                     🎁 Adjust
@@ -400,6 +401,7 @@
           variant="primary"
           size="lg"
           [loading]="isSavingRules()"
+          (btnClick)="saveRules()"
           (click)="saveRules()">
           💾 Save Loyalty Program Rules
         </gc-button>
@@ -516,6 +518,7 @@
           <gc-button
             variant="secondary"
             size="md"
+            (btnClick)="closeAdjustModal()"
             (click)="closeAdjustModal()">
             Cancel
           </gc-button>
@@ -523,6 +526,7 @@
             variant="primary"
             size="md"
             [loading]="isAdjusting()"
+            (btnClick)="confirmAdjustPoints()"
             (click)="confirmAdjustPoints()">
             Confirm Adjustment
           </gc-button>

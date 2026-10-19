@@ -7,6 +7,7 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 
 import { LoyaltyAdminService } from './loyalty-admin.service';
+import { UserAdminService } from '../users/user-admin.service';
 import {
   LoyaltyRules,
   UpdateLoyaltyRulesRequest,
@@ -46,10 +47,13 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.
 })
 export class AdminLoyaltyComponent implements OnInit, OnDestroy {
   private readonly loyaltyService = inject(LoyaltyAdminService);
+  private readonly userAdminService = inject(UserAdminService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroy$ = new Subject<void>();
+
+  private readonly userMap = new Map<string, { fullName: string; email: string; phoneNumber?: string }>();
 
   // ── Signals ────────────────────────────────────────────────────────────────
   readonly activeTab = signal<'accounts' | 'rules' | 'audit'>('accounts');
@@ -98,6 +102,8 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    this.loadUsers();
+
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const tabParam = params['tab'];
       if (tabParam === 'accounts' || tabParam === 'rules' || tabParam === 'audit') {
@@ -117,6 +123,53 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  loadUsers(): void {
+    this.userAdminService.getUsers({ page: 0, size: 200 }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res) => {
+        if (res && res.content) {
+          res.content.forEach((u) => {
+            this.userMap.set(u.id, {
+              fullName: u.fullName || u.email,
+              email: u.email,
+              phoneNumber: u.phoneNumber
+            });
+          });
+          if (this.accounts().length > 0) {
+            this.accounts.update((accs) => this.enrichAccounts(accs));
+          }
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  private enrichAccounts(rawAccounts: LoyaltyAccountResponse[]): LoyaltyAccountResponse[] {
+    return (rawAccounts || []).map((acc: any) => {
+      const uId = acc.userId || acc.id || '';
+      const u = this.userMap.get(uId);
+      const points = Number(acc.pointsBalance) || 0;
+      const pointVal = Number(acc.pointValue) || 1;
+      const equivDiscount = Number(acc.equivalentDiscount ?? acc.equivalentDiscountLkr ?? (points * pointVal)) || 0;
+      const lifetime = Number(acc.lifetimeEarned ?? acc.totalEarnedAllTime ?? points) || 0;
+      const redeemed = Number(acc.totalRedeemedAllTime ?? Math.max(0, lifetime - points)) || 0;
+
+      return {
+        ...acc,
+        id: uId,
+        userId: uId,
+        userName: u?.fullName || acc.userName || (uId ? `Player (${uId.slice(0, 8)})` : 'Player'),
+        userEmail: u?.email || acc.userEmail || (uId ? uId.slice(0, 14) + '...' : '—'),
+        phoneNumber: u?.phoneNumber || acc.phoneNumber || '—',
+        pointsBalance: points,
+        tier: (acc.tier || 'BRONZE') as LoyaltyTier,
+        equivalentDiscountLkr: equivDiscount,
+        totalEarnedAllTime: lifetime,
+        totalRedeemedAllTime: redeemed,
+        updatedAt: acc.updatedAt || new Date().toISOString()
+      };
+    });
   }
 
   selectTab(tab: 'accounts' | 'rules' | 'audit'): void {
@@ -158,9 +211,10 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
 
     this.loyaltyService.getAccounts(filter).pipe(takeUntil(this.destroy$)).subscribe({
       next: paged => {
-        this.accounts.set(paged.content);
-        this.totalElements.set(paged.totalElements);
-        this.totalPages.set(paged.totalPages);
+        const enriched = this.enrichAccounts(paged.content || []);
+        this.accounts.set(enriched);
+        this.totalElements.set(paged.totalElements || enriched.length);
+        this.totalPages.set(paged.totalPages || 1);
         this.isLoading.set(false);
       },
       error: err => {
@@ -191,7 +245,17 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
 
   loadTransactions(): void {
     this.loyaltyService.getTransactions().pipe(takeUntil(this.destroy$)).subscribe({
-      next: list => this.transactions.set(list),
+      next: (res: any) => {
+        const rawList = Array.isArray(res) ? res : (res?.content || []);
+        const enriched = rawList.map((tx: any) => {
+          const u = this.userMap.get(tx.userId);
+          return {
+            ...tx,
+            userName: u ? u.fullName : (tx.userName || (tx.userId ? `Player (${tx.userId.slice(0, 8)})` : 'Player'))
+          };
+        });
+        this.transactions.set(enriched);
+      },
       error: () => {}
     });
   }
@@ -246,7 +310,7 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
 
     this.isAdjusting.set(true);
     const req: AdjustPointsRequest = {
-      userId: acc.userId,
+      userId: acc.userId || acc.id,
       points,
       reason
     };

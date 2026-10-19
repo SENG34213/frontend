@@ -283,7 +283,7 @@
   <!-- ── Station Form Modal (Create / Edit) ─────────────────────────────── -->
   <gc-modal
     [isOpen]="formModalOpen()"
-    [(isOpen)]="formModalOpen"
+    (closed)="formModalOpen.set(false)"
     [title]="isEditing() ? 'Edit Gaming Station' : 'Add New Gaming Station'"
     modalId="modal-station-form">
     <form [formGroup]="stationForm" (ngSubmit)="submitStationForm()" id="form-station" novalidate>
@@ -420,7 +420,7 @@
   <!-- ── Delete Confirm Modal ─────────────────────────────────────────── -->
   <gc-modal
     [isOpen]="deleteModalOpen()"
-    [(isOpen)]="deleteModalOpen"
+    (closed)="deleteModalOpen.set(false)"
     title="Delete Gaming Station"
     modalId="modal-delete-station">
     @if (deletingStation(); as st) {
@@ -447,7 +447,7 @@
   <!-- ── Assign Games to Station Modal ─────────────────────────────────── -->
   <gc-modal
     [isOpen]="assignGamesModalOpen()"
-    [(isOpen)]="assignGamesModalOpen"
+    (closed)="assignGamesModalOpen.set(false)"
     title="Configure Station Games"
     modalId="modal-assign-station-games">
     @if (targetStationForAssign(); as st) {

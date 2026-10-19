@@ -203,7 +203,7 @@
               <span class="stations-heading">🖥️ Stations ({{ getStationsForGame(game.id).length }}):</span>
               <div class="stations-pills">
                 @for (st of getStationsForGame(game.id); track st.id) {
-                  <span class="station-pill" [title]="st.name + ' (' + st.type + ')'">{{ st.name }}</span>
+                  <span class="station-pill" [title]="(st.stationCode || st.name) + ' (' + st.type + ')'">{{ st.stationCode || st.name }}</span>
                 } @empty {
                   <span class="no-stations-pill">No stations assigned</span>
                 }
@@ -335,7 +335,7 @@
                   type="checkbox"
                   [checked]="formStationIds().includes(st.id)"
                   (change)="toggleStation(st.id)" />
-                <span class="station-name">{{ st.name }}</span>
+                <span class="station-name">{{ st.stationCode || st.name }}</span>
                 <span class="station-type-tag">{{ st.type }}</span>
               </label>
             } @empty {
