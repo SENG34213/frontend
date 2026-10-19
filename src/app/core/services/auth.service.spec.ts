@@ -165,6 +165,64 @@ describe('AuthService', () => {
     expect(service.decodeToken('invalid-token-string')).toBeNull();
   });
 
+  describe('startup with a stored token', () => {
+    function createServiceWithStoredToken(token: string): AuthService {
+      localStorage.setItem(TOKEN_KEY, token);
+      localStorage.setItem(ROLE_KEY, 'CUSTOMER');
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [AuthService, provideHttpClient(), provideHttpClientTesting()]
+      });
+      return TestBed.inject(AuthService);
+    }
+
+    it('should stay authenticated given a valid non-expired stored token', () => {
+      // Arrange
+      const token = createMockJwt({
+        sub: 'usr-1',
+        email: 'player@gamingcastle.lk',
+        role: 'CUSTOMER',
+        exp: Math.floor(Date.now() / 1000) + 3600
+      });
+
+      // Act
+      const freshService = createServiceWithStoredToken(token);
+
+      // Assert
+      expect(freshService.isAuthenticated()).toBeTrue();
+      expect(localStorage.getItem(TOKEN_KEY)).toBe(token);
+    });
+
+    it('should clear the session given an expired stored token', () => {
+      // Arrange
+      const token = createMockJwt({
+        sub: 'usr-1',
+        email: 'player@gamingcastle.lk',
+        role: 'CUSTOMER',
+        exp: Math.floor(Date.now() / 1000) - 60
+      });
+
+      // Act
+      const freshService = createServiceWithStoredToken(token);
+
+      // Assert
+      expect(freshService.isAuthenticated()).toBeFalse();
+      expect(freshService.token()).toBeNull();
+      expect(freshService.role()).toBeNull();
+      expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
+      expect(localStorage.getItem(ROLE_KEY)).toBeNull();
+    });
+
+    it('should clear the session given a malformed stored token', () => {
+      // Arrange & Act
+      const freshService = createServiceWithStoredToken('not-a-jwt');
+
+      // Assert
+      expect(freshService.isAuthenticated()).toBeFalse();
+      expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
+    });
+  });
+
   describe('forgotPassword and resetPassword HTTP flow', () => {
     it('should send POST request to /api/auth/password/forgot', () => {
       service.forgotPassword('player@gamingcastle.lk').subscribe();

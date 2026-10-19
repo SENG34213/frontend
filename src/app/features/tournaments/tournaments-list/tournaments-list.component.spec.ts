@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { TournamentsListComponent } from './tournaments-list.component';
 import { TournamentService, TournamentViewItem } from '../../../core/services/tournament.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -15,8 +15,7 @@ describe('TournamentsListComponent', () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
   let notifSocketSpy: jasmine.SpyObj<NotificationSocketService>;
   let toastSpy: jasmine.SpyObj<ToastService>;
-  let routerSpy: jasmine.SpyObj<Router>;
-
+  let navigateSpy: jasmine.Spy;
   const mockTournaments: TournamentViewItem[] = [
     {
       id: 'tourn-1',
@@ -73,7 +72,6 @@ describe('TournamentsListComponent', () => {
     authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'currentUser']);
     notifSocketSpy = jasmine.createSpyObj('NotificationSocketService', ['sendNotification']);
     toastSpy = jasmine.createSpyObj('ToastService', ['success', 'error', 'info', 'warning']);
-    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
     tournamentServiceSpy.getTournaments.and.returnValue(of(mockTournaments));
     tournamentServiceSpy.getMyRegistrations.and.returnValue(of([mockReg]));
@@ -112,13 +110,17 @@ describe('TournamentsListComponent', () => {
         { provide: AuthService, useValue: authServiceSpy },
         { provide: NotificationSocketService, useValue: notifSocketSpy },
         { provide: ToastService, useValue: toastSpy },
-        { provide: Router, useValue: routerSpy },
+        provideRouter([]),
         {
           provide: ActivatedRoute,
           useValue: { queryParams: of({}) }
         }
       ]
     }).compileComponents();
+    navigateSpy = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+
+    fixture = TestBed.createComponent(TournamentsListComponent);
+
 
     fixture = TestBed.createComponent(TournamentsListComponent);
     component = fixture.componentInstance;
@@ -154,12 +156,12 @@ describe('TournamentsListComponent', () => {
 
   it('should navigate to tournament details on viewDetails', () => {
     component.viewDetails('tourn-1');
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/tournaments', 'tourn-1']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/tournaments', 'tourn-1']);
   });
 
   it('should navigate to tournament bracket on viewBracket', () => {
     component.viewBracket('tourn-1');
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/tournaments', 'tourn-1', 'bracket']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/tournaments', 'tourn-1', 'bracket']);
   });
 
   it('should open quick register modal for unregistered open tournament', () => {

@@ -1,4 +1,5 @@
-import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -46,6 +47,7 @@ export interface MyTournamentDisplayItem {
 })
 export class MyTournamentsComponent implements OnInit {
   private readonly tournamentService = inject(TournamentService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly allItems = signal<MyTournamentDisplayItem[]>([]);
   readonly activeTab = signal<'upcoming' | 'played'>('upcoming');
@@ -95,7 +97,7 @@ export class MyTournamentsComponent implements OnInit {
     forkJoin({
       registrations: this.tournamentService.getMyRegistrations(),
       tournaments: this.tournamentService.getTournaments()
-    }).subscribe({
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: ({ registrations, tournaments }) => {
         const tournamentMap = new Map<string, TournamentViewItem>();
         (tournaments || []).forEach((t) => tournamentMap.set(t.id, t));
