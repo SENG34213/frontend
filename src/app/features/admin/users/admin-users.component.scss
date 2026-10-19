@@ -2,9 +2,19 @@
   padding: 1.5rem 1rem;
   max-width: 1400px;
   margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 
   @media (min-width: 768px) {
     padding: 2rem 1.5rem;
+  }
+
+  @media (max-width: 425px) {
+    padding: 1rem 0.75rem;
+  }
+
+  @media (max-width: 360px) {
+    padding: 0.75rem 0.5rem;
   }
 }
 
@@ -21,7 +31,7 @@
   }
 
   .page-title {
-    font-size: 1.875rem;
+    font-size: clamp(1.4rem, 4.5vw, 1.875rem);
     font-weight: 800;
     margin: 0 0 0.35rem;
     letter-spacing: -0.025em;
@@ -33,6 +43,10 @@
     font-size: 0.9375rem;
     color: var(--color-text-muted, #94a3b8);
     max-width: 650px;
+
+    @media (max-width: 425px) {
+      font-size: 0.875rem;
+    }
   }
 
   .header-actions {
@@ -40,6 +54,14 @@
     gap: 0.75rem;
     align-items: center;
     flex-wrap: wrap;
+
+    @media (max-width: 425px) {
+      width: 100%;
+
+      ::ng-deep button, ::ng-deep .gc-button {
+        flex: 1 1 auto;
+      }
+    }
   }
 }
 
@@ -68,7 +90,7 @@
 /* Stat Grid */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 1rem;
   margin-bottom: 1.75rem;
   align-items: stretch;
@@ -210,11 +232,14 @@
 
 /* Users Table */
 .table-responsive {
+  width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .gc-table {
   width: 100%;
+  min-width: 680px;
   border-collapse: collapse;
   text-align: left;
 
@@ -333,6 +358,11 @@
   flex-direction: column;
   animation: slideInRight 0.25s ease;
 
+  @media (max-width: 480px) {
+    max-width: 100%;
+    padding: 1.25rem 1rem;
+  }
+
   .panel-header {
     display: flex;
     justify-content: space-between;
@@ -369,6 +399,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
 
   .drawer-avatar {
     width: 3.5rem;
@@ -397,6 +428,7 @@
   .drawer-badges {
     display: flex;
     gap: 0.5rem;
+    flex-wrap: wrap;
   }
 }
 
@@ -407,6 +439,24 @@
   column-gap: 0.5rem;
   font-size: 0.875rem;
   margin: 1.5rem 0;
+
+  @media (max-width: 425px) {
+    grid-template-columns: 100px 1fr;
+  }
+
+  @media (max-width: 360px) {
+    grid-template-columns: 1fr;
+    row-gap: 0.35rem;
+
+    dt {
+      padding-top: 0.25rem;
+      font-size: 0.75rem;
+    }
+
+    dd {
+      margin-bottom: 0.5rem;
+    }
+  }
 
   dt {
     color: var(--color-text-muted, #94a3b8);
@@ -424,6 +474,10 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+
+  ::ng-deep button, ::ng-deep .gc-button {
+    width: 100%;
+  }
 }
 
 /* Modals */
@@ -484,4 +538,84 @@
 @keyframes slideInRight {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
+}
+
+/* ── Targeted Responsive Breakpoints (1024px, 768px, 425px, 375px, 320px) ── */
+
+@media (max-width: 1024px) {
+  .filter-card .filter-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    gap: 0.75rem;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 425px) {
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card .stat-inner {
+    gap: 0.75rem;
+  }
+
+  .stat-card .stat-val {
+    font-size: 1.5rem;
+  }
+
+  .filter-card .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-card .filter-actions {
+    flex-direction: column;
+    align-items: stretch;
+
+    .total-count {
+      text-align: center;
+    }
+
+    ::ng-deep button, ::ng-deep .gc-button {
+      width: 100%;
+    }
+  }
+
+  .modal-footer-actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+
+    ::ng-deep button, ::ng-deep .gc-button {
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: 375px) {
+  .page-title {
+    font-size: 1.45rem;
+  }
+}
+
+@media (max-width: 320px) {
+  .admin-users {
+    padding: 0.75rem 0.4rem;
+  }
+
+  .page-title {
+    font-size: 1.35rem;
+  }
+
+  .stat-card .stat-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.6rem;
+  }
 }

@@ -3,8 +3,17 @@
   flex-direction: column;
   gap: 1.5rem;
   padding: 1.5rem;
-  min-width: 320px;
+  width: 100%;
+  box-sizing: border-box;
   color: var(--color-text-main, #f8fafc);
+
+  @media (max-width: 425px) {
+    padding: 1rem 0.75rem;
+  }
+
+  @media (max-width: 360px) {
+    padding: 0.75rem 0.5rem;
+  }
 }
 
 .page-header {
@@ -19,6 +28,7 @@
     align-items: center;
     gap: 0.75rem;
     margin-bottom: 0.5rem;
+    flex-wrap: wrap;
 
     .subtext {
       font-size: 0.8125rem;
@@ -29,7 +39,7 @@
   }
 
   .page-title {
-    font-size: 1.75rem;
+    font-size: clamp(1.35rem, 4.5vw, 1.75rem);
     font-weight: 700;
     margin: 0;
     letter-spacing: -0.02em;
@@ -43,13 +53,17 @@
     color: var(--color-text-muted, #94a3b8);
     margin: 0.25rem 0 0 0;
     max-width: 620px;
+
+    @media (max-width: 425px) {
+      font-size: 0.875rem;
+    }
   }
 }
 
 // ── Stats Grid ───────────────────────────────────────────────────────────────
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
   gap: 1rem;
 
   .stat-card {
@@ -141,7 +155,7 @@
     align-items: center;
     gap: 0.5rem;
     flex: 1;
-    min-width: 240px;
+    min-width: min(100%, 200px);
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
@@ -191,7 +205,9 @@
 
 // ── Tables ───────────────────────────────────────────────────────────────────
 .table-responsive {
+  width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   background: rgba(15, 23, 42, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
@@ -199,6 +215,7 @@
 
 .loyalty-table {
   width: 100%;
+  min-width: 650px;
   border-collapse: collapse;
   font-size: 0.875rem;
 
@@ -287,7 +304,7 @@
 
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
       gap: 1.25rem;
     }
 
@@ -414,6 +431,8 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
     padding: 0.875rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
 
     .acc-name {
       font-weight: 600;
@@ -429,6 +448,10 @@
       display: flex;
       flex-direction: column;
       align-items: flex-end;
+
+      @media (max-width: 425px) {
+        align-items: flex-start;
+      }
 
       .pts-label {
         font-size: 0.6875rem;
@@ -506,6 +529,15 @@
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+    @media (max-width: 425px) {
+      flex-direction: column-reverse;
+      gap: 0.5rem;
+
+      ::ng-deep button, ::ng-deep .gc-button {
+        width: 100%;
+      }
+    }
   }
 }
 
@@ -513,3 +545,76 @@
 .text-danger  { color: #f87171 !important; }
 .text-warning { color: #f59e0b !important; }
 .text-accent  { color: #818cf8 !important; }
+
+/* ── Targeted Responsive Breakpoints (1024px, 768px, 425px, 375px, 320px) ── */
+
+@media (max-width: 1024px) {
+  .filter-toolbar {
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    gap: 0.75rem;
+  }
+
+  .filter-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+
+    .search-wrap {
+      width: 100%;
+    }
+
+    .filter-controls {
+      width: 100%;
+      justify-content: space-between;
+    }
+  }
+}
+
+@media (max-width: 425px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card .stat-value {
+    font-size: 1.35rem;
+  }
+
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+
+    .select-control {
+      width: 100%;
+    }
+  }
+
+  .rules-actions {
+    ::ng-deep button, ::ng-deep .gc-button {
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: 375px) {
+  .page-title {
+    font-size: 1.45rem;
+  }
+
+  .rules-card {
+    padding: 1rem !important;
+  }
+}
+
+@media (max-width: 320px) {
+  .loyalty-page-container {
+    padding: 0.75rem 0.4rem;
+  }
+
+  .page-title {
+    font-size: 1.35rem;
+  }
+}
