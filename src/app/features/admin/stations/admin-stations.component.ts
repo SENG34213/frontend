@@ -22,6 +22,7 @@ import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ModalComponent } from '../../../shared/ui/modal/modal.component';
 import { SkeletonComponent } from '../../../shared/ui/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.component';
+import { ImageUploaderComponent } from '../../../shared/components/image-uploader/image-uploader.component';
 
 @Component({
   selector: 'gc-admin-stations',
@@ -35,7 +36,8 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.
     BadgeComponent,
     ModalComponent,
     SkeletonComponent,
-    EmptyStateComponent
+    EmptyStateComponent,
+    ImageUploaderComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-stations.component.html',
@@ -88,7 +90,8 @@ export class AdminStationsComponent implements OnInit, OnDestroy {
     stationCode: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(20)]],
     type: ['CONSOLE' as StationType, [Validators.required]],
     hourlyRate: [650, [Validators.required, Validators.min(10)]],
-    active: [true]
+    active: [true],
+    imageUrl: ['']
   });
 
   // ── Options ────────────────────────────────────────────────────────────────
@@ -303,7 +306,8 @@ export class AdminStationsComponent implements OnInit, OnDestroy {
       stationCode: '',
       type: 'CONSOLE',
       hourlyRate: 650,
-      active: true
+      active: true,
+      imageUrl: ''
     });
     this.formModalOpen.set(true);
   }
@@ -322,7 +326,8 @@ export class AdminStationsComponent implements OnInit, OnDestroy {
       stationCode: station.stationCode || station.name || '',
       type: formType,
       hourlyRate: station.hourlyRate || 650,
-      active: station.active !== false
+      active: station.active !== false,
+      imageUrl: station.imageUrl || ''
     });
     this.formModalOpen.set(true);
   }
@@ -338,7 +343,8 @@ export class AdminStationsComponent implements OnInit, OnDestroy {
       stationCode: (val.stationCode || '').trim().toUpperCase(),
       type: val.type as StationType,
       hourlyRate: Number(val.hourlyRate) || 650,
-      active: val.active ?? true
+      active: val.active ?? true,
+      imageUrl: val.imageUrl ? String(val.imageUrl).trim() : undefined
     };
 
     this.actionInFlight.set(true);

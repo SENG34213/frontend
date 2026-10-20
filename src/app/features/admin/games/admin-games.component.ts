@@ -25,6 +25,7 @@ import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ModalComponent } from '../../../shared/ui/modal/modal.component';
 import { SkeletonComponent } from '../../../shared/ui/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.component';
+import { ImageUploaderComponent } from '../../../shared/components/image-uploader/image-uploader.component';
 
 @Component({
   selector: 'gc-admin-games',
@@ -37,7 +38,8 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.
     BadgeComponent,
     ModalComponent,
     SkeletonComponent,
-    EmptyStateComponent
+    EmptyStateComponent,
+    ImageUploaderComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-games.component.html',

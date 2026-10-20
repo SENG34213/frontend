@@ -246,6 +246,17 @@
       <div class="cards-grid">
         @for (tournament of filteredTournaments(); track tournament.id) {
           <article class="tournament-card" [class.card-registered]="isUserRegistered(tournament.id)">
+            <div class="card-cover-box">
+              @if (tournament.imageUrl) {
+                <img [src]="tournament.imageUrl" [alt]="tournament.name" class="card-cover-img" loading="lazy" />
+              } @else {
+                <div class="card-cover-placeholder">
+                  <span class="placeholder-icon">🏆</span>
+                  <span class="placeholder-title">{{ tournament.name }}</span>
+                  <span class="placeholder-sub">🎮 {{ tournament.gameTitle || 'Esports' }}</span>
+                </div>
+              }
+            </div>
             <!-- Top Banner / Game Header -->
             <div class="card-header">
               <div class="game-badge">

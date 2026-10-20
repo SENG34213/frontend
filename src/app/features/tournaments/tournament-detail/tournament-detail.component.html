@@ -38,6 +38,11 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- HERO HEADER BANNER                                             -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
+    @if (t.imageUrl) {
+      <div class="tournament-hero-banner-wrap">
+        <img [src]="t.imageUrl" [alt]="t.name" class="tournament-hero-banner-img" />
+      </div>
+    }
     <header class="detail-hero" aria-labelledby="detail-title">
       <div class="hero-bg-layer" aria-hidden="true"></div>
 
