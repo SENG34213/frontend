@@ -18,6 +18,8 @@ import { UserService } from '../services/user.service';
 import { BadgeComponent } from '../../shared/ui/badge/badge.component';
 import { NotificationCenterComponent } from '../../shared/components/notification-center/notification-center.component';
 import { ProfileModalComponent } from '../../shared/components/profile-modal/profile-modal.component';
+import { ButtonComponent } from '../../shared/ui/button/button.component';
+import { ModalComponent } from '../../shared/ui/modal/modal.component';
 
 @Component({
   selector: 'gc-customer-layout',
@@ -27,7 +29,9 @@ import { ProfileModalComponent } from '../../shared/components/profile-modal/pro
     RouterModule,
     BadgeComponent,
     NotificationCenterComponent,
-    ProfileModalComponent
+    ProfileModalComponent,
+    ButtonComponent,
+    ModalComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-layout.component.html',
@@ -39,6 +43,7 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
 
   readonly profileModalOpen = signal(false);
+  readonly showLogoutModal = signal(false);
   @ViewChild('avatarBtn') avatarBtn?: ElementRef<HTMLButtonElement>;
   @ViewChild('userDropdown') userDropdown?: ElementRef<HTMLDivElement>;
 
@@ -138,10 +143,23 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
     this.imageLoadFailed.set(true);
   }
 
-  onLogout(): void {
+  openLogoutModal(): void {
     this.closeDropdown(false);
+    this.showLogoutModal.set(true);
+  }
+
+  cancelLogout(): void {
+    this.showLogoutModal.set(false);
+  }
+
+  confirmLogout(): void {
+    this.showLogoutModal.set(false);
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  onLogout(): void {
+    this.openLogoutModal();
   }
 
   onMenuKeydown(event: KeyboardEvent): void {

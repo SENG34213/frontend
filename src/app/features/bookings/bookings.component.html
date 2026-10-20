@@ -68,10 +68,22 @@
 
           <!-- Time Slots Grid -->
           <div class="time-slots-card" role="region" aria-label="Available Time Slots">
+            <div class="slots-header-bar">
+              <div class="slots-header-title">
+                <span class="slots-icon">🕒</span>
+                <span class="slots-title-text">Select Time Slot</span>
+              </div>
+              <div class="slots-legend">
+                <span class="legend-pill avail"><span class="legend-dot"></span>Available</span>
+                <span class="legend-pill selected"><span class="legend-dot"></span>Selected</span>
+                <span class="legend-pill booked"><span class="legend-dot"></span>Booked</span>
+              </div>
+            </div>
+
             @if (slotsLoading()) {
               <div class="slots-loading-grid">
                 @for (n of [1,2,3,4,5,6]; track n) {
-                  <gc-skeleton shape="rect" height="60px"></gc-skeleton>
+                  <gc-skeleton shape="rect" height="44px"></gc-skeleton>
                 }
               </div>
             } @else {
@@ -90,6 +102,7 @@
                     [attr.aria-pressed]="slot.id === selectedSlotId() && slot.isAvailable"
                     [attr.aria-label]="slot.startTime + ' to ' + slot.endTime + (!slot.isAvailable ? ' (Booked)' : '')">
                     <span class="slot-start">{{ slot.startTime }}</span>
+                    <span class="slot-divider">→</span>
                     <span class="slot-end">{{ slot.endTime }}</span>
                     @if (!slot.isAvailable) {
                       <span class="slot-badge booked-badge">Booked</span>

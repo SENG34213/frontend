@@ -2,8 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { signal } from '@angular/core';
+import { of } from 'rxjs';
 import { AdminLayoutComponent } from './admin-layout.component';
 import { AuthService } from '../services/auth.service';
+import { UserProfile } from '../../shared/models/auth.model';
 
 describe('AdminLayoutComponent', () => {
   let component: AdminLayoutComponent;
@@ -12,9 +14,19 @@ describe('AdminLayoutComponent', () => {
   let router: Router;
 
   beforeEach(async () => {
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['logout'], {
-      currentUser: signal({ email: 'admin@gamingcastle.lk', role: 'ADMIN', sub: 'admin-1', userId: 'admin-1', iat: 0, exp: 9999999999 })
+    const mockAdminProfile: UserProfile = {
+      id: 'admin-1',
+      email: 'admin@gamingcastle.lk',
+      fullName: 'Admin User',
+      role: 'ADMIN'
+    };
+
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['logout', 'getMyProfile'], {
+      currentUser: signal({ email: 'admin@gamingcastle.lk', role: 'ADMIN', sub: 'admin-1', userId: 'admin-1', iat: 0, exp: 9999999999 }),
+      isAuthenticated: signal(true),
+      userProfile: signal(null)
     });
+    authServiceSpy.getMyProfile.and.returnValue(of(mockAdminProfile));
 
     await TestBed.configureTestingModule({
       imports: [AdminLayoutComponent],

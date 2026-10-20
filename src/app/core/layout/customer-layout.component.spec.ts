@@ -177,7 +177,7 @@ describe('CustomerLayoutComponent', () => {
       expect(items[4].textContent.trim()).toContain('Sign out');
     }));
 
-    it('should close dropdown and call authService.logout() when Sign out is clicked', fakeAsync(() => {
+    it('should close dropdown and open confirmation modal when Sign out is clicked, and logout on confirm', fakeAsync(() => {
       component.toggleDropdown();
       fixture.detectChanges();
       tick();
@@ -186,11 +186,27 @@ describe('CustomerLayoutComponent', () => {
       expect(signOutBtn).toBeTruthy();
 
       signOutBtn.click();
+      fixture.detectChanges();
       tick();
 
       expect(component.dropdownOpen()).toBeFalse();
+      expect(component.showLogoutModal()).toBeTrue();
+
+      component.confirmLogout();
+      tick();
+
+      expect(component.showLogoutModal()).toBeFalse();
       expect(authServiceSpy.logout).toHaveBeenCalled();
       expect(router.navigate).toHaveBeenCalledWith(['/login']);
+    }));
+
+    it('should dismiss sign out modal when cancelLogout is called', fakeAsync(() => {
+      component.openLogoutModal();
+      expect(component.showLogoutModal()).toBeTrue();
+
+      component.cancelLogout();
+      expect(component.showLogoutModal()).toBeFalse();
+      expect(authServiceSpy.logout).not.toHaveBeenCalled();
     }));
 
     it('should close dropdown on Escape key and return focus to avatar button', fakeAsync(() => {

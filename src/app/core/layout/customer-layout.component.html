@@ -186,4 +186,43 @@
     [isOpen]="profileModalOpen()"
     (closed)="closeProfileModal()">
   </gc-profile-modal>
+
+  <!-- Sign Out Confirmation Modal -->
+  <gc-modal
+    [isOpen]="showLogoutModal()"
+    (closed)="cancelLogout()"
+    title="Sign Out">
+    <div class="logout-modal-body">
+      <div class="logout-modal-icon-wrap" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </div>
+      <div class="logout-modal-text">
+        <h3 class="logout-modal-heading">Are you sure you want to sign out?</h3>
+        <p class="logout-modal-desc">
+          You will need to sign in again to book stations, join tournaments, and access your loyalty rewards.
+        </p>
+      </div>
+    </div>
+
+    <div modal-actions class="logout-modal-actions">
+      <gc-button
+        variant="ghost"
+        size="md"
+        class="cancel-logout-btn"
+        (btnClick)="cancelLogout()">
+        Cancel
+      </gc-button>
+      <gc-button
+        variant="danger"
+        size="md"
+        class="confirm-logout-btn"
+        (btnClick)="confirmLogout()">
+        Yes, Sign Out
+      </gc-button>
+    </div>
+  </gc-modal>
 </div>

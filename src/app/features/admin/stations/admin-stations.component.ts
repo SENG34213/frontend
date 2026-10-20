@@ -343,9 +343,11 @@ export class AdminStationsComponent implements OnInit, OnDestroy {
       stationCode: (val.stationCode || '').trim().toUpperCase(),
       type: val.type as StationType,
       hourlyRate: Number(val.hourlyRate) || 650,
-      active: val.active ?? true,
-      imageUrl: val.imageUrl ? String(val.imageUrl).trim() : undefined
+      active: val.active ?? true
     };
+    if (val.imageUrl && String(val.imageUrl).trim()) {
+      req.imageUrl = String(val.imageUrl).trim();
+    }
 
     this.actionInFlight.set(true);
 

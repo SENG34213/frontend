@@ -50,7 +50,11 @@ export interface BackendBookingResponse {
   userId: string;
   stationId: string;
   stationCode?: string;
+  stationName?: string;
   gameId?: string;
+  gameTitle?: string;
+  bookingReference?: string;
+  bookingDate?: string;
   startTime: string;
   endTime: string;
   status: string;
@@ -59,6 +63,7 @@ export interface BackendBookingResponse {
   totalAmount?: number;
   discountAmount?: number;
   payableAmount?: number;
+  finalAmount?: number;
   createdAt?: string;
 }
 
@@ -282,7 +287,7 @@ export class BookingService {
   }
 
   getMyBookings(): Observable<BookingResponse[]> {
-    return this.api.get<any[]>('/bookings/mine').pipe(
+    return this.api.get<BackendBookingResponse[]>('/bookings/mine').pipe(
       map((list) => {
         if (!list || !Array.isArray(list)) return [];
         return list.map((res) => {

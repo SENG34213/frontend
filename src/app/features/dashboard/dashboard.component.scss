@@ -380,10 +380,40 @@
   padding: var(--gc-spacing-2xl) var(--gc-spacing-xl);
   background: var(--gc-bg-surface);
   border-radius: var(--gc-radius-lg);
-  margin: 0 var(--gc-spacing-xl) var(--gc-spacing-2xl);
+  margin: 0 auto var(--gc-spacing-2xl);
+  width: 100%;
+  max-width: 1280px;
+  box-sizing: border-box;
+
+  .section-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    margin-bottom: var(--gc-spacing-xl);
+    width: 100%;
+
+    > div {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .section-title-lg {
+      text-align: center;
+    }
+
+    .section-desc {
+      text-align: center;
+      max-width: 620px;
+      margin: 0 auto;
+    }
+  }
 
   @media (max-width: 768px) {
-    margin: 0 0 var(--gc-spacing-xl);
+    margin: 0 auto var(--gc-spacing-xl);
     padding: var(--gc-spacing-xl) var(--gc-spacing-md);
     border-radius: 0;
   }
