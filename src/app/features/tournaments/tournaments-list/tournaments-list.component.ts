@@ -330,7 +330,9 @@ export class TournamentsListComponent implements OnInit, OnDestroy {
           title: 'Tournament Registration Confirmed 🏆',
           message: `Successfully enrolled in ${tournament.name} (${tag}). Check bracket for matchups!`,
           referenceId: res.id,
-          link: `/tournaments/${tournament.id}`
+          link: `/tournaments/${tournament.id}`,
+          targetUserId: this.authService.getUserId() || undefined,
+          data: { tournamentId: tournament.id, gamerTag: tag }
         });
 
         // Update local state

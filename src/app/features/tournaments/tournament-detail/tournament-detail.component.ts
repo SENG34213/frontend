@@ -220,7 +220,9 @@ export class TournamentDetailComponent implements OnInit, OnDestroy {
           title: 'Tournament Enrolled! 🏆',
           message: `You've registered for ${t.name} as "${tag}". Check bracket for matchups!`,
           referenceId: res.id,
-          link: `/tournaments/${t.id}/bracket`
+          link: `/tournaments/${t.id}/bracket`,
+          targetUserId: this.authService.getUserId() || undefined,
+          data: { tournamentId: t.id, gamerTag: tag }
         });
 
         // Increment count locally

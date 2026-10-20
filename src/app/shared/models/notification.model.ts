@@ -11,6 +11,9 @@ export interface AdminNotification {
   read: boolean;
   createdAt: string;
   metadata?: Record<string, unknown>;
+  targetUserId?: string;
+  targetUserIds?: string[];
+  broadcast?: boolean;
 }
 
 export interface NotificationPayload {
@@ -22,4 +25,8 @@ export interface NotificationPayload {
   link?: string;
   data?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
+  targetUserId?: string;
+  targetUserIds?: string[];
+  broadcast?: boolean;
 }
+

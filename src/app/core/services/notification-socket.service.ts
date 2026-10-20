@@ -1,8 +1,9 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { io, Socket } from 'socket.io-client';
 import { AdminNotification, NotificationPayload, NotificationCategory } from '../../shared/models/notification.model';
 import { ToastService } from '../../shared/ui/toast/toast.service';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +11,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
 export class NotificationSocketService {
   private readonly http = inject(HttpClient);
   private readonly toast = inject(ToastService);
+  private readonly authService = inject(AuthService);
 
   private readonly socketUrl = 'http://localhost:5001';
   private socket: Socket | null = null;
@@ -33,7 +35,7 @@ export class NotificationSocketService {
       case 'BOOKING':
         return list.filter(n => n.category === 'BOOKING' || n.category === 'RESCHEDULE' || n.category === 'CANCEL');
       case 'TOURNAMENT':
-        return list.filter(n => n.category === 'TOURNAMENT');
+        return list.filter(n => n.category === 'TOURNAMENT' || n.type.startsWith('TOURNAMENT') || n.type.startsWith('MATCH'));
       default:
         return list;
     }
@@ -42,22 +44,45 @@ export class NotificationSocketService {
   constructor() {
     this.initSocket();
     this.fetchInitialNotifications();
+
+    // Reactively re-identify socket and re-fetch notifications when auth state changes
+    effect(() => {
+      const userId = this.authService.getUserId() || '';
+      const role = this.authService.role() || 'CUSTOMER';
+      const email = this.authService.currentUser()?.email || '';
+
+      if (this.socket && this.socket.connected) {
+        this.socket.emit('identify', { userId, role, email });
+      }
+      this.fetchInitialNotifications();
+    });
   }
 
   // ── Socket.IO Connection ───────────────────────────────────────────────────
   private initSocket(): void {
     try {
+      const userId = this.authService.getUserId() || '';
+      const role = this.authService.role() || 'CUSTOMER';
+      const email = this.authService.currentUser()?.email || '';
+
       this.socket = io(this.socketUrl, {
         transports: ['websocket', 'polling'],
         reconnection: true,
         reconnectionAttempts: 10,
         reconnectionDelay: 2000,
-        timeout: 5000
+        timeout: 5000,
+        auth: { userId, role, email },
+        query: { userId, role, email }
       });
 
       this.socket.on('connect', () => {
         console.log('[NotificationSocket] Connected to Socket.IO server at', this.socketUrl);
         this.isConnected.set(true);
+        // Identify on connect in case auth was loaded
+        const uid = this.authService.getUserId() || '';
+        const r = this.authService.role() || 'CUSTOMER';
+        const em = this.authService.currentUser()?.email || '';
+        this.socket?.emit('identify', { userId: uid, role: r, email: em });
       });
 
       this.socket.on('disconnect', (reason) => {
@@ -113,7 +138,18 @@ export class NotificationSocketService {
   }
 
   private fetchInitialNotifications(): void {
-    this.http.get<{ notifications: AdminNotification[]; unreadCount: number }>(`${this.socketUrl}/api/notifications`).subscribe({
+    const userId = this.authService.getUserId() || '';
+    const role = this.authService.role() || '';
+    const email = this.authService.currentUser()?.email || '';
+    let params = new HttpParams();
+    if (userId) params = params.set('userId', userId);
+    if (role) params = params.set('role', role);
+    if (email) params = params.set('email', email);
+
+    this.http.get<{ notifications: AdminNotification[]; unreadCount: number }>(
+      `${this.socketUrl}/api/notifications`,
+      { params }
+    ).subscribe({
       next: (res) => {
         if (res && res.notifications) {
           this.notifications.set(res.notifications);
@@ -158,7 +194,9 @@ export class NotificationSocketService {
     if (this.socket && this.socket.connected) {
       this.socket.emit('mark_read', id);
     }
-    this.http.patch(`${this.socketUrl}/api/notifications/${id}/read`, {}).subscribe({ error: () => {} });
+    const userId = this.authService.getUserId();
+    const role = this.authService.role();
+    this.http.patch(`${this.socketUrl}/api/notifications/${id}/read`, { userId, role }).subscribe({ error: () => {} });
   }
 
   markAllAsRead(): void {
@@ -168,7 +206,9 @@ export class NotificationSocketService {
     if (this.socket && this.socket.connected) {
       this.socket.emit('mark_all_read');
     }
-    this.http.post(`${this.socketUrl}/api/notifications/mark-all-read`, {}).subscribe({ error: () => {} });
+    const userId = this.authService.getUserId();
+    const role = this.authService.role();
+    this.http.post(`${this.socketUrl}/api/notifications/mark-all-read`, { userId, role }).subscribe({ error: () => {} });
   }
 
   removeNotification(id: string): void {
@@ -187,9 +227,16 @@ export class NotificationSocketService {
 
   // ── Send Notification from Frontend or Testing ─────────────────────────────
   sendNotification(payload: NotificationPayload): void {
+    const currentUserId = this.authService.getUserId() || undefined;
+    const isCustomer = this.authService.isCustomer();
+
+    // Default to the current customer's ID if emitted by a customer and not otherwise targeted
+    const targetUserId = payload.targetUserId || (isCustomer && !payload.targetUserIds && !payload.broadcast ? currentUserId : undefined);
+
     const body = {
       ...payload,
-      id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
+      id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      targetUserId
     };
 
     this.http.post<{ success: boolean; notification: AdminNotification; unreadCount: number }>(
@@ -198,15 +245,23 @@ export class NotificationSocketService {
     ).subscribe({
       next: (res) => {
         if (!this.isConnected()) {
-          // If socket not connected, manually insert
-          this.notifications.update(prev => [res.notification, ...prev]);
-          this.unreadCount.update(c => c + 1);
-          this.playNotificationSound();
-          this.showToastAlert(res.notification);
+          // If socket not connected, manually insert if visible to current user
+          const currentUserRole = this.authService.role() || 'CUSTOMER';
+          const isVisible = currentUserRole === 'ADMIN' ||
+            body.broadcast ||
+            body.targetUserId === currentUserId ||
+            (body.targetUserIds && body.targetUserIds.includes(currentUserId || ''));
+
+          if (isVisible) {
+            this.notifications.update(prev => [res.notification, ...prev]);
+            this.unreadCount.update(c => c + 1);
+            this.playNotificationSound();
+            this.showToastAlert(res.notification);
+          }
         }
       },
       error: () => {
-        // Fallback local broadcast
+        // Fallback local broadcast if visible
         const category = body.category || this.deriveCategory(body.type);
         const localNotif: AdminNotification = {
           ...body,
@@ -214,10 +269,18 @@ export class NotificationSocketService {
           read: false,
           createdAt: new Date().toISOString()
         };
-        this.notifications.update(prev => [localNotif, ...prev]);
-        this.unreadCount.update(c => c + 1);
-        this.playNotificationSound();
-        this.showToastAlert(localNotif);
+        const currentUserRole = this.authService.role() || 'CUSTOMER';
+        const isVisible = currentUserRole === 'ADMIN' ||
+          body.broadcast ||
+          body.targetUserId === currentUserId ||
+          (body.targetUserIds && body.targetUserIds.includes(currentUserId || ''));
+
+        if (isVisible) {
+          this.notifications.update(prev => [localNotif, ...prev]);
+          this.unreadCount.update(c => c + 1);
+          this.playNotificationSound();
+          this.showToastAlert(localNotif);
+        }
       }
     });
   }
@@ -274,41 +337,47 @@ export class NotificationSocketService {
   }
 
   sendCustomerTestAlert(): void {
+    const currentUserId = this.authService.getUserId() || undefined;
     const types: NotificationPayload[] = [
       {
         type: 'BOOKING_CONFIRMED',
         category: 'BOOKING',
         title: 'Booking Confirmed! 🎮',
         message: 'Station PS5-02 reserved for 2 hours today at 16:00 (LKR 1,600.00)',
-        link: '/bookings'
+        link: '/bookings',
+        targetUserId: currentUserId
       },
       {
         type: 'TOURNAMENT_ENROLLED',
         category: 'TOURNAMENT',
         title: 'Tournament Enrolled! 🏆',
         message: 'You have entered Tekken 8 Knockout Championship Arena. View your bracket!',
-        link: '/tournaments'
+        link: '/tournaments',
+        targetUserId: currentUserId
       },
       {
         type: 'MATCH_REMINDER',
         category: 'TOURNAMENT',
         title: 'Match Starting Soon ⚡',
         message: 'Your Round 1 match begins in 15 minutes at Station PC-04!',
-        link: '/tournaments'
+        link: '/tournaments',
+        targetUserId: currentUserId
       },
       {
         type: 'BOOKING_REMINDER',
         category: 'BOOKING',
         title: 'Session Reminder ⏰',
         message: 'Your gaming session starts in 30 minutes at Gaming Castle Jaffna.',
-        link: '/bookings'
+        link: '/bookings',
+        targetUserId: currentUserId
       },
       {
         type: 'LOYALTY_AWARD',
         category: 'PAYMENT',
         title: 'Loyalty XP Rewarded! 🎁',
         message: 'You earned +250 XP for completing your session. Keep leveling up!',
-        link: '/dashboard'
+        link: '/dashboard',
+        targetUserId: currentUserId
       }
     ];
 

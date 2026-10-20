@@ -55,4 +55,27 @@ describe('AdminLayoutComponent', () => {
     expect(authServiceSpy.logout).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });
+
+  it('should open logout modal when openLogoutModal is called', () => {
+    expect(component.showLogoutModal()).toBeFalse();
+    component.openLogoutModal();
+    expect(component.showLogoutModal()).toBeTrue();
+  });
+
+  it('should close logout modal without logging out when cancelLogout is called', () => {
+    component.openLogoutModal();
+    expect(component.showLogoutModal()).toBeTrue();
+    component.cancelLogout();
+    expect(component.showLogoutModal()).toBeFalse();
+    expect(authServiceSpy.logout).not.toHaveBeenCalled();
+  });
+
+  it('should close logout modal, logout, and navigate to /login on confirmLogout', () => {
+    component.openLogoutModal();
+    expect(component.showLogoutModal()).toBeTrue();
+    component.confirmLogout();
+    expect(component.showLogoutModal()).toBeFalse();
+    expect(authServiceSpy.logout).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/login']);
+  });
 });
