@@ -437,6 +437,7 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
           message: `Tournament "${t.name}" has been cancelled by the administrator.`,
           link: `/tournaments/${t.id}`,
           targetUserIds: registeredUserIds.length > 0 ? registeredUserIds : undefined,
+          broadcast: registeredUserIds.length === 0,
           data: { tournamentId: t.id, name: t.name, registeredUserIds }
         });
 

@@ -41,15 +41,43 @@ export class NotificationSocketService {
     }
   });
 
+  private getUserIdSafely(): string {
+    if (typeof this.authService?.getUserId === 'function') {
+      return this.authService.getUserId() || '';
+    }
+    const cur = typeof this.authService?.currentUser === 'function' ? this.authService.currentUser() : null;
+    return cur?.userId || cur?.sub || '';
+  }
+
+  private getRoleSafely(): string {
+    if (typeof this.authService?.role === 'function') {
+      return this.authService.role() || 'CUSTOMER';
+    }
+    const cur = typeof this.authService?.currentUser === 'function' ? this.authService.currentUser() : null;
+    return cur?.role || 'CUSTOMER';
+  }
+
+  private isCustomerSafely(): boolean {
+    if (typeof this.authService?.isCustomer === 'function') {
+      return this.authService.isCustomer();
+    }
+    return this.getRoleSafely().toUpperCase() === 'CUSTOMER';
+  }
+
+  private getEmailSafely(): string {
+    const cur = typeof this.authService?.currentUser === 'function' ? this.authService.currentUser() : null;
+    return cur?.email || '';
+  }
+
   constructor() {
     this.initSocket();
     this.fetchInitialNotifications();
 
     // Reactively re-identify socket and re-fetch notifications when auth state changes
     effect(() => {
-      const userId = this.authService.getUserId() || '';
-      const role = this.authService.role() || 'CUSTOMER';
-      const email = this.authService.currentUser()?.email || '';
+      const userId = this.getUserIdSafely();
+      const role = this.getRoleSafely();
+      const email = this.getEmailSafely();
 
       if (this.socket && this.socket.connected) {
         this.socket.emit('identify', { userId, role, email });
@@ -61,9 +89,9 @@ export class NotificationSocketService {
   // ── Socket.IO Connection ───────────────────────────────────────────────────
   private initSocket(): void {
     try {
-      const userId = this.authService.getUserId() || '';
-      const role = this.authService.role() || 'CUSTOMER';
-      const email = this.authService.currentUser()?.email || '';
+      const userId = this.getUserIdSafely();
+      const role = this.getRoleSafely();
+      const email = this.getEmailSafely();
 
       this.socket = io(this.socketUrl, {
         transports: ['websocket', 'polling'],
@@ -79,9 +107,9 @@ export class NotificationSocketService {
         console.log('[NotificationSocket] Connected to Socket.IO server at', this.socketUrl);
         this.isConnected.set(true);
         // Identify on connect in case auth was loaded
-        const uid = this.authService.getUserId() || '';
-        const r = this.authService.role() || 'CUSTOMER';
-        const em = this.authService.currentUser()?.email || '';
+        const uid = this.getUserIdSafely();
+        const r = this.getRoleSafely();
+        const em = this.getEmailSafely();
         this.socket?.emit('identify', { userId: uid, role: r, email: em });
       });
 
@@ -138,9 +166,9 @@ export class NotificationSocketService {
   }
 
   private fetchInitialNotifications(): void {
-    const userId = this.authService.getUserId() || '';
-    const role = this.authService.role() || '';
-    const email = this.authService.currentUser()?.email || '';
+    const userId = this.getUserIdSafely();
+    const role = this.getRoleSafely();
+    const email = this.getEmailSafely();
     let params = new HttpParams();
     if (userId) params = params.set('userId', userId);
     if (role) params = params.set('role', role);
@@ -194,8 +222,8 @@ export class NotificationSocketService {
     if (this.socket && this.socket.connected) {
       this.socket.emit('mark_read', id);
     }
-    const userId = this.authService.getUserId();
-    const role = this.authService.role();
+    const userId = this.getUserIdSafely();
+    const role = this.getRoleSafely();
     this.http.patch(`${this.socketUrl}/api/notifications/${id}/read`, { userId, role }).subscribe({ error: () => {} });
   }
 
@@ -206,8 +234,8 @@ export class NotificationSocketService {
     if (this.socket && this.socket.connected) {
       this.socket.emit('mark_all_read');
     }
-    const userId = this.authService.getUserId();
-    const role = this.authService.role();
+    const userId = this.getUserIdSafely();
+    const role = this.getRoleSafely();
     this.http.post(`${this.socketUrl}/api/notifications/mark-all-read`, { userId, role }).subscribe({ error: () => {} });
   }
 
@@ -227,8 +255,8 @@ export class NotificationSocketService {
 
   // ── Send Notification from Frontend or Testing ─────────────────────────────
   sendNotification(payload: NotificationPayload): void {
-    const currentUserId = this.authService.getUserId() || undefined;
-    const isCustomer = this.authService.isCustomer();
+    const currentUserId = this.getUserIdSafely() || undefined;
+    const isCustomer = this.isCustomerSafely();
 
     // Default to the current customer's ID if emitted by a customer and not otherwise targeted
     const targetUserId = payload.targetUserId || (isCustomer && !payload.targetUserIds && !payload.broadcast ? currentUserId : undefined);

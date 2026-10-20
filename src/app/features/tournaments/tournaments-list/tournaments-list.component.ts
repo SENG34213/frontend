@@ -331,7 +331,7 @@ export class TournamentsListComponent implements OnInit, OnDestroy {
           message: `Successfully enrolled in ${tournament.name} (${tag}). Check bracket for matchups!`,
           referenceId: res.id,
           link: `/tournaments/${tournament.id}`,
-          targetUserId: this.authService.getUserId() || undefined,
+          targetUserId: (typeof this.authService.getUserId === 'function' ? this.authService.getUserId() : this.authService.currentUser()?.userId) || undefined,
           data: { tournamentId: tournament.id, gamerTag: tag }
         });
 

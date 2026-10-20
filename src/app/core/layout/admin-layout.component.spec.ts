@@ -21,11 +21,13 @@ describe('AdminLayoutComponent', () => {
       role: 'ADMIN'
     };
 
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['logout', 'getMyProfile'], {
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['logout', 'getMyProfile', 'getUserId'], {
       currentUser: signal({ email: 'admin@gamingcastle.lk', role: 'ADMIN', sub: 'admin-1', userId: 'admin-1', iat: 0, exp: 9999999999 }),
       isAuthenticated: signal(true),
-      userProfile: signal(null)
+      userProfile: signal(null),
+      role: signal('ADMIN')
     });
+    authServiceSpy.getUserId.and.returnValue('admin-1');
     authServiceSpy.getMyProfile.and.returnValue(of(mockAdminProfile));
 
     await TestBed.configureTestingModule({

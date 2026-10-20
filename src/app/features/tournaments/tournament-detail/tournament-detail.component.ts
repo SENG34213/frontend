@@ -221,7 +221,7 @@ export class TournamentDetailComponent implements OnInit, OnDestroy {
           message: `You've registered for ${t.name} as "${tag}". Check bracket for matchups!`,
           referenceId: res.id,
           link: `/tournaments/${t.id}/bracket`,
-          targetUserId: this.authService.getUserId() || undefined,
+          targetUserId: (typeof this.authService.getUserId === 'function' ? this.authService.getUserId() : this.authService.currentUser()?.userId) || undefined,
           data: { tournamentId: t.id, gamerTag: tag }
         });
 
