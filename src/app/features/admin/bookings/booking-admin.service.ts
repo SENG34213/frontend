@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, switchMap } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 import { environment } from '../../../../environments/environment';
 import { AdminBookingRow } from '../../../shared/models';
@@ -72,6 +72,25 @@ export class BookingAdminService {
 
   createWalkIn(body: WalkInRequest): Observable<AdminBookingRow> {
     return this.api.post<AdminBookingRow>('/bookings/walk-in', body);
+  }
+
+  finishBookingPayment(
+    bookingId: string,
+    customerUserId: string,
+    amount: number,
+    method: 'CASH' | 'CARD' = 'CASH'
+  ): Observable<AdminBookingRow> {
+    const idempotencyKey = `cash-bk-${bookingId}-${Date.now()}`;
+    return this.api.post<{ id: string }>('/payments/cash', {
+      referenceType: 'BOOKING',
+      referenceId: bookingId,
+      amount: amount > 0 ? Number(amount.toFixed(2)) : 1000,
+      method,
+      idempotencyKey,
+      customerUserId
+    }).pipe(
+      switchMap((payRes) => this.confirmBooking(bookingId, payRes.id))
+    );
   }
 
   exportCsv(filter: Omit<BookingFilter, 'page' | 'size' | 'sort'>): string {

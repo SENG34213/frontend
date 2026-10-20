@@ -80,7 +80,7 @@ describe('AdminBookingsComponent', () => {
 
   beforeEach(async () => {
     svcSpy = jasmine.createSpyObj('BookingAdminService', [
-      'getBookings', 'cancelBooking', 'rescheduleBooking', 'createWalkIn', 'exportCsv'
+      'getBookings', 'cancelBooking', 'rescheduleBooking', 'createWalkIn', 'finishBookingPayment', 'exportCsv'
     ]);
     toastSpy = jasmine.createSpyObj('ToastService', ['success', 'error', 'info', 'warning', 'show']);
 
@@ -88,6 +88,7 @@ describe('AdminBookingsComponent', () => {
     svcSpy.cancelBooking.and.returnValue(of({ ...mockRows[0], status: 'CANCELLED' as const }));
     svcSpy.rescheduleBooking.and.returnValue(of(mockRows[0]));
     svcSpy.createWalkIn.and.returnValue(of({ ...mockRows[0], source: 'WALK_IN' as const, status: 'PENDING' as const }));
+    svcSpy.finishBookingPayment.and.returnValue(of({ ...mockRows[0], status: 'CONFIRMED' as const, paymentId: 'pay-cash-1' }));
     svcSpy.exportCsv.and.returnValue('/api/bookings/admin/export.csv');
 
     stationAdminServiceSpy = jasmine.createSpyObj('StationAdminService', ['getAllStations']);
@@ -204,6 +205,37 @@ describe('AdminBookingsComponent', () => {
     expect(svcSpy.createWalkIn).toHaveBeenCalled();
     expect(toastSpy.success).toHaveBeenCalled();
     expect(component.walkInModalOpen()).toBeFalse();
+    expect(component.paymentModalOpen()).toBeTrue();
+  });
+
+  it('TC-FE-BKM-07b: should finish walk-in payment and confirm slot successfully', () => {
+    const booking = mockRows[0];
+    component.openPaymentModal(booking);
+
+    expect(component.paymentModalOpen()).toBeTrue();
+    expect(component.selectedBookingForPayment()).toEqual(booking);
+
+    component.paymentForm.patchValue({
+      amount: 1000,
+      method: 'CASH'
+    });
+
+    component.submitPayment();
+
+    expect(svcSpy.finishBookingPayment).toHaveBeenCalledWith('bk-001', 'usr-001', 1000, 'CASH');
+    expect(component.paymentModalOpen()).toBeFalse();
+    expect(toastSpy.success).toHaveBeenCalledWith(jasmine.stringMatching(/Slot confirmed/i));
+  });
+
+  it('TC-FE-BKM-07c: should dismiss payment modal when pay later is clicked', () => {
+    const booking = mockRows[0];
+    component.openPaymentModal(booking);
+    expect(component.paymentModalOpen()).toBeTrue();
+
+    component.cancelPaymentModal();
+
+    expect(component.paymentModalOpen()).toBeFalse();
+    expect(toastSpy.info).toHaveBeenCalledWith(jasmine.stringMatching(/PENDING/i));
   });
 
   it('TC-FE-BKM-08: should open cancel confirm modal and not yet cancel', () => {
@@ -221,6 +253,10 @@ describe('AdminBookingsComponent', () => {
 
     expect(svcSpy.cancelBooking).toHaveBeenCalledWith('bk-001');
     expect(toastSpy.success).toHaveBeenCalled();
+    expect(notificationSocketServiceSpy.sendNotification).toHaveBeenCalledWith(jasmine.objectContaining({
+      type: 'BOOKING_CANCELLED',
+      targetUserId: mockRows[0].userId
+    }));
     expect(component.cancelModalOpen()).toBeFalse();
   });
 
