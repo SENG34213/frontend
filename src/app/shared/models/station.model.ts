@@ -25,6 +25,7 @@ export interface GameStationRequest {
   type: StationType;
   hourlyRate: number;
   active: boolean;
+  imageUrl?: string;
 }
 
 export interface GameStationResponse {
@@ -33,6 +34,7 @@ export interface GameStationResponse {
   type: StationType;
   hourlyRate: number;
   active: boolean;
+  imageUrl?: string;
 }
 
 export interface SlotAvailabilityResponse {

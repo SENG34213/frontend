@@ -39,7 +39,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
             }
           }
         } else if (error.status === 403) {
-          router.navigate(['/forbidden']);
+          const isBackgroundProfileCall = req.url.includes('/users/me') || req.url.includes('/users/profile');
+          if (!isBackgroundProfileCall) {
+            router.navigate(['/forbidden']);
+          }
         } else if (error.status === 0) {
           toastService.error(`${mappedError.message} ${mappedError.action}`, 'Connection Error');
         } else if (error.status >= 500) {

@@ -42,6 +42,7 @@ export interface TokenPayload {
   email?: string;
   role: UserRole;
   fullName?: string;
+  avatarUrl?: string;
   iat: number;
   exp: number;
 }
@@ -51,7 +52,14 @@ export interface UserProfile {
   email: string;
   fullName: string;
   phoneNumber?: string;
+  avatarUrl?: string;
   role: UserRole;
   active: boolean;
   createdAt?: string;
+}
+
+export interface UpdateProfileRequest {
+  fullName: string;
+  phoneNumber?: string;
+  avatarUrl?: string;
 }
