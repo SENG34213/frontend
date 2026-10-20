@@ -85,28 +85,6 @@
                 <span>Profile</span>
               </a>
 
-        @if (authService.currentUser(); as user) {
-          <div
-            class="user-badge-wrapper clickable"
-            (click)="openProfileModal()"
-            role="button"
-            tabindex="0"
-            (keydown.enter)="openProfileModal()"
-            title="Edit profile & avatar">
-            @if (authService.userProfile()?.avatarUrl || user.avatarUrl) {
-              <img
-                [src]="authService.userProfile()?.avatarUrl || user.avatarUrl"
-                alt="Avatar"
-                class="user-avatar-tiny" />
-            } @else {
-              <span class="user-avatar-icon">👤</span>
-            }
-            <span class="user-name">{{ authService.userProfile()?.fullName || user.fullName || user.email || user.sub }}</span>
-            <gc-badge [variant]="authService.isAdmin() ? 'accent' : 'primary'">
-              {{ user.role }}
-            </gc-badge>
-          </div>
-        }
               <a
                 routerLink="/my-bookings"
                 routerLinkActive="active"

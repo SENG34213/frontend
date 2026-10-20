@@ -57,7 +57,6 @@ export interface UserProfile {
   active?: boolean;
   enabled?: boolean;
   profileImageUrl?: string;
-  avatarUrl?: string;
   createdAt?: string;
 }
 

@@ -2,8 +2,6 @@ import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } 
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { BookingService } from '../../core/services/booking.service';
-import { MockDataService } from '../../core/services/mock/mock-data.service';
-import { environment } from '../../../environments/environment';
 import { BookingResponse, BookingStatus } from '../../shared/models/booking.model';
 import { CardComponent } from '../../shared/ui/card/card.component';
 import { BadgeComponent, BadgeVariant } from '../../shared/ui/badge/badge.component';
@@ -40,7 +38,6 @@ export interface BookingDisplayItem extends BookingResponse {
 })
 export class MyBookingsComponent implements OnInit {
   private readonly bookingService = inject(BookingService);
-  private readonly mockData = inject(MockDataService);
 
   readonly allBookings = signal<BookingDisplayItem[]>([]);
   readonly activeTab = signal<'upcoming' | 'played'>('upcoming');
@@ -86,22 +83,8 @@ export class MyBookingsComponent implements OnInit {
     this.isLoading.set(true);
     this.hasError.set(false);
 
-    // If in mock mode, use rich customer mock bookings
-    const fetch$ = environment.useMocks
-      ? this.mockData.getMyCustomerBookings()
-      : this.bookingService.getMyBookings();
-
-    fetch$.subscribe({
+    this.bookingService.getMyBookings().subscribe({
       next: (list) => {
-        // If real backend returns empty in dev, check fallback
-        if ((!list || list.length === 0) && environment.useMocks) {
-          this.mockData.getMyCustomerBookings().subscribe((mocks) => {
-            this.allBookings.set(mocks.map((b) => this.mapDisplayItem(b)));
-            this.isLoading.set(false);
-          });
-          return;
-        }
-
         const items = (list || []).map((b) => this.mapDisplayItem(b));
         this.allBookings.set(items);
         this.isLoading.set(false);

@@ -25,7 +25,6 @@ import { ProfileModalComponent } from '../../shared/components/profile-modal/pro
   imports: [
     CommonModule,
     RouterModule,
-    ButtonComponent,
     BadgeComponent,
     NotificationCenterComponent,
     ProfileModalComponent
@@ -39,8 +38,7 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
   readonly userService = inject(UserService);
   private readonly router = inject(Router);
 
-  mobileMenuOpen = signal(false);
-  profileModalOpen = signal(false);
+  readonly profileModalOpen = signal(false);
   @ViewChild('avatarBtn') avatarBtn?: ElementRef<HTMLButtonElement>;
   @ViewChild('userDropdown') userDropdown?: ElementRef<HTMLDivElement>;
 
@@ -114,6 +112,8 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
 
   closeProfileModal(): void {
     this.profileModalOpen.set(false);
+  }
+
   toggleDropdown(): void {
     const nextState = !this.dropdownOpen();
     this.dropdownOpen.set(nextState);

@@ -282,7 +282,30 @@ export class BookingService {
   }
 
   getMyBookings(): Observable<BookingResponse[]> {
-    return this.api.get<BookingResponse[]>('/bookings/mine').pipe(
+    return this.api.get<any[]>('/bookings/mine').pipe(
+      map((list) => {
+        if (!list || !Array.isArray(list)) return [];
+        return list.map((res) => {
+          const item: BookingResponse = {
+            id: res.id,
+            bookingReference: res.bookingReference || `GC-${res.id ? String(res.id).substring(0, 8).toUpperCase() : 'BK'}`,
+            userId: res.userId,
+            stationId: res.stationId,
+            stationName: res.stationName || (res.stationCode ? `PS5 ${res.stationCode}` : 'PS5 Station'),
+            bookingDate: res.bookingDate || (res.startTime && String(res.startTime).includes('T') ? String(res.startTime).split('T')[0] : ''),
+            startTime: res.startTime,
+            endTime: res.endTime,
+            totalAmount: Number(res.totalAmount ?? 0),
+            discountAmount: Number(res.discountAmount ?? 0),
+            finalAmount: Number(res.finalAmount ?? res.payableAmount ?? res.totalAmount ?? 0),
+            status: (res.status || 'CONFIRMED') as BookingStatus,
+            createdAt: res.createdAt || ''
+          };
+          if (res.gameId) item.gameId = res.gameId;
+          if (res.gameTitle) item.gameTitle = res.gameTitle;
+          return item;
+        });
+      }),
       catchError(() => of([]))
     );
   }

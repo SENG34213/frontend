@@ -9,4 +9,4 @@ export * from './admin.model';
 export * from './report.model';
 export * from './game.model';
 export * from './notification.model';
-export * from './user.model';
+
