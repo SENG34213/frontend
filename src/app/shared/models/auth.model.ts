@@ -54,7 +54,10 @@ export interface UserProfile {
   phoneNumber?: string;
   avatarUrl?: string;
   role: UserRole;
-  active: boolean;
+  active?: boolean;
+  enabled?: boolean;
+  profileImageUrl?: string;
+  avatarUrl?: string;
   createdAt?: string;
 }
 

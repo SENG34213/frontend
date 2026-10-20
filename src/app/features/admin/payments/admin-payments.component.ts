@@ -71,7 +71,7 @@ export class AdminPaymentsComponent implements OnInit, OnDestroy {
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const anchorStr = maxDateStr > todayStr ? maxDateStr : todayStr;
+    const anchorStr = maxDateStr || todayStr;
     const anchor = new Date(anchorStr);
 
     const result: { date: string; revenue: number }[] = [];

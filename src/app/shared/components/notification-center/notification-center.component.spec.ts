@@ -85,7 +85,9 @@ describe('NotificationCenterComponent', () => {
   });
 
   it('should toggle drawer when floating trigger button is clicked', () => {
-    const triggerBtn = fixture.nativeElement.querySelector('.notification-trigger-btn');
+    const triggerButtons = fixture.nativeElement.querySelectorAll('.notification-trigger-btn');
+    expect(triggerButtons.length).toBe(1);
+    const triggerBtn = triggerButtons[0];
     expect(triggerBtn).toBeTruthy();
     triggerBtn.click();
     expect(notifSocketSpy.toggleDrawer).toHaveBeenCalled();

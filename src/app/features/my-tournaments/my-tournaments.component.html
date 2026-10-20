@@ -1,0 +1,125 @@
+<div class="page-container container">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">My <span class="text-gradient">Tournaments</span></h1>
+      <p class="page-subtitle">Track your tournament entries, brackets, match schedules and results</p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/tournaments" class="browse-tournaments-btn">
+        Browse Tournaments
+      </a>
+    </div>
+  </header>
+
+  <!-- Error State with Retry -->
+  @if (hasError()) {
+    <gc-card class="state-card">
+      <gc-empty-state
+        icon="⚠️"
+        title="Could not load your tournaments"
+        description="We couldn't retrieve your registrations right now. Please try again."
+        actionLabel="Retry"
+        (actionClick)="loadMyTournaments()">
+      </gc-empty-state>
+    </gc-card>
+  } @else if (isLoading()) {
+    <!-- Skeletons -->
+    <div class="tabs-skeleton">
+      <gc-skeleton shape="rect" width="220px" height="42px"></gc-skeleton>
+    </div>
+    <div class="tournaments-grid">
+      @for (i of [1, 2, 3]; track i) {
+        <gc-card class="tourn-skeleton-card">
+          <gc-skeleton shape="text" width="60%" height="22px"></gc-skeleton>
+          <gc-skeleton shape="text" width="40%" height="16px"></gc-skeleton>
+          <gc-skeleton shape="rect" width="100%" height="60px"></gc-skeleton>
+        </gc-card>
+      }
+    </div>
+  } @else {
+    <!-- Tabs Navigation -->
+    <div class="tabs-wrapper">
+      <gc-tabs
+        [tabs]="tabs()"
+        [activeTab]="activeTab()"
+        (tabChange)="onTabChange($event)">
+      </gc-tabs>
+    </div>
+
+    <!-- Tournaments List -->
+    @if (currentList().length === 0) {
+      <gc-card class="empty-state-card">
+        @if (activeTab() === 'upcoming') {
+          <gc-empty-state
+            icon="🏆"
+            title="No upcoming tournament registrations"
+            description="You haven't joined any upcoming tournaments. Join a championship to compete for glory and cash prizes!"
+            actionLabel="Explore Tournaments"
+            (actionClick)="loadMyTournaments()">
+          </gc-empty-state>
+        } @else {
+          <gc-empty-state
+            icon="⚔️"
+            title="No tournament history"
+            description="Your past played tournaments and battle records will show up here.">
+          </gc-empty-state>
+        }
+      </gc-card>
+    } @else {
+      <div class="tournaments-grid">
+        @for (item of currentList(); track item.registrationId) {
+          <gc-card
+            [glow]="item.isUpcoming ? 'purple' : 'none'"
+            class="tournament-card">
+            <!-- Header -->
+            <div class="tourn-card-header">
+              <div class="tourn-title-group">
+                <span class="tourn-trophy-icon">🏆</span>
+                <div>
+                  <h3 class="tourn-name">{{ item.tournamentName }}</h3>
+                  <span class="tourn-game">{{ item.gameTitle }}</span>
+                </div>
+              </div>
+              <gc-badge [variant]="item.badgeVariant">
+                {{ item.badgeLabel }}
+              </gc-badge>
+            </div>
+
+            <div class="tourn-card-divider"></div>
+
+            <!-- Meta details -->
+            <div class="tourn-meta-grid">
+              <div class="meta-item">
+                <span class="meta-label">Date & Time</span>
+                <span class="meta-value">{{ item.formattedDate }} at {{ item.formattedTime }}</span>
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Entry Fee</span>
+                <span class="meta-value text-gradient font-bold">
+                  {{ item.entryFee === 0 ? 'FREE' : 'LKR ' + (item.entryFee | number) }}
+                </span>
+              </div>
+
+              <div class="meta-item placement-item">
+                <span class="meta-label">Status / Result</span>
+                <span class="meta-value result-badge">{{ item.resultPlacement }}</span>
+              </div>
+            </div>
+
+            <!-- Card footer actions -->
+            <div class="tourn-card-footer">
+              <a [routerLink]="['/tournaments', item.tournamentId]" class="details-link">
+                View Tournament Hub &rarr;
+              </a>
+              <a [routerLink]="['/tournaments', item.tournamentId, 'bracket']" class="bracket-link">
+                View Bracket
+              </a>
+            </div>
+          </gc-card>
+        }
+      </div>
+    }
+  }
+</div>

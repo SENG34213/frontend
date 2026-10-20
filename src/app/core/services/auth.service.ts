@@ -37,6 +37,7 @@ export class AuthService {
   private expirationTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
+    this.clearExpiredSession();
     this.scheduleExpirationWarning();
     if (this.isAuthenticated()) {
       this.getMyProfile().subscribe({ error: () => {} });
@@ -75,6 +76,17 @@ export class AuthService {
         }
       })
     );
+  }
+
+  private clearExpiredSession(): void {
+    if (!this.token()) return;
+
+    const payload = this.currentUser();
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+
+    if (!payload || (payload.exp && payload.exp <= nowInSeconds)) {
+      this.logout();
+    }
   }
 
   register(request: RegisterRequest): Observable<AuthResponse> {

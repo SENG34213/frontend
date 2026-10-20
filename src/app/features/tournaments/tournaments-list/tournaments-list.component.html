@@ -271,8 +271,10 @@
 
             <!-- Card Body -->
             <div class="card-body">
-              <h2 class="tournament-title" role="button" tabindex="0" (click)="viewDetails(tournament.id)" (keydown.enter)="viewDetails(tournament.id)">
-                {{ tournament.name }}
+              <h2 class="tournament-title">
+                <a [href]="'/tournaments/' + tournament.id" class="tournament-title-link" (click)="viewDetails(tournament.id); $event.preventDefault()">
+                  {{ tournament.name }}
+                </a>
               </h2>
 
               <p class="card-schedule">
