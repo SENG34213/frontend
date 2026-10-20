@@ -14,6 +14,7 @@ export interface TournamentRequest {
   entryFee: number;  // LKR
   maxParticipants: number;
   registrationDeadline: string; // ISO-8601 Instant
+  imageUrl?: string;
 }
 
 export interface TournamentResponse {
@@ -30,6 +31,8 @@ export interface TournamentResponse {
   createdByAdminId?: string;
   createdAt?: string;
   isRegistrationOpen?: boolean;
+  imageUrl?: string;
+  bannerUrl?: string;
   // UI aliases
   title?: string;
   description?: string;

@@ -21,6 +21,7 @@
         <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">HOME</a>
         <a routerLink="/bookings" routerLinkActive="active" (click)="closeMobileMenu()">BOOKINGS</a>
         <a routerLink="/tournaments" routerLinkActive="active" (click)="closeMobileMenu()">TOURNAMENTS</a>
+        <a href="javascript:void(0)" (click)="openProfileModal(); closeMobileMenu()" role="button">PROFILE</a>
         <a routerLink="/styleguide" routerLinkActive="active" class="dev-nav-link" (click)="closeMobileMenu()">UI KIT</a>
       </nav>
 
@@ -84,6 +85,28 @@
                 <span>Profile</span>
               </a>
 
+        @if (authService.currentUser(); as user) {
+          <div
+            class="user-badge-wrapper clickable"
+            (click)="openProfileModal()"
+            role="button"
+            tabindex="0"
+            (keydown.enter)="openProfileModal()"
+            title="Edit profile & avatar">
+            @if (authService.userProfile()?.avatarUrl || user.avatarUrl) {
+              <img
+                [src]="authService.userProfile()?.avatarUrl || user.avatarUrl"
+                alt="Avatar"
+                class="user-avatar-tiny" />
+            } @else {
+              <span class="user-avatar-icon">👤</span>
+            }
+            <span class="user-name">{{ authService.userProfile()?.fullName || user.fullName || user.email || user.sub }}</span>
+            <gc-badge [variant]="authService.isAdmin() ? 'accent' : 'primary'">
+              {{ user.role }}
+            </gc-badge>
+          </div>
+        }
               <a
                 routerLink="/my-bookings"
                 routerLinkActive="active"
@@ -179,4 +202,10 @@
 
   <!-- Real-time Customer Notifications Center (Drawer & Launcher) -->
   <gc-notification-center [mode]="'customer'"></gc-notification-center>
+
+  <!-- Customer Profile & Avatar Modal -->
+  <gc-profile-modal
+    [isOpen]="profileModalOpen()"
+    (closed)="closeProfileModal()">
+  </gc-profile-modal>
 </div>

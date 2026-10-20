@@ -1,0 +1,107 @@
+<gc-modal
+  [isOpen]="isOpen"
+  (isOpenChange)="isOpenChange.emit($event)"
+  title="My Gamer Profile"
+  size="md"
+  (closed)="closeModal()">
+
+  <div class="profile-modal-content">
+    <!-- Top Hero Section with Avatar Uploader -->
+    <div class="avatar-section">
+      <gc-image-uploader
+        label="Profile Picture / Avatar"
+        aspectRatio="square"
+        [value]="avatarUrl()"
+        placeholder="Upload your avatar"
+        helpText="Square photo recommended (PNG, JPG, WebP)"
+        [maxDimension]="400"
+        (valueChange)="onImageChange($event)">
+      </gc-image-uploader>
+    </div>
+
+    <!-- User Information Form -->
+    <div class="form-fields-grid">
+      <!-- Full Name -->
+      <div class="form-group">
+        <label for="profile-full-name" class="form-label">
+          Full Name <span class="required">*</span>
+        </label>
+        <input
+          id="profile-full-name"
+          type="text"
+          class="form-control"
+          placeholder="e.g. Kasun Perera"
+          [ngModel]="fullName()"
+          (ngModelChange)="fullName.set($event)"
+          maxlength="100"
+          required />
+      </div>
+
+      <!-- Phone Number -->
+      <div class="form-group">
+        <label for="profile-phone" class="form-label">
+          Phone Number
+        </label>
+        <input
+          id="profile-phone"
+          type="tel"
+          class="form-control"
+          placeholder="+94771234567"
+          [ngModel]="phoneNumber()"
+          (ngModelChange)="phoneNumber.set($event)"
+          maxlength="20" />
+        <span class="field-hint">Used for tournament SMS updates</span>
+      </div>
+
+      <!-- Email (Read-only) -->
+      <div class="form-group">
+        <label for="profile-email" class="form-label">Email Address</label>
+        <div class="readonly-badge-input">
+          <input
+            id="profile-email"
+            type="email"
+            class="form-control readonly"
+            [value]="email()"
+            readonly />
+          <span class="verified-tag">✓ Verified</span>
+        </div>
+      </div>
+
+      <!-- Role / Account Status -->
+      <div class="form-group">
+        <label class="form-label">Account Tier</label>
+        <div class="role-display">
+          <gc-badge [variant]="role() === 'ADMIN' ? 'accent' : 'primary'">
+            {{ role() }}
+          </gc-badge>
+          <span class="status-indicator">● Active Member</span>
+        </div>
+      </div>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="error-banner" role="alert">
+        <span>⚠️</span> {{ errorMessage() }}
+      </div>
+    }
+
+    <!-- Modal Actions -->
+    <div class="modal-actions-footer" modal-footer>
+      <gc-button
+        variant="ghost"
+        size="md"
+        (btnClick)="closeModal()">
+        Cancel
+      </gc-button>
+
+      <gc-button
+        variant="primary"
+        size="md"
+        [loading]="isSaving()"
+        [disabled]="isSaving()"
+        (btnClick)="saveProfile()">
+        💾 Save Profile
+      </gc-button>
+    </div>
+  </div>
+</gc-modal>

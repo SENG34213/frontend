@@ -238,6 +238,43 @@
   flex-shrink: 0;
 }
 
+.admin-profile-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.3rem 0.75rem 0.3rem 0.4rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: inherit;
+  font: inherit;
+
+  &:hover {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+
+    .admin-user {
+      color: var(--gc-text-primary, #ffffff);
+    }
+  }
+
+  .admin-avatar-tiny {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid var(--gc-primary, #6366f1);
+  }
+
+  .admin-avatar-placeholder {
+    font-size: 1rem;
+    line-height: 1;
+  }
+}
+
 .admin-user {
   font-size: 0.875rem;
   color: var(--gc-text-secondary);

@@ -17,6 +17,7 @@ import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
 import { BadgeComponent } from '../../shared/ui/badge/badge.component';
 import { NotificationCenterComponent } from '../../shared/components/notification-center/notification-center.component';
+import { ProfileModalComponent } from '../../shared/components/profile-modal/profile-modal.component';
 
 @Component({
   selector: 'gc-customer-layout',
@@ -24,8 +25,10 @@ import { NotificationCenterComponent } from '../../shared/components/notificatio
   imports: [
     CommonModule,
     RouterModule,
+    ButtonComponent,
     BadgeComponent,
-    NotificationCenterComponent
+    NotificationCenterComponent,
+    ProfileModalComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-layout.component.html',
@@ -36,6 +39,8 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
   readonly userService = inject(UserService);
   private readonly router = inject(Router);
 
+  mobileMenuOpen = signal(false);
+  profileModalOpen = signal(false);
   @ViewChild('avatarBtn') avatarBtn?: ElementRef<HTMLButtonElement>;
   @ViewChild('userDropdown') userDropdown?: ElementRef<HTMLDivElement>;
 
@@ -103,6 +108,12 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
     this.mobileMenuOpen.set(false);
   }
 
+  openProfileModal(): void {
+    this.profileModalOpen.set(true);
+  }
+
+  closeProfileModal(): void {
+    this.profileModalOpen.set(false);
   toggleDropdown(): void {
     const nextState = !this.dropdownOpen();
     this.dropdownOpen.set(nextState);

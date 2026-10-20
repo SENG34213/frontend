@@ -162,6 +162,18 @@
       <section class="tournaments-grid" aria-label="Tournaments List">
         @for (t of filteredTournaments(); track t.id) {
           <gc-card class="tourn-card" [class.cancelled]="t.status === 'CANCELLED'">
+            <div class="tourn-banner-box">
+              @if (t.imageUrl) {
+                <img [src]="t.imageUrl" [alt]="t.name || t.title" class="tourn-banner-img" loading="lazy" />
+              } @else {
+                <div class="tourn-banner-placeholder">
+                  <span class="placeholder-icon">🏆</span>
+                  <span class="placeholder-title">{{ t.name || t.title }}</span>
+                  <span class="placeholder-sub">🎮 {{ t.gameTitle }}</span>
+                </div>
+              }
+            </div>
+
             <!-- Card Header -->
             <div class="card-header">
               <div class="game-tag">
@@ -268,6 +280,14 @@
     modalId="modal-create-tournament">
     <form [formGroup]="createForm" (ngSubmit)="submitCreate()" id="form-create-tourn" novalidate>
       <div class="modal-form-grid">
+        <!-- Tournament Poster / Banner -->
+        <gc-image-uploader
+          label="Tournament Poster / Banner (Optional)"
+          aspectRatio="wide"
+          [value]="createForm.get('imageUrl')?.value || ''"
+          (valueChange)="createForm.get('imageUrl')?.setValue($event)">
+        </gc-image-uploader>
+
         <!-- Name -->
         <div class="form-field">
           <label class="form-label" for="tourn-name">Tournament Name <span class="required" aria-hidden="true">*</span></label>

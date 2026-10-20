@@ -94,9 +94,21 @@
       </div>
 
       <div class="topbar-right">
-        <span class="admin-user" [title]="authService.currentUser()?.email || 'Admin'">
-          {{ authService.currentUser()?.email || 'Admin' }}
-        </span>
+        <button
+          type="button"
+          class="admin-profile-btn"
+          (click)="profileModalOpen.set(true)"
+          title="Click to manage profile and photo">
+          @if (authService.userProfile()?.avatarUrl) {
+            <img [src]="authService.userProfile()?.avatarUrl" alt="Admin Avatar" class="admin-avatar-tiny" />
+          } @else {
+            <span class="admin-avatar-placeholder">👤</span>
+          }
+          <span class="admin-user" [title]="authService.currentUser()?.email || 'Admin'">
+            {{ authService.userProfile()?.fullName || authService.currentUser()?.email || 'Admin' }}
+          </span>
+        </button>
+
         <gc-button variant="outline" size="sm" (btnClick)="onLogout()" class="logout-btn">
           Logout
         </gc-button>
@@ -110,4 +122,10 @@
 
   <!-- Real-time Admin Notifications Center (Bottom-Right) -->
   <gc-notification-center [mode]="'admin'"></gc-notification-center>
+
+  <!-- My Profile Modal -->
+  <gc-profile-modal
+    [isOpen]="profileModalOpen()"
+    (closed)="profileModalOpen.set(false)">
+  </gc-profile-modal>
 </div>

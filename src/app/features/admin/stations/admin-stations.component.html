@@ -177,6 +177,17 @@
       <section class="stations-grid" aria-label="Gaming stations list">
         @for (st of filteredStations(); track st.id) {
           <gc-card class="station-card" [class.inactive]="!st.active">
+            <div class="station-banner-box">
+              @if (st.imageUrl) {
+                <img [src]="st.imageUrl" [alt]="st.stationCode || 'Station'" class="station-banner-img" loading="lazy" />
+              } @else {
+                <div class="station-banner-placeholder">
+                  <span class="placeholder-icon">{{ getTypeIcon(st.type) }}</span>
+                  <span class="placeholder-title">{{ st.stationCode || st.name }}</span>
+                  <span class="placeholder-sub">{{ getTypeLabel(st.type) }}</span>
+                </div>
+              }
+            </div>
             <!-- Card Header -->
             <div class="card-header">
               <div class="code-wrap">
@@ -330,6 +341,19 @@
           @if (stationForm.get('hourlyRate')?.invalid && stationForm.get('hourlyRate')?.touched) {
             <span class="field-error" role="alert">Hourly rate must be greater than 0</span>
           }
+        </div>
+
+        <!-- Station Image -->
+        <div class="form-field full-width">
+          <gc-image-uploader
+            label="Station Photo / Setup Image"
+            aspectRatio="wide"
+            [value]="stationForm.get('imageUrl')?.value || ''"
+            placeholder="Drag & drop station picture or browse"
+            helpText="16:9 widescreen photo recommended (PNG, JPG, WebP)"
+            [maxDimension]="800"
+            (valueChange)="stationForm.get('imageUrl')?.setValue($event)">
+          </gc-image-uploader>
         </div>
 
         <!-- Active Toggle -->

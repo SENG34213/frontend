@@ -1,0 +1,120 @@
+<div class="gc-image-uploader-wrapper">
+  @if (label) {
+    <div class="uploader-header">
+      <label class="uploader-label">{{ label }}</label>
+      @if (showUrlToggle && !hasImage()) {
+        <div class="mode-pills">
+          <button
+            type="button"
+            class="mode-pill"
+            [class.active]="activeTab() === 'file'"
+            (click)="activeTab.set('file')">
+            📁 File Upload
+          </button>
+          <button
+            type="button"
+            class="mode-pill"
+            [class.active]="activeTab() === 'url'"
+            (click)="activeTab.set('url')">
+            🔗 Web URL
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Hidden native file input -->
+  <input
+    #fileInput
+    type="file"
+    accept="image/png, image/jpeg, image/jpg, image/webp"
+    class="sr-only"
+    (change)="onFileSelected($event)"
+    aria-label="Upload image file" />
+
+  <!-- Preview Card (When an image is loaded) -->
+  @if (hasImage()) {
+    <div
+      class="preview-card"
+      [ngClass]="'ratio-' + aspectRatio">
+      <img
+        [src]="currentImage()"
+        alt="Image preview"
+        class="preview-img"
+        loading="lazy" />
+
+      <div class="preview-overlay">
+        <button
+          type="button"
+          class="overlay-btn btn-change"
+          (click)="triggerFileInput()"
+          title="Choose a different image">
+          📷 Change
+        </button>
+        <button
+          type="button"
+          class="overlay-btn btn-delete"
+          (click)="clearImage($event)"
+          title="Remove this image">
+          ✕ Remove
+        </button>
+      </div>
+    </div>
+  } @else {
+    <!-- Upload Dropzone or URL Tab -->
+    @if (activeTab() === 'file') {
+      <div
+        class="dropzone-box"
+        [ngClass]="['ratio-' + aspectRatio, isDragging() ? 'dragging' : '']"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+        (click)="triggerFileInput()"
+        role="button"
+        tabindex="0"
+        (keydown.enter)="triggerFileInput()"
+        (keydown.space)="triggerFileInput()">
+        
+        @if (isProcessing()) {
+          <div class="processing-spinner">
+            <span class="spinner-icon">⏳</span>
+            <span class="spinner-text">Optimizing image...</span>
+          </div>
+        } @else {
+          <div class="dropzone-content">
+            <div class="icon-circle">
+              <span class="upload-icon">📸</span>
+            </div>
+            <p class="dropzone-title">{{ placeholder }}</p>
+            <p class="dropzone-hint">{{ helpText }}</p>
+            <span class="btn-browse">Browse Files</span>
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- Direct URL Input Mode -->
+      <div class="url-input-box">
+        <div class="input-with-action">
+          <input
+            type="url"
+            class="url-field"
+            placeholder="https://example.com/image.jpg"
+            [ngModel]="directUrlInput()"
+            (ngModelChange)="directUrlInput.set($event)"
+            (keydown.enter)="applyDirectUrl()" />
+          <button
+            type="button"
+            class="btn-apply-url"
+            (click)="applyDirectUrl()">
+            Apply
+          </button>
+        </div>
+        <p class="url-help">Paste a link to any online image (Unsplash, Imgur, CDN, etc.)</p>
+      </div>
+    }
+  }
+
+  @if (errorMessage()) {
+    <p class="error-msg" role="alert">⚠️ {{ errorMessage() }}</p>
+  }
+</div>

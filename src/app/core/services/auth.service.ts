@@ -8,7 +8,9 @@ import {
   RegisterRequest,
   ResetPasswordRequest,
   TokenPayload,
-  UserRole
+  UserRole,
+  UserProfile,
+  UpdateProfileRequest
 } from '../../shared/models/auth.model';
 import { environment } from '../../../environments/environment';
 
@@ -25,6 +27,7 @@ export class AuthService {
   readonly isAuthenticated = signal<boolean>(!!this.getStoredToken());
   readonly role = signal<UserRole | null>(this.getStoredRole());
   readonly currentUser = signal<TokenPayload | null>(this.parseStoredToken());
+  readonly userProfile = signal<UserProfile | null>(null);
   readonly isSessionExpiring = signal<boolean>(false);
 
   // Computed signals
@@ -36,6 +39,43 @@ export class AuthService {
   constructor() {
     this.clearExpiredSession();
     this.scheduleExpirationWarning();
+    if (this.isAuthenticated()) {
+      this.getMyProfile().subscribe({ error: () => {} });
+    }
+  }
+
+  getMyProfile(): Observable<UserProfile> {
+    return this.http.get<UserProfile>(`${environment.apiUrl}/users/me`).pipe(
+      tap((p) => {
+        this.userProfile.set(p);
+        if (p) {
+          const cur = this.currentUser();
+          if (cur) {
+            this.currentUser.set({
+              ...cur,
+              avatarUrl: p.avatarUrl || undefined,
+              fullName: p.fullName || cur.fullName
+            });
+          }
+        }
+      })
+    );
+  }
+
+  updateMyProfile(req: UpdateProfileRequest): Observable<UserProfile> {
+    return this.http.patch<UserProfile>(`${environment.apiUrl}/users/me`, req).pipe(
+      tap((p) => {
+        this.userProfile.set(p);
+        const cur = this.currentUser();
+        if (cur) {
+          this.currentUser.set({
+            ...cur,
+            avatarUrl: p.avatarUrl || undefined,
+            fullName: p.fullName || cur.fullName
+          });
+        }
+      })
+    );
   }
 
   private clearExpiredSession(): void {
@@ -85,6 +125,7 @@ export class AuthService {
     this.isAuthenticated.set(false);
     this.role.set(null);
     this.currentUser.set(null);
+    this.userProfile.set(null);
     this.isSessionExpiring.set(false);
 
     if (this.expirationTimer) {

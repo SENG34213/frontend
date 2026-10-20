@@ -162,7 +162,11 @@
             @if (game.coverUrl) {
               <img [src]="game.coverUrl" [alt]="game.title" loading="lazy" />
             } @else {
-              <div class="cover-placeholder">🎮 {{ game.title }}</div>
+              <div class="cover-placeholder">
+                <span class="placeholder-icon">🎮</span>
+                <span class="placeholder-title">{{ game.title }}</span>
+                <span class="placeholder-sub">{{ game.genre }}</span>
+              </div>
             }
             <div class="cover-badges">
               @if (game.featured) {
@@ -377,16 +381,17 @@
           </div>
         </div>
 
-        <!-- Cover Image URL -->
-        <div class="form-group">
-          <label class="form-label" for="game-cover-input">Cover Image URL</label>
-          <input
-            id="game-cover-input"
-            type="url"
-            class="form-input"
-            placeholder="https://images.unsplash.com/..."
+        <!-- Cover Image -->
+        <div class="form-group full-width">
+          <gc-image-uploader
+            label="Game Box Art / Cover Image"
+            aspectRatio="tall"
             [value]="formCoverUrl()"
-            (input)="formCoverUrl.set($any($event.target).value)" />
+            placeholder="Drag & drop game box art or browse"
+            helpText="Cover art 3:4 aspect ratio recommended (PNG, JPG, WebP)"
+            [maxDimension]="600"
+            (valueChange)="formCoverUrl.set($event)">
+          </gc-image-uploader>
         </div>
 
         <!-- Description -->

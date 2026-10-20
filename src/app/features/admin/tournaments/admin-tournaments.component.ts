@@ -23,6 +23,7 @@ import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ModalComponent } from '../../../shared/ui/modal/modal.component';
 import { SkeletonComponent } from '../../../shared/ui/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.component';
+import { ImageUploaderComponent } from '../../../shared/components/image-uploader/image-uploader.component';
 
 @Component({
   selector: 'gc-admin-tournaments',
@@ -36,7 +37,8 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.
     BadgeComponent,
     ModalComponent,
     SkeletonComponent,
-    EmptyStateComponent
+    EmptyStateComponent,
+    ImageUploaderComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-tournaments.component.html',
@@ -89,6 +91,7 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
   readonly createForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
     gameTitle: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(60)]],
+    imageUrl: [''],
     startDate: [this.toLocalDatetimeStr(new Date(Date.now() + 7 * 86400000)), [Validators.required]],
     endDate: [this.toLocalDatetimeStr(new Date(Date.now() + 8 * 86400000))],
     entryFee: [1500, [Validators.required, Validators.min(0)]],
@@ -223,6 +226,7 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
     this.createForm.reset({
       name: '',
       gameTitle: '',
+      imageUrl: '',
       startDate: this.toLocalDatetimeStr(new Date(Date.now() + 7 * 86400000)),
       endDate: this.toLocalDatetimeStr(new Date(Date.now() + 8 * 86400000)),
       entryFee: 1500,
@@ -242,6 +246,7 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
     const req: TournamentRequest = {
       name: (val.name || '').trim(),
       gameTitle: (val.gameTitle || '').trim(),
+      imageUrl: val.imageUrl ? String(val.imageUrl).trim() : undefined,
       startDate: new Date(val.startDate!).toISOString(),
       endDate: val.endDate ? new Date(val.endDate).toISOString() : undefined,
       entryFee: Number(val.entryFee) || 0,
