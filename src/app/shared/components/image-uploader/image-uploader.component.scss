@@ -1,0 +1,310 @@
+.gc-image-uploader-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gc-spacing-xs, 0.5rem);
+  width: 100%;
+}
+
+.uploader-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.uploader-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gc-text, #f8fafc);
+  letter-spacing: 0.02em;
+}
+
+.mode-pills {
+  display: flex;
+  gap: 0.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.15rem;
+  border-radius: var(--gc-radius-full, 9999px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  .mode-pill {
+    background: transparent;
+    border: none;
+    color: var(--gc-text-muted, #94a3b8);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--gc-radius-full, 9999px);
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: #fff;
+    }
+
+    &.active {
+      background: var(--gc-accent-primary, #6366f1);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+    }
+  }
+}
+
+// ── Aspect Ratios ─────────────────────────────────────────────────────────────
+
+.ratio-square {
+  aspect-ratio: 1 / 1;
+  max-width: 220px;
+  margin: 0 auto;
+}
+
+.ratio-wide {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+}
+
+.ratio-tall {
+  aspect-ratio: 3 / 4;
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+// ── Preview Card ─────────────────────────────────────────────────────────────
+
+.preview-card {
+  position: relative;
+  border-radius: var(--gc-radius-md, 0.5rem);
+  overflow: hidden;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  background: #0f172a;
+
+  .preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+
+  &:hover {
+    .preview-img {
+      transform: scale(1.03);
+    }
+
+    .preview-overlay {
+      opacity: 1;
+    }
+  }
+
+  .preview-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 15, 30, 0.75);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+
+    .overlay-btn {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border-radius: var(--gc-radius-sm, 0.25rem);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+
+      &.btn-change {
+        background: var(--gc-accent-primary, #6366f1);
+        color: #fff;
+
+        &:hover {
+          background: #4f46e5;
+          transform: translateY(-1px);
+        }
+      }
+
+      &.btn-delete {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+        border-color: rgba(239, 68, 68, 0.4);
+
+        &:hover {
+          background: #ef4444;
+          color: #fff;
+          transform: translateY(-1px);
+        }
+      }
+    }
+  }
+}
+
+// ── Dropzone Box ─────────────────────────────────────────────────────────────
+
+.dropzone-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed rgba(255, 255, 255, 0.18);
+  border-radius: var(--gc-radius-md, 0.5rem);
+  background: rgba(15, 23, 42, 0.6);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  padding: 1rem;
+  text-align: center;
+
+  &:hover,
+  &.dragging {
+    border-color: var(--gc-accent-primary, #6366f1);
+    background: rgba(99, 102, 241, 0.08);
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+  }
+
+  .dropzone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .icon-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(99, 102, 241, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.25rem;
+
+    .upload-icon {
+      font-size: 1.25rem;
+    }
+  }
+
+  .dropzone-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gc-text, #f8fafc);
+    margin: 0;
+  }
+
+  .dropzone-hint {
+    font-size: 0.75rem;
+    color: var(--gc-text-muted, #94a3b8);
+    margin: 0;
+    max-width: 240px;
+  }
+
+  .btn-browse {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gc-accent-primary, #6366f1);
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--gc-radius-full, 9999px);
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: var(--gc-accent-primary, #6366f1);
+      color: #fff;
+    }
+  }
+
+  .processing-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+
+    .spinner-icon {
+      font-size: 1.75rem;
+      animation: spin 1.2s infinite linear;
+    }
+
+    .spinner-text {
+      font-size: 0.8125rem;
+      color: var(--gc-text-muted, #94a3b8);
+    }
+  }
+}
+
+// ── URL Input Box ────────────────────────────────────────────────────────────
+
+.url-input-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  .input-with-action {
+    display: flex;
+    gap: 0.5rem;
+
+    .url-field {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--gc-radius-sm, 0.25rem);
+      padding: 0.5rem 0.75rem;
+      color: #fff;
+      font-size: 0.875rem;
+
+      &:focus {
+        outline: none;
+        border-color: var(--gc-accent-primary, #6366f1);
+        box-shadow: 0 0 8px rgba(99, 102, 241, 0.3);
+      }
+    }
+
+    .btn-apply-url {
+      background: var(--gc-accent-primary, #6366f1);
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: var(--gc-radius-sm, 0.25rem);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: #4f46e5;
+      }
+    }
+  }
+
+  .url-help {
+    font-size: 0.75rem;
+    color: var(--gc-text-muted, #94a3b8);
+    margin: 0;
+  }
+}
+
+.error-msg {
+  font-size: 0.75rem;
+  color: #f87171;
+  margin: 0.25rem 0 0;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
