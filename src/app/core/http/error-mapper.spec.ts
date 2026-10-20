@@ -168,5 +168,101 @@ describe('ErrorMapper', () => {
       expect(error.code).toBe('VALIDATION_ERROR');
       expect(error.fieldErrors?.['password']).toBe('Password must be at least 8 characters');
     });
+
+    it('should map PHONE_TAKEN error code', () => {
+      const httpErr = new HttpErrorResponse({
+        status: 409,
+        error: { code: 'PHONE_TAKEN' }
+      });
+      const error = ErrorMapper.map(httpErr);
+      expect(error.code).toBe('PHONE_TAKEN');
+      expect(error.message).toContain('phone number is already registered');
+    });
+
+    it('should map INVALID_RESET_CODE error code', () => {
+      const httpErr = new HttpErrorResponse({
+        status: 400,
+        error: { code: 'INVALID_RESET_CODE' }
+      });
+      const error = ErrorMapper.map(httpErr);
+      expect(error.code).toBe('INVALID_RESET_CODE');
+      expect(error.message).toContain('6-digit verification code is invalid');
+    });
+
+    it('should map ACCOUNT_DEACTIVATED_BY_ADMIN error code', () => {
+      const httpErr = new HttpErrorResponse({
+        status: 403,
+        error: { code: 'ACCOUNT_DEACTIVATED_BY_ADMIN' }
+      });
+      const error = ErrorMapper.map(httpErr);
+      expect(error.code).toBe('ACCOUNT_DEACTIVATED_BY_ADMIN');
+      expect(error.message).toContain('suspended by an administrator');
+    });
+
+    it('should map ACCOUNT_DISABLED error code', () => {
+      const httpErr = new HttpErrorResponse({
+        status: 403,
+        error: { code: 'ACCOUNT_DISABLED' }
+      });
+      const error = ErrorMapper.map(httpErr);
+      expect(error.code).toBe('ACCOUNT_DISABLED');
+      expect(error.message).toContain('account has been disabled');
+    });
+
+    it('should map USER_NOT_FOUND error code', () => {
+      const httpErr = new HttpErrorResponse({
+        status: 404,
+        error: { code: 'USER_NOT_FOUND' }
+      });
+      const error = ErrorMapper.map(httpErr);
+      expect(error.code).toBe('USER_NOT_FOUND');
+      expect(error.message).toContain('No account was found');
+    });
+
+    it('should map 422 Unprocessable Entity status', () => {
+      const httpErr = new HttpErrorResponse({
+        status: 422,
+        error: { message: 'Entity unprocessable', fieldErrors: { amount: 'Must be positive' } }
+      });
+      const error = ErrorMapper.map(httpErr);
+      expect(error.status).toBe(422);
+      expect(error.message).toBe('Entity unprocessable');
+      expect(error.fieldErrors?.['amount']).toBe('Must be positive');
+    });
+
+    it('should map 423 Locked status', () => {
+      const httpErr = new HttpErrorResponse({ status: 423 });
+      const error = ErrorMapper.map(httpErr);
+      expect(error.status).toBe(423);
+      expect(error.code).toBe('ACCOUNT_LOCKED');
+      expect(error.message).toContain('temporarily locked');
+    });
+
+    it('should map 500 Internal Server Error status', () => {
+      const httpErr = new HttpErrorResponse({ status: 500 });
+      const error = ErrorMapper.map(httpErr);
+      expect(error.status).toBe(500);
+      expect(error.message).toContain('temporary issue');
+    });
+
+    it('should map general 409 conflict when message does not include SLOT', () => {
+      const httpErr = new HttpErrorResponse({
+        status: 409,
+        error: { message: 'Resource already exists' }
+      });
+      const error = ErrorMapper.map(httpErr);
+      expect(error.status).toBe(409);
+      expect(error.message).toBe('Resource already exists');
+    });
+
+    it('should map unknown status code to default fallback', () => {
+      const httpErr = new HttpErrorResponse({
+        status: 418,
+        error: { message: 'I am a teapot' }
+      });
+      const error = ErrorMapper.map(httpErr);
+      expect(error.status).toBe(418);
+      expect(error.message).toBe('I am a teapot');
+    });
   });
 });
