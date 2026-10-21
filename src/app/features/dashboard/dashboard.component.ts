@@ -14,6 +14,7 @@ import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { BadgeComponent } from '../../shared/ui/badge/badge.component';
 import { SkeletonComponent } from '../../shared/ui/skeleton/skeleton.component';
 import { StationGamePickerComponent } from '../../shared/components/station-game-picker/station-game-picker.component';
+import { TournamentTickerComponent } from '../../shared/components/tournament-ticker/tournament-ticker.component';
 import { Game } from '../../shared/models';
 
 @Component({
@@ -25,7 +26,8 @@ import { Game } from '../../shared/models';
     ButtonComponent,
     BadgeComponent,
     SkeletonComponent,
-    StationGamePickerComponent
+    StationGamePickerComponent,
+    TournamentTickerComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.component.html',
