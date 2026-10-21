@@ -117,6 +117,24 @@ describe('BookingAdminService', () => {
     });
   });
 
+  it('should process payment and confirm booking in sequence via finishBookingPayment', (done) => {
+    apiSpy.post.and.returnValue(of({ id: 'pay-cash-999' }));
+    apiSpy.patch.and.returnValue(of({ ...mockBookingRow, status: 'CONFIRMED', paymentId: 'pay-cash-999' }));
+
+    service.finishBookingPayment('bk-123', 'usr-guest', 1500).subscribe(res => {
+      expect(res.status).toBe('CONFIRMED');
+      expect(res.paymentId).toBe('pay-cash-999');
+      expect(apiSpy.post).toHaveBeenCalledWith('/payments/cash', jasmine.objectContaining({
+        referenceType: 'BOOKING',
+        referenceId: 'bk-123',
+        amount: 1500,
+        customerUserId: 'usr-guest'
+      }));
+      expect(apiSpy.patch).toHaveBeenCalledWith('/bookings/bk-123/confirm', { paymentId: 'pay-cash-999' });
+      done();
+    });
+  });
+
   it('should construct export CSV URL with and without query parameters', () => {
     const urlWithParams = service.exportCsv({
       status: 'CONFIRMED',

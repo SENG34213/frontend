@@ -53,6 +53,14 @@ export class TournamentAdminService {
   }
 
   /**
+   * Update tournament information.
+   * Maps to PUT /api/tournaments/{id}
+   */
+  updateTournament(id: string, request: TournamentRequest): Observable<TournamentResponse> {
+    return this.api.put<TournamentResponse>(`${this.tournamentsEndpoint}/${id}`, request);
+  }
+
+  /**
    * Update tournament status.
    * Maps to PATCH /api/tournaments/{id}/status
    */

@@ -22,7 +22,7 @@ describe('TournamentAdminService', () => {
   };
 
   beforeEach(() => {
-    apiSpy = jasmine.createSpyObj('ApiService', ['get', 'post', 'patch']);
+    apiSpy = jasmine.createSpyObj('ApiService', ['get', 'post', 'put', 'patch']);
     TestBed.configureTestingModule({
       providers: [
         TournamentAdminService,
@@ -87,6 +87,25 @@ describe('TournamentAdminService', () => {
     service.createTournament(req).subscribe(res => {
       expect(res.id).toBe('t-101');
       expect(apiSpy.post).toHaveBeenCalledWith('/tournaments', req);
+      done();
+    });
+  });
+
+  it('should update tournament details via PUT', (done) => {
+    const updateReq: TournamentRequest = {
+      name: 'FC 25 Grand Championship',
+      gameTitle: 'EA Sports FC 25',
+      startDate: '2026-10-30T10:00:00Z',
+      registrationDeadline: '2026-10-29T18:00:00Z',
+      entryFee: 1500,
+      maxParticipants: 32
+    };
+
+    apiSpy.put.and.returnValue(of({ ...mockTournament, name: 'FC 25 Grand Championship', entryFee: 1500, maxParticipants: 32 }));
+
+    service.updateTournament('t-101', updateReq).subscribe(res => {
+      expect(res.name).toBe('FC 25 Grand Championship');
+      expect(apiSpy.put).toHaveBeenCalledWith('/tournaments/t-101', updateReq);
       done();
     });
   });

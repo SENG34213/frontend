@@ -259,6 +259,13 @@
                 <gc-button
                   variant="outline"
                   size="sm"
+                  (btnClick)="openEditModal(t, $event)"
+                  aria-label="Edit tournament details">
+                  ✏️ Edit
+                </gc-button>
+                <gc-button
+                  variant="outline"
+                  size="sm"
                   class="btn-danger-hover"
                   (btnClick)="openCancelModal(t, $event)"
                   aria-label="Cancel this tournament">
@@ -389,6 +396,127 @@
         [disabled]="actionInFlight()"
         (btnClick)="submitCreate()">
         {{ actionInFlight() ? 'Publishing…' : '🏆 Publish Tournament' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Edit Tournament Modal ────────────────────────────────────────── -->
+  <gc-modal
+    [isOpen]="editModalOpen()"
+    [(isOpen)]="editModalOpen"
+    title="Update Tournament Information"
+    modalId="modal-edit-tournament">
+    <form [formGroup]="editForm" (ngSubmit)="submitEdit()" id="form-edit-tourn" novalidate>
+      <div class="modal-form-grid">
+        <!-- Tournament Poster / Banner -->
+        <gc-image-uploader
+          label="Tournament Poster / Banner (Optional)"
+          aspectRatio="wide"
+          [value]="editForm.get('imageUrl')?.value || ''"
+          (valueChange)="editForm.get('imageUrl')?.setValue($event)">
+        </gc-image-uploader>
+
+        <!-- Name -->
+        <div class="form-field">
+          <label class="form-label" for="edit-tourn-name">Tournament Name <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="edit-tourn-name"
+            type="text"
+            class="gc-input-native"
+            formControlName="name"
+            placeholder="e.g. Colombo FC 25 Winter Clash"
+            [attr.aria-invalid]="editForm.get('name')?.invalid && editForm.get('name')?.touched" />
+          @if (editForm.get('name')?.invalid && editForm.get('name')?.touched) {
+            <span class="field-error" role="alert">Tournament name is required (min 3 characters)</span>
+          }
+        </div>
+
+        <!-- Game Title -->
+        <div class="form-field">
+          <label class="form-label" for="edit-tourn-game">Game Title <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="edit-tourn-game"
+            type="text"
+            class="gc-input-native"
+            formControlName="gameTitle"
+            placeholder="e.g. EA Sports FC 25, Valorant, Tekken 8"
+            [attr.aria-invalid]="editForm.get('gameTitle')?.invalid && editForm.get('gameTitle')?.touched" />
+          @if (editForm.get('gameTitle')?.invalid && editForm.get('gameTitle')?.touched) {
+            <span class="field-error" role="alert">Game title is required</span>
+          }
+        </div>
+
+        <div class="form-row-2">
+          <!-- Start Date -->
+          <div class="form-field">
+            <label class="form-label" for="edit-tourn-start">Start Date & Time <span class="required" aria-hidden="true">*</span></label>
+            <input
+              id="edit-tourn-start"
+              type="datetime-local"
+              class="gc-input-native"
+              formControlName="startDate" />
+            @if (editForm.get('startDate')?.invalid && editForm.get('startDate')?.touched) {
+              <span class="field-error" role="alert">Valid start date is required</span>
+            }
+          </div>
+
+          <!-- Registration Deadline -->
+          <div class="form-field">
+            <label class="form-label" for="edit-tourn-deadline">Registration Deadline <span class="required" aria-hidden="true">*</span></label>
+            <input
+              id="edit-tourn-deadline"
+              type="datetime-local"
+              class="gc-input-native"
+              formControlName="registrationDeadline" />
+            @if (editForm.get('registrationDeadline')?.invalid && editForm.get('registrationDeadline')?.touched) {
+              <span class="field-error" role="alert">Deadline is required</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <!-- Entry Fee -->
+          <div class="form-field">
+            <label class="form-label" for="edit-tourn-fee">Entry Fee (LKR) <span class="required" aria-hidden="true">*</span></label>
+            <input
+              id="edit-tourn-fee"
+              type="number"
+              step="100"
+              min="0"
+              class="gc-input-native font-mono"
+              formControlName="entryFee" />
+            @if (editForm.get('entryFee')?.invalid && editForm.get('entryFee')?.touched) {
+              <span class="field-error" role="alert">Fee must be 0 or greater</span>
+            }
+          </div>
+
+          <!-- Max Participants -->
+          <div class="form-field">
+            <label class="form-label" for="edit-tourn-max">Max Participants <span class="required" aria-hidden="true">*</span></label>
+            <select
+              id="edit-tourn-max"
+              class="gc-select-native"
+              formControlName="maxParticipants">
+              <option [value]="4">4 Players (Semifinals + Finals)</option>
+              <option [value]="8">8 Players (Quarterfinals)</option>
+              <option [value]="16">16 Players (Round of 16)</option>
+              <option [value]="32">32 Players (Round of 32)</option>
+              <option [value]="64">64 Players (Grand Championship)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="editModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="primary"
+        form="form-edit-tourn"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="submitEdit()">
+        {{ actionInFlight() ? 'Saving…' : '💾 Save Changes' }}
       </gc-button>
     </div>
   </gc-modal>

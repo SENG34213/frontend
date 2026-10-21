@@ -165,6 +165,16 @@
                   </td>
                   <td class="actions-col" (click)="$event.stopPropagation()">
                     <div class="row-actions">
+                      @if (booking.status === 'PENDING') {
+                        <gc-button
+                          size="sm"
+                          variant="primary"
+                          class="pay-btn"
+                          (btnClick)="openPaymentModal(booking, $event)"
+                          aria-label="Collect payment and confirm slot">
+                          💵 Pay & Confirm
+                        </gc-button>
+                      }
                       @if (canReschedule(booking)) {
                         <gc-button
                           size="sm" variant="outline"
@@ -263,6 +273,14 @@
           </dl>
 
           <div class="panel-actions mt-lg">
+            @if (bk.status === 'PENDING') {
+              <gc-button
+                variant="primary"
+                class="pay-btn"
+                (btnClick)="openPaymentModal(bk, $event); closeDetail()">
+                💵 Finish Payment & Confirm Slot
+              </gc-button>
+            }
             @if (canReschedule(bk)) {
               <gc-button variant="secondary" (btnClick)="openReschedule(bk, $event); closeDetail()">
                 🔄 Reschedule
@@ -357,8 +375,7 @@
       </div>
 
       <p class="modal-info-text">
-        ⚠️ Walk-in bookings remain <strong>PENDING</strong> until confirmed with a cash payment. Go to
-        <a routerLink="/admin/payments" class="inline-link">Payments</a> after creating.
+        ℹ️ Walk-in bookings are initially reserved with <strong>PENDING</strong> status. You will be prompted to record payment and confirm the slot immediately after creating.
       </p>
     </form>
 
@@ -371,6 +388,87 @@
         [disabled]="actionInFlight()"
         (btnClick)="submitWalkIn()">
         {{ actionInFlight() ? 'Creating…' : '🎮 Create Walk-In' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Walk-In Payment & Confirmation Modal ──────────────────────────── -->
+  <gc-modal
+    [isOpen]="paymentModalOpen()"
+    [(isOpen)]="paymentModalOpen"
+    title="Finish Walk-In Payment & Confirm Slot"
+    modalId="modal-walkin-payment">
+    @if (selectedBookingForPayment(); as bk) {
+      <div class="payment-modal-content">
+        <div class="payment-highlight-banner mb-md">
+          <div class="banner-icon-wrap" aria-hidden="true">
+            💵
+          </div>
+          <div class="banner-text">
+            <h4 class="banner-title">Walk-In Slot Held &mdash; Status: <span class="status-pending-text">PENDING</span></h4>
+            <p class="banner-desc">
+              Customer is at the counter. Record payment to confirm the reservation and activate the gaming slot.
+            </p>
+          </div>
+        </div>
+
+        <div class="payment-booking-summary mb-md">
+          <div class="summary-item">
+            <span class="summary-label">Station:</span>
+            <span class="summary-val font-semibold">{{ bk.stationCode || 'Gaming Station' }} ({{ bk.stationType || 'Console' }})</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Customer:</span>
+            <span class="summary-val">{{ getCustomerName(bk.userId) }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Slot Duration:</span>
+            <span class="summary-val font-mono">{{ formatDateTime(bk.startTime) }} &rarr; {{ formatTime(bk.endTime) }} ({{ getDuration(bk) }})</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Payable Amount:</span>
+            <span class="summary-val font-mono text-primary font-bold">LKR {{ getAmount(bk) | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <form [formGroup]="paymentForm" (ngSubmit)="submitPayment()" id="form-walkin-payment" novalidate>
+          <div class="payment-form-grid">
+            <div class="form-field">
+              <label class="form-label" for="pay-method">Payment Method <span class="required" aria-hidden="true">*</span></label>
+              <select id="pay-method" class="gc-select-native" formControlName="method">
+                <option value="CASH">💵 Cash (Front Counter)</option>
+                <option value="CARD">💳 Card (POS Terminal)</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="pay-amount">Amount Received (LKR) <span class="required" aria-hidden="true">*</span></label>
+              <input
+                id="pay-amount"
+                type="number"
+                step="50"
+                min="1"
+                class="gc-input-native font-mono"
+                formControlName="amount"
+                [attr.aria-invalid]="paymentForm.get('amount')?.invalid && paymentForm.get('amount')?.touched" />
+              @if (paymentForm.get('amount')?.invalid && paymentForm.get('amount')?.touched) {
+                <span class="field-error" role="alert">Please enter a valid amount greater than 0</span>
+              }
+            </div>
+          </div>
+        </form>
+      </div>
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="cancelPaymentModal()">Pay Later (Keep Pending)</gc-button>
+      <gc-button
+        variant="primary"
+        form="form-walkin-payment"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight() || paymentForm.invalid"
+        (btnClick)="submitPayment()">
+        {{ actionInFlight() ? 'Processing…' : '✅ Finish Payment & Confirm Slot' }}
       </gc-button>
     </div>
   </gc-modal>

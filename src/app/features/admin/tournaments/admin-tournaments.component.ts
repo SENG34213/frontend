@@ -4,7 +4,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, catchError, switchMap, of, map } from 'rxjs';
 
 import { TournamentAdminService } from './tournament-admin.service';
 import {
@@ -67,6 +67,10 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
   // Create Modal
   readonly createModalOpen = signal(false);
 
+  // Edit Modal
+  readonly editModalOpen = signal(false);
+  readonly selectedTournamentForEdit = signal<TournamentResponse | null>(null);
+
   // Registrations Inspector Modal
   readonly registrationsModalOpen = signal(false);
   readonly selectedTournamentForRegistrations = signal<TournamentResponse | null>(null);
@@ -97,6 +101,17 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
     entryFee: [1500, [Validators.required, Validators.min(0)]],
     maxParticipants: [16, [Validators.required, Validators.min(2)]],
     registrationDeadline: [this.toLocalDatetimeStr(new Date(Date.now() + 5 * 86400000)), [Validators.required]]
+  });
+
+  readonly editForm = this.fb.group({
+    name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+    gameTitle: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(60)]],
+    imageUrl: [''],
+    startDate: ['', [Validators.required]],
+    endDate: [''],
+    entryFee: [1500, [Validators.required, Validators.min(0)]],
+    maxParticipants: [16, [Validators.required, Validators.min(2)]],
+    registrationDeadline: ['', [Validators.required]]
   });
 
   readonly statusForm = this.fb.group({
@@ -281,6 +296,78 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
       });
   }
 
+  // ── Edit Tournament ─────────────────────────────────────────────────────────
+  openEditModal(t: TournamentResponse, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.selectedTournamentForEdit.set(t);
+
+    const sDate = t.startDate ? this.toLocalDatetimeStr(new Date(t.startDate)) : '';
+    const eDate = t.endDate ? this.toLocalDatetimeStr(new Date(t.endDate)) : '';
+    const dDate = t.registrationDeadline ? this.toLocalDatetimeStr(new Date(t.registrationDeadline)) : '';
+
+    this.editForm.reset({
+      name: t.name || t.title || '',
+      gameTitle: t.gameTitle || '',
+      imageUrl: t.imageUrl || '',
+      startDate: sDate,
+      endDate: eDate,
+      entryFee: t.entryFee ?? 0,
+      maxParticipants: t.maxParticipants ?? 16,
+      registrationDeadline: dDate
+    });
+
+    this.editModalOpen.set(true);
+  }
+
+  submitEdit(): void {
+    const t = this.selectedTournamentForEdit();
+    if (!t) return;
+
+    if (this.editForm.invalid) {
+      this.editForm.markAllAsTouched();
+      return;
+    }
+
+    const val = this.editForm.value;
+    const req: TournamentRequest = {
+      name: (val.name || '').trim(),
+      gameTitle: (val.gameTitle || '').trim(),
+      imageUrl: val.imageUrl ? String(val.imageUrl).trim() : undefined,
+      startDate: new Date(val.startDate!).toISOString(),
+      endDate: val.endDate ? new Date(val.endDate).toISOString() : undefined,
+      entryFee: Number(val.entryFee) || 0,
+      maxParticipants: Number(val.maxParticipants) || 16,
+      registrationDeadline: new Date(val.registrationDeadline!).toISOString()
+    };
+
+    this.actionInFlight.set(true);
+    this.tournamentAdminService.updateTournament(t.id, req)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updated) => {
+          this.actionInFlight.set(false);
+          this.editModalOpen.set(false);
+          this.toast.success(`Tournament "${updated.name}" updated successfully!`);
+
+          this.notifSocketService.sendNotification({
+            type: 'TOURNAMENT_REGISTRATION',
+            category: 'TOURNAMENT',
+            title: 'Tournament Updated',
+            message: `Tournament "${updated.name}" details have been updated.`,
+            link: '/admin/tournaments',
+            data: { tournamentId: updated.id, name: updated.name }
+          });
+
+          this.loadTournaments();
+        },
+        error: (err) => {
+          this.actionInFlight.set(false);
+          const msg = err?.error?.message || err?.message || 'Failed to update tournament';
+          this.toast.error(msg);
+        }
+      });
+  }
+
   // ── Status Management ──────────────────────────────────────────────────────
   openStatusModal(t: TournamentResponse, event?: Event): void {
     if (event) event.stopPropagation();
@@ -326,30 +413,41 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
     if (!t) return;
 
     this.actionInFlight.set(true);
-    this.tournamentAdminService.cancelTournament(t.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.actionInFlight.set(false);
-          this.cancelModalOpen.set(false);
-          this.toast.success(`Tournament "${t.name}" has been cancelled`);
 
-          this.notifSocketService.sendNotification({
-            type: 'TOURNAMENT_CANCELLED',
-            category: 'TOURNAMENT',
-            title: 'Tournament Cancelled',
-            message: `Tournament "${t.name}" was cancelled. Registered participants notified.`,
-            link: '/admin/tournaments',
-            data: { tournamentId: t.id, name: t.name }
-          });
+    // Fetch registered participants so all registered customers get notified
+    this.tournamentAdminService.getRegistrations(t.id).pipe(
+      takeUntil(this.destroy$),
+      catchError(() => of([] as RegistrationResponse[])),
+      switchMap((regs) => {
+        const registeredUserIds = regs.map((r) => r.userId).filter(Boolean);
+        return this.tournamentAdminService.cancelTournament(t.id).pipe(
+          map(() => registeredUserIds)
+        );
+      })
+    ).subscribe({
+      next: (registeredUserIds) => {
+        this.actionInFlight.set(false);
+        this.cancelModalOpen.set(false);
+        this.toast.success(`Tournament "${t.name}" has been cancelled`);
 
-          this.loadTournaments();
-        },
-        error: (err) => {
-          this.actionInFlight.set(false);
-          this.toast.error(err?.message || 'Failed to cancel tournament');
-        }
-      });
+        this.notifSocketService.sendNotification({
+          type: 'TOURNAMENT_CANCELLED',
+          category: 'CANCEL',
+          title: 'Tournament Cancelled',
+          message: `Tournament "${t.name}" has been cancelled by the administrator.`,
+          link: `/tournaments/${t.id}`,
+          targetUserIds: registeredUserIds.length > 0 ? registeredUserIds : undefined,
+          broadcast: registeredUserIds.length === 0,
+          data: { tournamentId: t.id, name: t.name, registeredUserIds }
+        });
+
+        this.loadTournaments();
+      },
+      error: (err) => {
+        this.actionInFlight.set(false);
+        this.toast.error(err?.message || 'Failed to cancel tournament');
+      }
+    });
   }
 
   // ── Registrations Inspector ────────────────────────────────────────────────
@@ -438,23 +536,36 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
 
   sendReminders(t: TournamentResponse, event?: Event): void {
     if (event) event.stopPropagation();
-    this.tournamentAdminService.sendReminders(t.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.toast.success(`Pre-tournament reminders sent to registered players`);
-          this.notifSocketService.sendNotification({
-            type: 'MATCH_REMINDER',
-            category: 'TOURNAMENT',
-            title: 'Match Starting Soon ⚡',
-            message: `2-Hour Reminder: Upcoming match for ${t.name} (${t.gameTitle}) is starting soon!`,
-            link: '/tournaments'
-          });
-        },
-        error: () => {
-          this.toast.error('Failed to dispatch notifications');
-        }
-      });
+    this.actionInFlight.set(true);
+
+    this.tournamentAdminService.getRegistrations(t.id).pipe(
+      takeUntil(this.destroy$),
+      catchError(() => of([] as RegistrationResponse[])),
+      switchMap((regs) => {
+        const registeredUserIds = regs.map((r) => r.userId).filter(Boolean);
+        return this.tournamentAdminService.sendReminders(t.id).pipe(
+          map(() => registeredUserIds)
+        );
+      })
+    ).subscribe({
+      next: (registeredUserIds) => {
+        this.actionInFlight.set(false);
+        this.toast.success(`Pre-tournament reminders sent to registered players`);
+        this.notifSocketService.sendNotification({
+          type: 'MATCH_REMINDER',
+          category: 'TOURNAMENT',
+          title: 'Match Starting Soon ⚡',
+          message: `2-Hour Reminder: Upcoming match for ${t.name} (${t.gameTitle}) is starting soon!`,
+          link: `/tournaments/${t.id}`,
+          targetUserIds: registeredUserIds,
+          data: { tournamentId: t.id, name: t.name, registeredUserIds }
+        });
+      },
+      error: () => {
+        this.actionInFlight.set(false);
+        this.toast.error('Failed to dispatch notifications');
+      }
+    });
   }
 
   // ── Filter Events ──────────────────────────────────────────────────────────

@@ -121,6 +121,7 @@ describe('AdminTournamentsComponent', () => {
       'getTournaments',
       'getTournamentById',
       'createTournament',
+      'updateTournament',
       'updateStatus',
       'cancelTournament',
       'getRegistrations',
@@ -143,6 +144,9 @@ describe('AdminTournamentsComponent', () => {
         entryFee: 1500,
         status: 'UPCOMING'
       })
+    );
+    tournamentAdminServiceSpy.updateTournament.and.returnValue(
+      of({ ...mockTournaments[0], name: 'Updated Championship Name' })
     );
     tournamentAdminServiceSpy.updateStatus.and.returnValue(
       of({ ...mockTournaments[0], status: 'ONGOING' })
@@ -305,6 +309,12 @@ describe('AdminTournamentsComponent', () => {
     expect(tournamentAdminServiceSpy.cancelTournament).toHaveBeenCalledWith('tourn-01');
     expect(toastServiceSpy.success).toHaveBeenCalledWith(jasmine.stringMatching(/cancelled/i));
     expect(component.cancelModalOpen()).toBeFalse();
+    expect(notificationSocketServiceSpy.sendNotification).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        type: 'TOURNAMENT_CANCELLED',
+        targetUserIds: ['usr-01', 'usr-02']
+      })
+    );
   });
 
   it('TC-FE-TRN-11: should open registrations modal and load participant list', () => {
@@ -350,11 +360,17 @@ describe('AdminTournamentsComponent', () => {
     expect(toastServiceSpy.success).toHaveBeenCalledWith(jasmine.stringMatching(/recorded/i));
   });
 
-  it('TC-FE-TRN-15: should dispatch pre-tournament reminders', () => {
+  it('TC-FE-TRN-15: should dispatch pre-tournament reminders to registered players via socket', () => {
     const t = mockTournaments[0];
     component.sendReminders(t);
 
+    expect(tournamentAdminServiceSpy.getRegistrations).toHaveBeenCalledWith('tourn-01');
     expect(tournamentAdminServiceSpy.sendReminders).toHaveBeenCalledWith('tourn-01');
+    expect(notificationSocketServiceSpy.sendNotification).toHaveBeenCalledWith(jasmine.objectContaining({
+      type: 'MATCH_REMINDER',
+      category: 'TOURNAMENT',
+      targetUserIds: ['usr-01', 'usr-02']
+    }));
     expect(toastServiceSpy.success).toHaveBeenCalledWith(jasmine.stringMatching(/reminders sent/i));
   });
 
@@ -380,4 +396,70 @@ describe('AdminTournamentsComponent', () => {
     expect(component.sortBy()).toBe('date_asc');
     expect(component.filteredTournaments().length).toBe(4);
   });
+
+  it('TC-FE-TRN-18: should open edit modal and prefill form with tournament data', () => {
+    const t = mockTournaments[0];
+    component.openEditModal(t);
+
+    expect(component.editModalOpen()).toBeTrue();
+    expect(component.selectedTournamentForEdit()).toEqual(t);
+    expect(component.editForm.get('name')?.value).toBe(t.name);
+    expect(component.editForm.get('gameTitle')?.value).toBe(t.gameTitle);
+    expect(component.editForm.get('entryFee')?.value).toBe(t.entryFee);
+    expect(component.editForm.get('maxParticipants')?.value).toBe(t.maxParticipants);
+  });
+
+  it('TC-FE-TRN-19: should submit edit form and update tournament successfully', () => {
+    const t = mockTournaments[0];
+    component.openEditModal(t);
+
+    component.editForm.patchValue({
+      name: 'Updated FC 25 Championship',
+      gameTitle: 'EA Sports FC 25',
+      entryFee: 2000,
+      maxParticipants: 16
+    });
+
+    component.submitEdit();
+
+    expect(tournamentAdminServiceSpy.updateTournament).toHaveBeenCalled();
+    expect(component.editModalOpen()).toBeFalse();
+    expect(toastServiceSpy.success).toHaveBeenCalledWith(jasmine.stringMatching(/updated successfully/i));
+  });
+
+  it('TC-FE-TRN-20: should not submit edit if form is invalid', () => {
+    const t = mockTournaments[0];
+    component.openEditModal(t);
+
+    component.editForm.patchValue({
+      name: '',
+      gameTitle: ''
+    });
+
+    component.submitEdit();
+
+    expect(tournamentAdminServiceSpy.updateTournament).not.toHaveBeenCalled();
+    expect(component.editForm.invalid).toBeTrue();
+  });
+
+  it('TC-FE-TRN-21: should cancel tournament and notify all registered customers and admin via socket', () => {
+    const t = mockTournaments[0];
+    component.openCancelModal(t);
+
+    expect(component.cancelModalOpen()).toBeTrue();
+    expect(component.selectedTournamentForCancel()).toEqual(t);
+
+    component.confirmCancel();
+
+    expect(tournamentAdminServiceSpy.getRegistrations).toHaveBeenCalledWith(t.id);
+    expect(tournamentAdminServiceSpy.cancelTournament).toHaveBeenCalledWith(t.id);
+    expect(notificationSocketServiceSpy.sendNotification).toHaveBeenCalledWith(jasmine.objectContaining({
+      type: 'TOURNAMENT_CANCELLED',
+      category: 'CANCEL',
+      targetUserIds: ['usr-01', 'usr-02']
+    }));
+    expect(component.cancelModalOpen()).toBeFalse();
+    expect(toastServiceSpy.success).toHaveBeenCalledWith(jasmine.stringMatching(/cancelled/i));
+  });
 });
+

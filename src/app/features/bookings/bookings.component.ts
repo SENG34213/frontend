@@ -512,13 +512,16 @@ export class BookingsComponent implements OnInit {
         };
         this.isProcessingPayment.set(false);
         this.bookingSuccessReceipt.set(enriched);
+        const currentUserId = response.userId || this.authService.getUserId() || undefined;
         this.notifSocketService.sendNotification({
           type: 'BOOKING_CREATED',
           category: 'BOOKING',
           title: 'Booking Confirmed! 🎮',
           message: `${enriched.stationName || 'Station'} reserved for ${slot.startTime} - ${slot.endTime} (${enriched.gameTitle || 'Game'})`,
           referenceId: enriched.id,
-          link: '/bookings'
+          link: '/bookings',
+          targetUserId: currentUserId,
+          data: { bookingId: enriched.id, stationId: this.selectedStationId() }
         });
         this.loadSlotsForDate();
         this.loadLoyalty();
