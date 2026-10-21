@@ -265,4 +265,25 @@ describe('ErrorMapper', () => {
       expect(error.message).toBe('I am a teapot');
     });
   });
+
+  describe('idempotency', () => {
+    it('should return the same ApiError object unchanged when map() is called a second time', () => {
+      // Arrange: simulate what the error interceptor does — convert an
+      // HttpErrorResponse (409 SLOT_UNAVAILABLE) into an ApiError.
+      const httpErr = new HttpErrorResponse({
+        status: 409,
+        error: { code: 'SLOT_UNAVAILABLE', message: 'Slot taken' }
+      });
+      const firstResult = ErrorMapper.map(httpErr);
+
+      // Act: a service's catchError calls map() again on the already-mapped ApiError.
+      const secondResult = ErrorMapper.map(firstResult);
+
+      // Assert: the second call must return the identical object (same reference).
+      expect(secondResult).toBe(firstResult);
+      // And it must NOT have been overwritten with the generic fallback.
+      expect(secondResult.message).not.toContain('unexpected application error');
+      expect(secondResult.status).toBe(409);
+    });
+  });
 });

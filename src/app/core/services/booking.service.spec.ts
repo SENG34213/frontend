@@ -498,4 +498,118 @@ describe('BookingService', () => {
       });
     });
   });
+
+  describe('rescheduleBooking', () => {
+    it('should call PATCH /bookings/{id}/reschedule with ISO instants given valid params and useMocks is false', (done) => {
+      // Arrange
+      const orig = environment.useMocks;
+      environment.useMocks = false;
+
+      const backendResponse: BackendBookingResponse = {
+        id: 'bk-resched-1',
+        userId: 'usr-1',
+        stationId: 'st-01',
+        stationCode: 'CONSOLE-01',
+        gameId: 'game-01',
+        gameTitle: 'EA SPORTS FC 25',
+        startTime: '2026-10-25T08:30:00Z',
+        endTime: '2026-10-25T10:30:00Z',
+        status: 'CONFIRMED',
+        totalAmount: 1000,
+        payableAmount: 1000
+      };
+
+      apiSpy.patch.and.returnValue(of(backendResponse));
+
+      // Act
+      service
+        .rescheduleBooking('bk-resched-1', {
+          stationId: 'st-01',
+          gameId: 'game-01',
+          startTime: '14:00',
+          endTime: '16:00',
+          bookingDate: '2026-10-25'
+        })
+        .subscribe((res) => {
+          // Assert
+          expect(apiSpy.patch).toHaveBeenCalledWith(
+            '/bookings/bk-resched-1/reschedule',
+            jasmine.objectContaining({
+              stationId: 'st-01',
+              gameId: 'game-01',
+              startTime: '2026-10-25T08:30:00.000Z',
+              endTime: '2026-10-25T10:30:00.000Z'
+            })
+          );
+          expect(res.id).toBe('bk-resched-1');
+          expect(res.gameId).toBe('game-01');
+          expect(res.gameTitle).toBe('EA SPORTS FC 25');
+          expect(res.stationName).toBe('PS5 CONSOLE-01');
+          expect(res.status).toBe('CONFIRMED');
+
+          environment.useMocks = orig;
+          done();
+        });
+    });
+
+    it('should return mock response given useMocks is true', (done) => {
+      // Arrange
+      const orig = environment.useMocks;
+      environment.useMocks = true;
+
+      // Act
+      service
+        .rescheduleBooking('bk-mock-1', {
+          stationId: 'st-01',
+          gameId: 'game-01',
+          startTime: '14:00',
+          endTime: '16:00',
+          bookingDate: '2026-10-25'
+        })
+        .subscribe((res) => {
+          // Assert
+          expect(res.id).toBe('bk-mock-1');
+          expect(res.gameId).toBe('game-01');
+          expect(res.status).toBe('CONFIRMED');
+
+          environment.useMocks = orig;
+          done();
+        });
+    });
+
+    it('should expose backend error code given backend returns an error', (done) => {
+      // Arrange
+      const orig = environment.useMocks;
+      environment.useMocks = false;
+
+      const httpError = {
+        status: 409,
+        error: {
+          error: 'SLOT_UNAVAILABLE',
+          message: 'Station is already booked for that time range'
+        }
+      };
+
+      apiSpy.patch.and.returnValue(throwError(() => httpError));
+
+      // Act
+      service
+        .rescheduleBooking('bk-resched-1', {
+          stationId: 'st-01',
+          gameId: 'game-01',
+          startTime: '14:00',
+          endTime: '16:00',
+          bookingDate: '2026-10-25'
+        })
+        .subscribe({
+          next: () => fail('Expected reschedule to fail'),
+          error: (err) => {
+            // Assert
+            expect(err.code).toBe('SLOT_UNAVAILABLE');
+            environment.useMocks = orig;
+            done();
+          }
+        });
+    });
+  });
 });

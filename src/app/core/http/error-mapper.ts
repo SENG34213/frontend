@@ -3,10 +3,40 @@ import { ApiError } from '../../shared/models/api-response.model';
 
 export class ErrorMapper {
   /**
+   * Type guard: returns true when the value is an already-mapped ApiError.
+   * Used to make map() idempotent — if the error interceptor already converted
+   * an HttpErrorResponse into an ApiError, a second call from a service's
+   * catchError must not overwrite it with the generic "unexpected application
+   * error" fallback.
+   */
+  private static isApiError(error: unknown): error is ApiError {
+    if (
+      error === null ||
+      typeof error !== 'object' ||
+      error instanceof HttpErrorResponse
+    ) {
+      return false;
+    }
+    const e = error as Record<string, unknown>;
+    return (
+      typeof e['status'] === 'number' &&
+      typeof e['message'] === 'string' &&
+      'action' in e
+    );
+  }
+
+  /**
    * Transforms an HttpErrorResponse or unknown error into a plain-English ApiError
    * strictly adhering to NFR-08: "Errors in plain English with a corrective action".
    */
   static map(error: unknown): ApiError {
+    // Idempotency: if the error interceptor already mapped this HttpErrorResponse
+    // into an ApiError, return it unchanged so service-level catchError handlers
+    // do not lose the real error code and message.
+    if (ErrorMapper.isApiError(error)) {
+      return error;
+    }
+
     if (!(error instanceof HttpErrorResponse)) {
       return {
         status: 0,
