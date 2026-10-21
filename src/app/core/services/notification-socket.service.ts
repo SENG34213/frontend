@@ -23,6 +23,7 @@ export class NotificationSocketService {
   readonly isConnected = signal<boolean>(false);
   readonly isDrawerOpen = signal<boolean>(false);
   readonly activeFilter = signal<'ALL' | 'UNREAD' | 'BOOKING' | 'TOURNAMENT'>('ALL');
+  readonly activeSlotLocks = signal<{ key: string; stationId: string; date: string; timeSlot: string; userId: string; expiresAt: number }[]>([]);
 
   // Computed filtered list
   readonly filteredNotifications = computed(() => {
@@ -159,6 +160,23 @@ export class NotificationSocketService {
         this.unreadCount.set(0);
       });
 
+      // ── Real-Time Slot Soft-Locking Listeners ──────────────────────────────
+      this.socket.on('slot_locks', (locks: { key: string; stationId: string; date: string; timeSlot: string; userId: string; expiresAt: number }[]) => {
+        this.activeSlotLocks.set(locks || []);
+      });
+
+      this.socket.on('slot_locked', (lock: { key: string; stationId: string; date: string; timeSlot: string; userId: string; expiresAt: number }) => {
+        this.activeSlotLocks.update(prev => [...prev.filter(l => l.key !== lock.key), lock]);
+      });
+
+      this.socket.on('slot_unlocked', (data: { key: string }) => {
+        this.activeSlotLocks.update(prev => prev.filter(l => l.key !== data.key));
+      });
+
+      this.socket.on('slot_booked_live', (data: { key: string }) => {
+        this.activeSlotLocks.update(prev => prev.filter(l => l.key !== data.key));
+      });
+
     } catch (err) {
       console.error('[NotificationSocket] Socket initialization error:', err);
       this.isConnected.set(false);
@@ -209,6 +227,34 @@ export class NotificationSocketService {
 
   setFilter(filter: 'ALL' | 'UNREAD' | 'BOOKING' | 'TOURNAMENT'): void {
     this.activeFilter.set(filter);
+  }
+
+  // ── Slot Soft-Locking Methods ──────────────────────────────────────────────
+  lockSlot(stationId: string, date: string, timeSlot: string): void {
+    if (this.socket && this.socket.connected) {
+      this.socket.emit('lock_slot', { stationId, date, timeSlot });
+    }
+  }
+
+  unlockSlot(stationId: string, date: string, timeSlot: string): void {
+    if (this.socket && this.socket.connected) {
+      this.socket.emit('unlock_slot', { stationId, date, timeSlot });
+    }
+  }
+
+  confirmSlotBooked(stationId: string, date: string, timeSlot: string): void {
+    if (this.socket && this.socket.connected) {
+      this.socket.emit('booking_confirmed_slot', { stationId, date, timeSlot });
+    }
+  }
+
+  isSlotHeldByOther(stationId: string, date: string, timeSlot: string): boolean {
+    const key = `${stationId}_${date}_${timeSlot}`;
+    const now = Date.now();
+    const currentUid = this.getUserIdSafely();
+    return this.activeSlotLocks().some(
+      l => l.key === key && l.expiresAt > now && l.userId !== currentUid
+    );
   }
 
   markAsRead(id: string): void {
