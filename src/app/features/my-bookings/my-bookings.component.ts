@@ -92,6 +92,15 @@ export class MyBookingsComponent implements OnInit {
   readonly isSubmitting = signal<boolean>(false);
   readonly rescheduleError = signal<string | null>(null);
 
+  // ── Session Review State (SDS Table C.3 / C.5) ──────────────────────────────
+  readonly userReviews = signal<Record<string, any>>({});
+  readonly isReviewModalOpen = signal<boolean>(false);
+  readonly selectedBookingForReview = signal<BookingDisplayItem | null>(null);
+  readonly reviewRating = signal<number>(5);
+  readonly reviewComment = signal<string>('');
+  readonly isSubmittingReview = signal<boolean>(false);
+  readonly reviewError = signal<string | null>(null);
+
   // ── Computed Lists ──────────────────────────────────────────────────────────
   readonly upcomingBookings = computed(() => {
     return this.allBookings()
@@ -207,6 +216,63 @@ export class MyBookingsComponent implements OnInit {
       error: () => {
         this.hasError.set(true);
         this.isLoading.set(false);
+      }
+    });
+
+    this.loadReviews();
+  }
+
+  loadReviews(): void {
+    this.bookingService.getMyReviews().subscribe({
+      next: (reviews) => {
+        const map: Record<string, any> = {};
+        if (Array.isArray(reviews)) {
+          reviews.forEach((r) => {
+            if (r.bookingId) map[r.bookingId] = r;
+          });
+        }
+        this.userReviews.set(map);
+      },
+      error: () => {}
+    });
+  }
+
+  openReviewModal(item: BookingDisplayItem): void {
+    this.selectedBookingForReview.set(item);
+    this.reviewRating.set(5);
+    this.reviewComment.set('');
+    this.reviewError.set(null);
+    this.isReviewModalOpen.set(true);
+  }
+
+  closeReviewModal(): void {
+    if (this.isSubmittingReview()) return;
+    this.isReviewModalOpen.set(false);
+    this.selectedBookingForReview.set(null);
+    this.reviewError.set(null);
+  }
+
+  setRating(stars: number): void {
+    this.reviewRating.set(stars);
+  }
+
+  submitReview(): void {
+    const booking = this.selectedBookingForReview();
+    if (!booking) return;
+
+    this.isSubmittingReview.set(true);
+    this.reviewError.set(null);
+
+    this.bookingService.submitReview(booking.id, this.reviewRating(), this.reviewComment()).subscribe({
+      next: (created) => {
+        this.isSubmittingReview.set(false);
+        this.toastService.success('Review Submitted', 'Thank you for rating your gaming session!');
+        this.userReviews.update((map) => ({ ...map, [booking.id]: created }));
+        this.closeReviewModal();
+      },
+      error: (err) => {
+        this.isSubmittingReview.set(false);
+        this.reviewError.set(err?.error?.message || 'Failed to submit review. Please try again.');
       }
     });
   }
