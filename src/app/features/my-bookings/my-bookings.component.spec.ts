@@ -121,7 +121,9 @@ describe('MyBookingsComponent', () => {
     bookingServiceSpy = jasmine.createSpyObj('BookingService', [
       'getMyBookings',
       'getStationAvailability',
-      'rescheduleBooking'
+      'rescheduleBooking',
+      'getMyReviews',
+      'submitReview'
     ]);
     mockDataSpy = jasmine.createSpyObj('MockDataService', [
       'getMyCustomerBookings',
@@ -131,6 +133,7 @@ describe('MyBookingsComponent', () => {
 
     bookingServiceSpy.getMyBookings.and.returnValue(of(mockBookings));
     bookingServiceSpy.getStationAvailability.and.returnValue(of(mockSlots));
+    bookingServiceSpy.getMyReviews.and.returnValue(of([]));
     mockDataSpy.getMyCustomerBookings.and.returnValue(of(mockBookings));
 
     await TestBed.configureTestingModule({

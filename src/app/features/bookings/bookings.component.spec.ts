@@ -68,8 +68,13 @@ describe('BookingsComponent', () => {
       'createBooking'
     ]);
     mockNotificationSocketService = jasmine.createSpyObj<NotificationSocketService>('NotificationSocketService', [
-      'sendNotification'
+      'sendNotification',
+      'isSlotHeldByOther',
+      'lockSlot',
+      'unlockSlot',
+      'confirmSlotBooked'
     ]);
+    mockNotificationSocketService.isSlotHeldByOther.and.returnValue(false);
 
     mockBookingService.getStations.and.returnValue(of(testStations));
     mockBookingService.getStationGames.and.callFake((id: string) => {
