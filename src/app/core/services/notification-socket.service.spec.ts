@@ -214,4 +214,94 @@ describe('NotificationSocketService', () => {
       unreadCount: 1
     });
   });
+
+  describe('Real-Time Slot Soft-Locking', () => {
+    let mockSocket: {
+      connected: boolean;
+      emit: jasmine.Spy;
+      on: jasmine.Spy;
+    };
+
+    beforeEach(() => {
+      mockSocket = {
+        connected: true,
+        emit: jasmine.createSpy('emit'),
+        on: jasmine.createSpy('on')
+      };
+      (service as unknown as { socket: unknown }).socket = mockSocket;
+    });
+
+    it('should emit lock_slot when socket is connected', () => {
+      service.lockSlot('st-01', '2026-11-04', '10:00');
+      expect(mockSocket.emit).toHaveBeenCalledWith('lock_slot', {
+        stationId: 'st-01',
+        date: '2026-11-04',
+        timeSlot: '10:00'
+      });
+    });
+
+    it('should not emit lock_slot when socket is disconnected', () => {
+      mockSocket.connected = false;
+      service.lockSlot('st-01', '2026-11-04', '10:00');
+      expect(mockSocket.emit).not.toHaveBeenCalled();
+    });
+
+    it('should emit unlock_slot when socket is connected', () => {
+      service.unlockSlot('st-01', '2026-11-04', '10:00');
+      expect(mockSocket.emit).toHaveBeenCalledWith('unlock_slot', {
+        stationId: 'st-01',
+        date: '2026-11-04',
+        timeSlot: '10:00'
+      });
+    });
+
+    it('should emit booking_confirmed_slot when socket is connected', () => {
+      service.confirmSlotBooked('st-01', '2026-11-04', '10:00');
+      expect(mockSocket.emit).toHaveBeenCalledWith('booking_confirmed_slot', {
+        stationId: 'st-01',
+        date: '2026-11-04',
+        timeSlot: '10:00'
+      });
+    });
+
+    it('should correctly identify if slot is held by another user', () => {
+      const now = Date.now();
+      service.activeSlotLocks.set([
+        {
+          key: 'st-01_2026-11-04_10:00',
+          stationId: 'st-01',
+          date: '2026-11-04',
+          timeSlot: '10:00',
+          userId: 'other-user',
+          expiresAt: now + 60000
+        },
+        {
+          key: 'st-01_2026-11-04_11:00',
+          stationId: 'st-01',
+          date: '2026-11-04',
+          timeSlot: '11:00',
+          userId: 'cust-001', // current user
+          expiresAt: now + 60000
+        },
+        {
+          key: 'st-01_2026-11-04_12:00',
+          stationId: 'st-01',
+          date: '2026-11-04',
+          timeSlot: '12:00',
+          userId: 'other-user',
+          expiresAt: now - 1000 // expired
+        }
+      ]);
+
+      // Held by other and unexpired -> true
+      expect(service.isSlotHeldByOther('st-01', '2026-11-04', '10:00')).toBeTrue();
+      // Held by current user -> false
+      expect(service.isSlotHeldByOther('st-01', '2026-11-04', '11:00')).toBeFalse();
+      // Expired lock -> false
+      expect(service.isSlotHeldByOther('st-01', '2026-11-04', '12:00')).toBeFalse();
+      // Non-existent slot -> false
+      expect(service.isSlotHeldByOther('st-01', '2026-11-04', '13:00')).toBeFalse();
+    });
+  });
 });
+

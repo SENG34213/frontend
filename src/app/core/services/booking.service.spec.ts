@@ -4,7 +4,7 @@ import { BookingService, BackendStationResponse, BackendSlotResponse, BackendBoo
 import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
-import { BookingResponse } from '../../shared/models';
+import { BookingResponse, BookingReview } from '../../shared/models';
 
 describe('BookingService', () => {
   let service: BookingService;
@@ -612,4 +612,70 @@ describe('BookingService', () => {
         });
     });
   });
+
+  describe('Reviews API', () => {
+    it('should submit a review via POST /bookings/:id/review', (done) => {
+      const mockReview: BookingReview = {
+        id: 'rev-1',
+        bookingId: 'bk-123',
+        userId: 'usr-1',
+        rating: 5,
+        comment: 'Great experience!',
+        createdAt: '2026-10-21T10:00:00Z'
+      };
+      apiSpy.post.and.returnValue(of(mockReview));
+
+      service.submitReview('bk-123', 5, 'Great experience!').subscribe((res) => {
+        expect(apiSpy.post).toHaveBeenCalledWith('/bookings/bk-123/review', {
+          rating: 5,
+          comment: 'Great experience!'
+        });
+        expect(res).toEqual(mockReview);
+        done();
+      });
+    });
+
+    it('should fetch review for a specific booking via GET /bookings/:id/review', (done) => {
+      const mockReview: BookingReview = {
+        id: 'rev-1',
+        bookingId: 'bk-123',
+        userId: 'usr-1',
+        rating: 4,
+        createdAt: '2026-10-21T10:00:00Z'
+      };
+      apiSpy.get.and.returnValue(of(mockReview));
+
+      service.getReviewByBooking('bk-123').subscribe((res) => {
+        expect(apiSpy.get).toHaveBeenCalledWith('/bookings/bk-123/review');
+        expect(res).toEqual(mockReview);
+        done();
+      });
+    });
+
+    it('should fetch current user reviews via GET /reviews/mine', (done) => {
+      const mockReviews: BookingReview[] = [
+        { id: 'rev-1', bookingId: 'bk-1', userId: 'usr-1', rating: 5, createdAt: '2026-10-21T10:00:00Z' },
+        { id: 'rev-2', bookingId: 'bk-2', userId: 'usr-1', rating: 4, createdAt: '2026-10-21T10:00:00Z' }
+      ];
+      apiSpy.get.and.returnValue(of(mockReviews));
+
+      service.getMyReviews().subscribe((res) => {
+        expect(apiSpy.get).toHaveBeenCalledWith('/reviews/mine');
+        expect(res).toEqual(mockReviews);
+        done();
+      });
+    });
+
+    it('should fetch station rating via GET /reviews/station/:stationId/rating', (done) => {
+      const mockRating = { stationId: 'st-01', averageRating: 4.8 };
+      apiSpy.get.and.returnValue(of(mockRating));
+
+      service.getStationRating('st-01').subscribe((res) => {
+        expect(apiSpy.get).toHaveBeenCalledWith('/reviews/station/st-01/rating');
+        expect(res).toEqual(mockRating);
+        done();
+      });
+    });
+  });
 });
+

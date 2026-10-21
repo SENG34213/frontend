@@ -112,14 +112,20 @@ export class BookingsComponent implements OnInit {
   readonly bookingErrorMessage = signal<string | null>(null);
 
   // Card form fields with dynamic formatting
-  cardNumber = '4242 4242 4242 4242';
+  readonly cardNumberSignal = signal<string>('4242 4242 4242 4242');
+  get cardNumber(): string {
+    return this.cardNumberSignal();
+  }
+  set cardNumber(val: string) {
+    this.cardNumberSignal.set(val);
+  }
   cardExpiry = '12/28';
   cardCvv = '888';
   cardholderName = 'Player One';
 
   // Detected card brand: visa, mastercard, amex, or generic
   readonly cardBrand = computed<'visa' | 'mastercard' | 'amex' | 'generic'>(() => {
-    const raw = this.cardNumber.replace(/\D/g, '');
+    const raw = this.cardNumberSignal().replace(/\D/g, '');
     if (/^4/.test(raw)) return 'visa';
     if (/^5[1-5]/.test(raw) || /^2[2-7]/.test(raw)) return 'mastercard';
     if (/^3[47]/.test(raw)) return 'amex';
@@ -127,7 +133,7 @@ export class BookingsComponent implements OnInit {
   });
 
   readonly isCardNumberValid = computed<boolean>(() => {
-    const raw = this.cardNumber.replace(/\D/g, '');
+    const raw = this.cardNumberSignal().replace(/\D/g, '');
     if (raw.length < 13) return false;
     return this.validateLuhn(raw);
   });
