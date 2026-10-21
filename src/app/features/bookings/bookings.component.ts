@@ -20,6 +20,13 @@ import { SkeletonComponent } from '../../shared/ui/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
 import { BadgeComponent } from '../../shared/ui/badge/badge.component';
 
+import {
+  DisplaySlot,
+  formatDateToYMD,
+  formatTimeString,
+  getCleanTimeId
+} from '../../core/utils/slot.utils';
+
 export interface CalendarDay {
   dayNumber: number;
   dateStr: string; // YYYY-MM-DD
@@ -30,16 +37,7 @@ export interface CalendarDay {
   isWeekend: boolean;
 }
 
-export interface DisplaySlot {
-  id: string;
-  startTime: string; // e.g. "12:00 PM"
-  endTime: string;   // e.g. "01:00 PM"
-  rawStart: string;  // e.g. "12:00"
-  rawEnd: string;    // e.g. "13:00"
-  durationHours: number;
-  isAvailable: boolean;
-  isSelected: boolean;
-}
+export type { DisplaySlot };
 
 @Component({
   selector: 'gc-bookings',
@@ -577,36 +575,14 @@ export class BookingsComponent implements OnInit {
   // ── Private helpers ───────────────────────────────────────────────────────────
 
   private formatDate(d: Date): string {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    return formatDateToYMD(d);
   }
 
   private formatTimeString(time: string): string {
-    if (!time) return '';
-    if (time.includes('AM') || time.includes('PM')) return time;
-    if (time.includes('T') || time.endsWith('Z')) {
-      const d = new Date(time);
-      if (!isNaN(d.getTime())) {
-        return d.toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true,
-          timeZone: 'Asia/Colombo'
-        });
-      }
-    }
-    const [hStr, mStr] = time.split(':');
-    let h = parseInt(hStr, 10);
-    const m = mStr || '00';
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12;
-    h = h ? h : 12;
-    return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+    return formatTimeString(time);
   }
 
   private getCleanTimeId(time: string): string {
-    return time.replace(/[^a-zA-Z0-9]/g, '');
+    return getCleanTimeId(time);
   }
 }

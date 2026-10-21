@@ -31,3 +31,11 @@ export interface BookingResponse {
 export interface CancelBookingRequest {
   reason?: string;
 }
+
+export interface RescheduleBookingRequest {
+  stationId: string;
+  gameId: string;
+  startTime: string; // HH:mm or ISO
+  endTime: string;   // HH:mm or ISO
+  bookingDate?: string; // YYYY-MM-DD
+}

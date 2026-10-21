@@ -1,7 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, of, map } from 'rxjs';
+import { Observable, catchError, of, map, throwError } from 'rxjs';
 import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
+import { MockDataService } from './mock/mock-data.service';
+import { environment } from '../../../environments/environment';
+import { ErrorMapper } from '../http/error-mapper';
+import { ApiError } from '../../shared/models/api-response.model';
 
 import {
   Station,
@@ -11,7 +15,8 @@ import {
   BookingRequest,
   BookingResponse,
   BookingStatus,
-  LoyaltyBalanceDto
+  LoyaltyBalanceDto,
+  RescheduleBookingRequest
 } from '../../shared/models';
 
 export interface BackendStationResponse {
@@ -73,6 +78,7 @@ const GAME_COVER_PLACEHOLDER = '/assets/images/ps5_console_01.jpg';
 export class BookingService {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
+  private readonly mockData = inject(MockDataService);
 
   private readonly uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -312,6 +318,78 @@ export class BookingService {
         });
       }),
       catchError(() => of([]))
+    );
+  }
+
+  rescheduleBooking(
+    bookingId: string,
+    request: RescheduleBookingRequest
+  ): Observable<BookingResponse> {
+    if (environment.useMocks) {
+      return this.mockData.rescheduleBooking(bookingId, request);
+    }
+
+    let startIso: string;
+    let endIso: string;
+
+    if (request.startTime && request.startTime.includes('T')) {
+      startIso = new Date(request.startTime).toISOString();
+    } else {
+      startIso = new Date(`${request.bookingDate}T${request.startTime}:00+05:30`).toISOString();
+    }
+
+    if (request.endTime && request.endTime.includes('T')) {
+      endIso = new Date(request.endTime).toISOString();
+    } else {
+      endIso = new Date(`${request.bookingDate}T${request.endTime}:00+05:30`).toISOString();
+    }
+
+    const payload = {
+    stationId: request.stationId,
+    ...(request.gameId ? { gameId: request.gameId } : {}),
+    startTime: startIso,
+    endTime: endIso
+  };
+
+    return this.api.patch<BackendBookingResponse>(`/bookings/${bookingId}/reschedule`, payload).pipe(
+      map((res: BackendBookingResponse) => {
+        const item: BookingResponse = {
+          id: res.id,
+          bookingReference: res.bookingReference || `GC-${res.id ? String(res.id).substring(0, 8).toUpperCase() : 'BK'}`,
+          userId: res.userId,
+          stationId: res.stationId,
+          stationName: res.stationName || (res.stationCode ? `PS5 ${res.stationCode}` : 'PS5 Station'),
+          gameId: res.gameId || request.gameId,
+          gameTitle: res.gameTitle,
+          bookingDate: res.bookingDate || (res.startTime && String(res.startTime).includes('T') ? String(res.startTime).split('T')[0] : (request.bookingDate || '')),
+          startTime: res.startTime,
+          endTime: res.endTime,
+          totalAmount: Number(res.totalAmount ?? 0),
+          discountAmount: Number(res.discountAmount ?? 0),
+          finalAmount: Number(res.finalAmount ?? res.payableAmount ?? res.totalAmount ?? 0),
+          status: (res.status || 'CONFIRMED') as BookingStatus,
+          createdAt: res.createdAt || ''
+        };
+        return item;
+      }),
+      catchError((error: unknown) => {
+        // ErrorMapper.map() is idempotent: if the error interceptor already produced
+        // an ApiError, this call returns it unchanged — preserving the real code/message.
+        const mappedError = ErrorMapper.map(error);
+
+        // Prefer the code already on the mapped error; fall back to error.error.error
+        // for raw HttpErrorResponses that somehow bypass the interceptor.
+        const errObj = error as Record<string, unknown> | null;
+        const serverError = errObj && typeof errObj['error'] === 'object' && errObj['error'] !== null
+          ? (errObj['error'] as Record<string, unknown>)
+          : null;
+        const fallbackRaw = serverError ? (serverError['error'] as string | undefined) : undefined;
+        const rawCode = mappedError.code ||
+          (typeof fallbackRaw === 'string' && /^[A-Z0-9_]+$/.test(fallbackRaw) ? fallbackRaw : undefined);
+        const code = rawCode || 'UNKNOWN_ERROR';
+
+        return throwError(() => ({ ...mappedError, code } as ApiError));
+      })
     );
   }
 }
