@@ -55,6 +55,13 @@ export class LoyaltyService {
   private readonly auth = inject(AuthService);
 
   /**
+   * Invalidates any cached loyalty balance or history.
+   */
+  invalidateCache(): void {
+    // Queries are live; method allows explicit cache invalidation across callers
+  }
+
+  /**
    * Retrieves loyalty balance and tier for a user.
    * Maps to GET /api/loyalty/balance/{userId}
    */

@@ -7,6 +7,8 @@ import { MockDataService } from '../../core/services/mock/mock-data.service';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 import { BookingResponse } from '../../shared/models/booking.model';
 import { SlotAvailability } from '../../shared/models/station.model';
+import { LoyaltyService } from '../../core/services/loyalty.service';
+import { UserService } from '../../core/services/user.service';
 
 describe('MyBookingsComponent', () => {
   let component: MyBookingsComponent;
@@ -14,6 +16,8 @@ describe('MyBookingsComponent', () => {
   let bookingServiceSpy: jasmine.SpyObj<BookingService>;
   let mockDataSpy: jasmine.SpyObj<MockDataService>;
   let toastServiceSpy: jasmine.SpyObj<ToastService>;
+  let loyaltyServiceSpy: jasmine.SpyObj<LoyaltyService>;
+  let userServiceSpy: jasmine.SpyObj<UserService>;
 
   const mockBookings: BookingResponse[] = [
     {
@@ -121,16 +125,17 @@ describe('MyBookingsComponent', () => {
     bookingServiceSpy = jasmine.createSpyObj('BookingService', [
       'getMyBookings',
       'getStationAvailability',
-      'rescheduleBooking'
+      'rescheduleBooking',
+      'cancelBooking'
     ]);
-    mockDataSpy = jasmine.createSpyObj('MockDataService', [
-      'getMyCustomerBookings',
-      'rescheduleBooking'
-    ]);
+    mockDataSpy = jasmine.createSpyObj('MockDataService', ['getMyCustomerBookings']);
     toastServiceSpy = jasmine.createSpyObj('ToastService', ['success', 'error', 'info', 'warning']);
+    loyaltyServiceSpy = jasmine.createSpyObj('LoyaltyService', ['invalidateCache', 'getBalance', 'getHistory']);
+    userServiceSpy = jasmine.createSpyObj('UserService', ['clearCachedProfile', 'getMyProfile']);
+
+    bookingServiceSpy.getStationAvailability.and.returnValue(of(mockSlots));
 
     bookingServiceSpy.getMyBookings.and.returnValue(of(mockBookings));
-    bookingServiceSpy.getStationAvailability.and.returnValue(of(mockSlots));
     mockDataSpy.getMyCustomerBookings.and.returnValue(of(mockBookings));
 
     await TestBed.configureTestingModule({
@@ -139,7 +144,9 @@ describe('MyBookingsComponent', () => {
         provideRouter([]),
         { provide: BookingService, useValue: bookingServiceSpy },
         { provide: MockDataService, useValue: mockDataSpy },
-        { provide: ToastService, useValue: toastServiceSpy }
+        { provide: ToastService, useValue: toastServiceSpy },
+        { provide: LoyaltyService, useValue: loyaltyServiceSpy },
+        { provide: UserService, useValue: userServiceSpy }
       ]
     }).compileComponents();
 
@@ -184,6 +191,7 @@ describe('MyBookingsComponent', () => {
     expect(component.activeTab()).toBe('played');
     expect(component.currentList().length).toBe(2);
 
+    // Sorted newest first: bk-3 (Oct 5) before bk-4 (Oct 2)
     expect(component.currentList()[0].id).toBe('bk-3');
     expect(component.currentList()[1].id).toBe('bk-4');
 
@@ -218,7 +226,6 @@ describe('MyBookingsComponent', () => {
     expect(component.hasError()).toBeFalse();
     expect(component.allBookings().length).toBe(4);
   });
-
   // ── Reschedule Feature Tests ────────────────────────────────────────────────
 
   it('should display reschedule button only for CONFIRMED upcoming bookings given upcoming list', () => {
@@ -519,5 +526,320 @@ describe('MyBookingsComponent', () => {
     expect(component.isRescheduleModalOpen()).toBeTrue();
     expect(component.rescheduleError()).toContain('Connection failed');
   });
-});
+  // ── Cancel Feature Tests ──────────────────────────────────────────────────
 
+  describe('Cancellation Flow', () => {
+    it('should display cancel button for upcoming PENDING and CONFIRMED bookings given upcoming list', () => {
+      // Arrange & Act
+      fixture.detectChanges();
+      const cards = fixture.nativeElement.querySelectorAll('.booking-card');
+
+      // Assert: bk-1 (CONFIRMED) has cancel button
+      const card1CancelBtn = cards[0].querySelector('.cancel-btn-content');
+      expect(card1CancelBtn).toBeTruthy();
+      expect(card1CancelBtn.textContent).toContain('Cancel booking');
+
+      // bk-2 (PENDING) also has cancel button
+      const card2CancelBtn = cards[1].querySelector('.cancel-btn-content');
+      expect(card2CancelBtn).toBeTruthy();
+      expect(card2CancelBtn.textContent).toContain('Cancel booking');
+    });
+
+    it('should hide cancel button entirely in the Played tab', () => {
+      // Arrange & Act
+      fixture.detectChanges();
+      component.onTabChange('played');
+      fixture.detectChanges();
+
+      // Assert
+      const cancelButtons = fixture.nativeElement.querySelectorAll('.cancel-btn-content');
+      expect(cancelButtons.length).toBe(0);
+    });
+
+    it('should disable cancel button and display hint given booking starts within 2 hours', () => {
+      // Arrange: Create a booking starting in 30 minutes
+      const soonStart = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+      const soonEnd = new Date(Date.now() + 90 * 60 * 1000).toISOString();
+      const soonBooking: BookingResponse = {
+        id: 'bk-soon-cancel',
+        bookingReference: 'GC-SOONC',
+        userId: 'usr-1',
+        stationId: 'st-01',
+        stationName: 'PS5 Lounge #01',
+        gameId: 'game-01',
+        gameTitle: 'EA SPORTS FC 25',
+        bookingDate: soonStart.split('T')[0],
+        startTime: soonStart,
+        endTime: soonEnd,
+        totalAmount: 1000,
+        finalAmount: 1000,
+        status: 'CONFIRMED',
+        createdAt: new Date().toISOString()
+      };
+
+      bookingServiceSpy.getMyBookings.and.returnValue(of([soonBooking]));
+
+      // Act
+      component.loadBookings();
+      fixture.detectChanges();
+
+      // Assert
+      const item = component.upcomingBookings()[0];
+      expect(item.canCancel).toBeFalse();
+      expect(item.isWithin2Hours).toBeTrue();
+
+      const cancelBtn = fixture.nativeElement.querySelector('.cancel-booking-btn button');
+      expect(cancelBtn.disabled).toBeTrue();
+
+      const cancelHint = fixture.nativeElement.querySelector('.cancel-cutoff-hint');
+      expect(cancelHint).toBeTruthy();
+      expect(cancelHint.textContent).toContain('Cancellation closes 2 hours before the start time');
+    });
+
+    it('should open cancel modal with right summary given cancel button clicked', () => {
+      // Arrange
+      fixture.detectChanges();
+      const item = component.upcomingBookings()[0];
+
+      // Act
+      component.openCancelModal(item);
+      fixture.detectChanges();
+
+      // Assert
+      expect(component.isCancelModalOpen()).toBeTrue();
+      expect(component.selectedBookingForCancel()?.id).toBe(item.id);
+
+      const modalEl = fixture.nativeElement.querySelector('.cancel-booking-summary');
+      expect(modalEl).toBeTruthy();
+      expect(modalEl.textContent).toContain(item.displayGame);
+      expect(modalEl.textContent).toContain(item.displayStation);
+      expect(modalEl.textContent).toContain(item.formattedDate);
+      expect(modalEl.textContent).toContain(item.formattedTimeSlot);
+      expect(modalEl.textContent).toContain('1,000.00');
+    });
+
+    it('should make no API call and close modal given Keep booking is clicked', () => {
+      // Arrange
+      fixture.detectChanges();
+      const item = component.upcomingBookings()[0];
+      component.openCancelModal(item);
+      fixture.detectChanges();
+
+      // Act
+      component.closeCancelModal();
+      fixture.detectChanges();
+
+      // Assert
+      expect(component.isCancelModalOpen()).toBeFalse();
+      expect(component.selectedBookingForCancel()).toBeNull();
+      expect(bookingServiceSpy.cancelBooking).not.toHaveBeenCalled();
+    });
+
+    it('should call cancelBooking exactly once given confirmation clicked', () => {
+      // Arrange
+      fixture.detectChanges();
+      const item = component.upcomingBookings()[0];
+      component.openCancelModal(item);
+      fixture.detectChanges();
+
+      bookingServiceSpy.cancelBooking.and.returnValue(of({
+        ...mockBookings[0],
+        status: 'CANCELLED'
+      }));
+
+      // Act
+      component.confirmCancel();
+
+      // Assert
+      expect(bookingServiceSpy.cancelBooking).toHaveBeenCalledTimes(1);
+      expect(bookingServiceSpy.cancelBooking).toHaveBeenCalledWith(item.id);
+    });
+
+    it('should prevent double submission given confirm cancel clicked while in flight', () => {
+      // Arrange
+      fixture.detectChanges();
+      const item = component.upcomingBookings()[0];
+      component.openCancelModal(item);
+      fixture.detectChanges();
+
+      component.isCancelling.set(true);
+
+      // Act
+      component.confirmCancel();
+
+      // Assert
+      expect(bookingServiceSpy.cancelBooking).not.toHaveBeenCalled();
+    });
+
+    it('should move booking from Upcoming to Played tab, update badge counts, show success toast, and invalidate loyalty cache given cancellation succeeds', () => {
+      // Arrange
+      fixture.detectChanges();
+      const item = component.upcomingBookings()[0];
+      component.openCancelModal(item);
+      fixture.detectChanges();
+
+      const cancelledBooking: BookingResponse = {
+        ...mockBookings[0],
+        status: 'CANCELLED'
+      };
+
+      bookingServiceSpy.cancelBooking.and.returnValue(of(cancelledBooking));
+
+      // Act
+      component.confirmCancel();
+      fixture.detectChanges();
+
+      // Assert
+      expect(component.isCancelModalOpen()).toBeFalse();
+      expect(component.selectedBookingForCancel()).toBeNull();
+      expect(toastServiceSpy.success).toHaveBeenCalledWith('Booking cancelled', 'Success');
+      expect(loyaltyServiceSpy.invalidateCache).toHaveBeenCalledTimes(1);
+      expect(userServiceSpy.clearCachedProfile).toHaveBeenCalledTimes(1);
+
+      // Moved from upcoming to played
+      expect(component.upcomingBookings().length).toBe(1);
+      expect(component.playedBookings().length).toBe(3);
+      expect(component.tabs()[0].badge).toBe(1);
+      expect(component.tabs()[1].badge).toBe(3);
+      expect(component.activeTab()).toBe('upcoming');
+    });
+
+    it('should show empty state if upcoming tab becomes empty after cancellation', () => {
+      // Arrange: only 1 upcoming booking
+      const singleUpcoming = [mockBookings[0]];
+      bookingServiceSpy.getMyBookings.and.returnValue(of(singleUpcoming));
+      component.loadBookings();
+      fixture.detectChanges();
+
+      expect(component.upcomingBookings().length).toBe(1);
+
+      const cancelledBooking: BookingResponse = {
+        ...mockBookings[0],
+        status: 'CANCELLED'
+      };
+      bookingServiceSpy.cancelBooking.and.returnValue(of(cancelledBooking));
+
+      // Act
+      component.openCancelModal(component.upcomingBookings()[0]);
+      component.confirmCancel();
+      fixture.detectChanges();
+
+      // Assert
+      expect(component.upcomingBookings().length).toBe(0);
+      const emptyState = fixture.nativeElement.querySelector('.empty-state-card');
+      expect(emptyState).toBeTruthy();
+      expect(emptyState.textContent).toContain('No upcoming bookings');
+    });
+
+    it('should handle TOO_LATE error by showing friendly toast and refreshing list', () => {
+      // Arrange
+      fixture.detectChanges();
+      const item = component.upcomingBookings()[0];
+      component.openCancelModal(item);
+      fixture.detectChanges();
+
+      bookingServiceSpy.cancelBooking.and.returnValue(
+        throwError(() => ({
+          status: 400,
+          code: 'TOO_LATE',
+          message: 'Bookings cannot be cancelled within 2 hours of the scheduled start time'
+        }))
+      );
+
+      // Act
+      component.confirmCancel();
+      fixture.detectChanges();
+
+      // Assert
+      expect(component.isCancelModalOpen()).toBeFalse();
+      expect(toastServiceSpy.error).toHaveBeenCalledWith(
+        'Bookings cannot be cancelled within 2 hours of the start time.',
+        'Cancellation Closed'
+      );
+      expect(bookingServiceSpy.getMyBookings).toHaveBeenCalled();
+    });
+
+    it('should handle ALREADY_CANCELLED error by showing friendly toast and refreshing list', () => {
+      // Arrange
+      fixture.detectChanges();
+      const item = component.upcomingBookings()[0];
+      component.openCancelModal(item);
+      fixture.detectChanges();
+
+      bookingServiceSpy.cancelBooking.and.returnValue(
+        throwError(() => ({
+          status: 409,
+          code: 'ALREADY_CANCELLED',
+          message: 'This booking is already cancelled'
+        }))
+      );
+
+      // Act
+      component.confirmCancel();
+      fixture.detectChanges();
+
+      // Assert
+      expect(component.isCancelModalOpen()).toBeFalse();
+      expect(toastServiceSpy.error).toHaveBeenCalledWith(
+        'This booking was already cancelled.',
+        'Already Cancelled'
+      );
+      expect(bookingServiceSpy.getMyBookings).toHaveBeenCalled();
+    });
+
+    it('should handle NOT_YOUR_BOOKING and BOOKING_NOT_FOUND error by showing friendly toast and refreshing list', () => {
+      // Arrange
+      fixture.detectChanges();
+      const item = component.upcomingBookings()[0];
+      component.openCancelModal(item);
+      fixture.detectChanges();
+
+      bookingServiceSpy.cancelBooking.and.returnValue(
+        throwError(() => ({
+          status: 403,
+          code: 'NOT_YOUR_BOOKING',
+          message: 'You can only cancel your own bookings'
+        }))
+      );
+
+      // Act
+      component.confirmCancel();
+      fixture.detectChanges();
+
+      // Assert
+      expect(component.isCancelModalOpen()).toBeFalse();
+      expect(toastServiceSpy.error).toHaveBeenCalledWith(
+        'This booking can no longer be cancelled. Refreshing your bookings.',
+        'Cannot Cancel'
+      );
+      expect(bookingServiceSpy.getMyBookings).toHaveBeenCalled();
+    });
+
+    it('should keep modal open and display error message given network or unknown error to allow retry', () => {
+      // Arrange
+      fixture.detectChanges();
+      const item = component.upcomingBookings()[0];
+      component.openCancelModal(item);
+      fixture.detectChanges();
+
+      bookingServiceSpy.cancelBooking.and.returnValue(
+        throwError(() => ({
+          status: 0,
+          code: 'UNKNOWN_ERROR',
+          message: 'Network connection failed'
+        }))
+      );
+
+      // Act
+      component.confirmCancel();
+      fixture.detectChanges();
+
+      // Assert
+      expect(component.isCancelModalOpen()).toBeTrue();
+      expect(component.cancelError()).toContain('Network connection failed');
+      const errorAlert = fixture.nativeElement.querySelector('.cancel-error-alert');
+      expect(errorAlert).toBeTruthy();
+      expect(errorAlert.textContent).toContain('Network connection failed');
+    });
+  });
+});
