@@ -9,7 +9,7 @@ import {
   formatSpots,
   filterAndSortUpcomingTournaments
 } from './tournament-ticker.component';
-import { TournamentService } from '../../../core/services/tournament.service';
+import { TournamentService, TournamentViewItem } from '../../../core/services/tournament.service';
 import { TournamentResponse, TournamentStatus } from '../../../shared/models';
 
 describe('TournamentTickerComponent', () => {
@@ -17,7 +17,7 @@ describe('TournamentTickerComponent', () => {
   let fixture: ComponentFixture<TournamentTickerComponent>;
   let tournamentServiceSpy: jasmine.SpyObj<TournamentService>;
 
-  const baseTournament = (overrides: Partial<TournamentResponse> = {}): TournamentResponse => ({
+  const baseTournament = (overrides: Partial<TournamentViewItem> = {}): TournamentViewItem => ({
     id: 'test-1',
     name: 'Test Tournament',
     gameTitle: 'Tekken 8',
@@ -31,6 +31,10 @@ describe('TournamentTickerComponent', () => {
     createdByAdminId: 'admin-1',
     createdAt: new Date().toISOString(),
     isRegistrationOpen: true,
+    spotsLeft: 12,
+    progressPercent: 25,
+    isFull: false,
+    isClosingSoon: false,
     ...overrides
   });
 
@@ -182,7 +186,7 @@ describe('TournamentTickerComponent', () => {
 
   describe('Component Behavior', () => {
     it('should render skeleton while loading', () => {
-      const subject = new Subject<any>();
+      const subject = new Subject<TournamentViewItem[]>();
       tournamentServiceSpy.getTournaments.and.returnValue(subject.asObservable());
 
       fixture = TestBed.createComponent(TournamentTickerComponent);
@@ -212,7 +216,7 @@ describe('TournamentTickerComponent', () => {
         })
       ];
 
-      tournamentServiceSpy.getTournaments.and.returnValue(of(mockTournaments as any));
+      tournamentServiceSpy.getTournaments.and.returnValue(of(mockTournaments));
 
       fixture = TestBed.createComponent(TournamentTickerComponent);
       component = fixture.componentInstance;
@@ -269,7 +273,7 @@ describe('TournamentTickerComponent', () => {
         })
       );
 
-      tournamentServiceSpy.getTournaments.and.returnValue(of(mockTournaments as any));
+      tournamentServiceSpy.getTournaments.and.returnValue(of(mockTournaments));
 
       fixture = TestBed.createComponent(TournamentTickerComponent);
       component = fixture.componentInstance;
