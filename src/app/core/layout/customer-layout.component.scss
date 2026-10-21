@@ -30,8 +30,11 @@
   text-decoration: none;
 
   .logo-icon {
-    font-size: 1.5rem;
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
     filter: drop-shadow(0 0 10px var(--gc-primary-glow));
+    border-radius: var(--gc-radius-sm, 6px);
   }
 
   .logo-text {

@@ -3,29 +3,46 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { NotificationSocketService } from './notification-socket.service';
 import { ToastService } from '../../shared/ui/toast/toast.service';
+import { AuthService } from './auth.service';
 import { AdminNotification } from '../../shared/models/notification.model';
 
 describe('NotificationSocketService', () => {
   let service: NotificationSocketService;
   let httpMock: HttpTestingController;
   let toastSpy: jasmine.SpyObj<ToastService>;
+  let authSpy: jasmine.SpyObj<AuthService>;
 
   beforeEach(() => {
     toastSpy = jasmine.createSpyObj('ToastService', ['success', 'info', 'error', 'warning']);
+    authSpy = jasmine.createSpyObj('AuthService', ['getUserId', 'role', 'currentUser', 'isCustomer', 'isAdmin']);
+
+    authSpy.getUserId.and.returnValue('cust-001');
+    authSpy.role.and.returnValue('CUSTOMER');
+    authSpy.currentUser.and.returnValue({
+      sub: 'cust-001',
+      userId: 'cust-001',
+      email: 'customer@test.com',
+      role: 'CUSTOMER',
+      iat: 1234567,
+      exp: 9999999
+    });
+    authSpy.isCustomer.and.returnValue(true);
+    authSpy.isAdmin.and.returnValue(false);
 
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: ToastService, useValue: toastSpy }
+        { provide: ToastService, useValue: toastSpy },
+        { provide: AuthService, useValue: authSpy }
       ]
     });
 
     httpMock = TestBed.inject(HttpTestingController);
     service = TestBed.inject(NotificationSocketService);
 
-    // Handle initial fetch GET request
-    const initReq = httpMock.match('http://localhost:5001/api/notifications');
+    // Handle initial fetch GET request (may have query parameters)
+    const initReq = httpMock.match(req => req.url.includes('/api/notifications'));
     if (initReq.length > 0) {
       initReq[0].flush({
         notifications: [
@@ -104,8 +121,9 @@ describe('NotificationSocketService', () => {
     expect(target?.read).toBeTrue();
     expect(service.unreadCount()).toBe(0);
 
-    const patchReq = httpMock.expectOne('http://localhost:5001/api/notifications/n-1/read');
+    const patchReq = httpMock.expectOne(req => req.url.includes('/api/notifications/n-1/read'));
     expect(patchReq.request.method).toBe('PATCH');
+    expect(patchReq.request.body).toEqual({ userId: 'cust-001', role: 'CUSTOMER' });
     patchReq.flush({ success: true });
   });
 
@@ -114,8 +132,9 @@ describe('NotificationSocketService', () => {
     expect(service.notifications().every(n => n.read)).toBeTrue();
     expect(service.unreadCount()).toBe(0);
 
-    const postReq = httpMock.expectOne('http://localhost:5001/api/notifications/mark-all-read');
+    const postReq = httpMock.expectOne(req => req.url.includes('/api/notifications/mark-all-read'));
     expect(postReq.request.method).toBe('POST');
+    expect(postReq.request.body).toEqual({ userId: 'cust-001', role: 'CUSTOMER' });
     postReq.flush({ success: true, unreadCount: 0 });
   });
 
@@ -139,7 +158,7 @@ describe('NotificationSocketService', () => {
     delReq.flush({ success: true });
   });
 
-  it('should send notification and update state on HTTP success', () => {
+  it('should send notification and automatically attach customer targetUserId', () => {
     const payload = {
       type: 'BOOKING_CONFIRMED',
       category: 'BOOKING' as const,
@@ -152,10 +171,12 @@ describe('NotificationSocketService', () => {
 
     const postReq = httpMock.expectOne('http://localhost:5001/api/notify');
     expect(postReq.request.method).toBe('POST');
+    expect(postReq.request.body.targetUserId).toBe('cust-001');
 
     const createdNotif: AdminNotification = {
       id: 'notif-test-123',
       ...payload,
+      targetUserId: 'cust-001',
       read: false,
       createdAt: new Date().toISOString()
     };
@@ -169,13 +190,14 @@ describe('NotificationSocketService', () => {
     expect(service.notifications().some(n => n.id === 'notif-test-123')).toBeTrue();
   });
 
-  it('should trigger sendCustomerTestAlert when sendTestAlert(true) is invoked', () => {
+  it('should trigger sendCustomerTestAlert when sendTestAlert(true) is invoked with targetUserId', () => {
     spyOn(service, 'sendCustomerTestAlert').and.callThrough();
     service.sendTestAlert(true);
     expect(service.sendCustomerTestAlert).toHaveBeenCalled();
 
     const postReq = httpMock.expectOne('http://localhost:5001/api/notify');
     expect(postReq.request.method).toBe('POST');
+    expect(postReq.request.body.targetUserId).toBe('cust-001');
     postReq.flush({
       success: true,
       notification: {
@@ -185,6 +207,7 @@ describe('NotificationSocketService', () => {
         title: 'Booking Confirmed!',
         message: 'Station PC-02 booked',
         link: '/bookings',
+        targetUserId: 'cust-001',
         read: false,
         createdAt: new Date().toISOString()
       } satisfies AdminNotification,

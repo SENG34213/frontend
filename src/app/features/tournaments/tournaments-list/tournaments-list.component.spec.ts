@@ -69,7 +69,7 @@ describe('TournamentsListComponent', () => {
       'getStatusBadgeInfo',
       'enrichTournament'
     ]);
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'currentUser']);
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'currentUser', 'getUserId']);
     notifSocketSpy = jasmine.createSpyObj('NotificationSocketService', ['sendNotification']);
     toastSpy = jasmine.createSpyObj('ToastService', ['success', 'error', 'info', 'warning']);
 
@@ -93,6 +93,7 @@ describe('TournamentsListComponent', () => {
     }));
 
     authServiceSpy.isAuthenticated.and.returnValue(true);
+    authServiceSpy.getUserId.and.returnValue('usr-1');
     authServiceSpy.currentUser.and.returnValue({
       userId: 'usr-1',
       sub: 'usr-1',

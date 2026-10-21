@@ -14,7 +14,7 @@
     [class.mobile-open]="mobileNavOpen()">
     <div class="sidebar-header">
       <a routerLink="/admin" class="brand-link" (click)="closeMobileNav()">
-        <span class="logo-icon">👑</span>
+        <img src="/images/GamingCastleEmblem.png" alt="Gaming Castle Emblem" class="logo-icon">
         @if (!sidebarCollapsed()) {
           <span class="logo-text">ADMIN <span class="text-gradient">PORTAL</span></span>
         }
@@ -109,7 +109,7 @@
           </span>
         </button>
 
-        <gc-button variant="outline" size="sm" (btnClick)="onLogout()" class="logout-btn">
+        <gc-button variant="outline" size="sm" (btnClick)="openLogoutModal()" class="logout-btn">
           Logout
         </gc-button>
       </div>
@@ -128,4 +128,43 @@
     [isOpen]="profileModalOpen()"
     (closed)="profileModalOpen.set(false)">
   </gc-profile-modal>
+
+  <!-- Admin Sign Out Confirmation Modal -->
+  <gc-modal
+    [isOpen]="showLogoutModal()"
+    (closed)="cancelLogout()"
+    title="Sign Out of Admin Portal">
+    <div class="logout-modal-body">
+      <div class="logout-modal-icon-wrap" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </div>
+      <div class="logout-modal-text">
+        <h3 class="logout-modal-heading">Are you sure you want to log out?</h3>
+        <p class="logout-modal-desc">
+          You will need to sign in with your administrator credentials again to manage bookings, tournaments, and systems.
+        </p>
+      </div>
+    </div>
+
+    <div modal-actions class="logout-modal-actions">
+      <gc-button
+        variant="ghost"
+        size="md"
+        class="cancel-logout-btn"
+        (btnClick)="cancelLogout()">
+        Cancel
+      </gc-button>
+      <gc-button
+        variant="danger"
+        size="md"
+        class="confirm-logout-btn"
+        (btnClick)="confirmLogout()">
+        Yes, Log Out
+      </gc-button>
+    </div>
+  </gc-modal>
 </div>

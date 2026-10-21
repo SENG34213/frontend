@@ -77,6 +77,8 @@ export class AdminBookingsComponent implements OnInit {
 
   // ── Modals ───────────────────────────────────────────────────────────────
   readonly walkInModalOpen = signal(false);
+  readonly paymentModalOpen = signal(false);
+  readonly selectedBookingForPayment = signal<AdminBookingRow | null>(null);
   readonly rescheduleModalOpen = signal(false);
   readonly cancelModalOpen = signal(false);
   readonly actionInFlight = signal(false);
@@ -84,6 +86,7 @@ export class AdminBookingsComponent implements OnInit {
 
   // ── Forms ────────────────────────────────────────────────────────────────
   walkInForm!: FormGroup;
+  paymentForm!: FormGroup;
   rescheduleForm!: FormGroup;
 
   // ── Dropdown Data for Walk-In / Reschedule ─────────────────────────────────
@@ -180,6 +183,11 @@ export class AdminBookingsComponent implements OnInit {
       stationId: ['', Validators.required],
       startTime: ['', Validators.required],
       endTime: ['', Validators.required]
+    });
+
+    this.paymentForm = this.fb.group({
+      amount: [0, [Validators.required, Validators.min(1)]],
+      method: ['CASH', Validators.required]
     });
   }
 
@@ -299,22 +307,28 @@ export class AdminBookingsComponent implements OnInit {
     };
 
     this.svc.createWalkIn(body).subscribe({
-      next: () => {
+      next: (createdBooking) => {
         this.walkInModalOpen.set(false);
         this.actionInFlight.set(false);
-        this.toast.success('Walk-in booking created. Station is now reserved.');
-        
+        this.toast.success('Walk-in booking created with PENDING status.');
+
         // Real-time notification broadcast
-        const stName = this.stations().find(s => s.id === stationId)?.name || 'station';
+        const stName = this.stations().find(s => s.id === stationId)?.name || createdBooking?.stationCode || 'station';
         this.notifSocketService.sendNotification({
           type: 'BOOKING_CREATED',
-          title: 'Walk-In Slot Reserved',
-          message: `Walk-in booking created for ${stName}.`,
+          title: 'Walk-In Slot Reserved (Pending Payment)',
+          message: `Walk-in booking created for ${stName}. Complete payment to confirm slot.`,
           link: '/admin/bookings',
-          data: { stationId, targetUserId }
+          targetUserId: targetUserId,
+          data: { stationId, targetUserId, bookingId: createdBooking?.id }
         });
 
         this.loadBookings();
+
+        // Prompt admin to finish payment and confirm slot immediately
+        if (createdBooking) {
+          this.openPaymentModal(createdBooking);
+        }
       },
       error: (err) => {
         this.actionInFlight.set(false);
@@ -322,6 +336,74 @@ export class AdminBookingsComponent implements OnInit {
         this.toast.error(msg);
       }
     });
+  }
+
+  // ── Walk-In Payment & Confirmation ─────────────────────────────────────────
+  openPaymentModal(booking: AdminBookingRow, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.selectedBookingForPayment.set(booking);
+    const amount = this.getAmount(booking);
+    this.paymentForm.reset({
+      amount: amount > 0 ? Number(amount.toFixed(2)) : 1000,
+      method: 'CASH'
+    });
+    this.paymentModalOpen.set(true);
+  }
+
+  cancelPaymentModal(): void {
+    this.paymentModalOpen.set(false);
+    this.toast.info('Booking remains in PENDING status. You can finish payment anytime from the bookings table.');
+  }
+
+  submitPayment(): void {
+    const booking = this.selectedBookingForPayment();
+    if (!booking) return;
+
+    if (this.paymentForm.invalid) {
+      this.paymentForm.markAllAsTouched();
+      return;
+    }
+
+    const { amount, method } = this.paymentForm.value;
+    const finalAmount = Number(amount) || this.getAmount(booking);
+
+    this.actionInFlight.set(true);
+    this.svc.finishBookingPayment(booking.id, booking.userId, finalAmount, method)
+      .subscribe({
+        next: (confirmed) => {
+          this.actionInFlight.set(false);
+          this.paymentModalOpen.set(false);
+          this.toast.success(`Payment of LKR ${finalAmount.toFixed(2)} received! Slot confirmed.`);
+
+          this.notifSocketService.sendNotification({
+            type: 'BOOKING_CONFIRMED',
+            title: 'Walk-In Slot Confirmed',
+            message: `Walk-in payment completed. Slot confirmed for ${booking.stationCode || 'station'}.`,
+            link: '/admin/bookings',
+            targetUserId: booking.userId,
+            data: { bookingId: booking.id, paymentId: confirmed?.paymentId }
+          });
+
+          this.loadBookings();
+          if (this.selectedBooking()?.id === booking.id) {
+            this.selectedBooking.set({
+              ...this.selectedBooking()!,
+              status: 'CONFIRMED',
+              paymentId: confirmed?.paymentId
+            });
+          }
+        },
+        error: (err) => {
+          this.actionInFlight.set(false);
+          const msg = err?.error?.message || err?.message || 'Payment processing failed. You can retry anytime.';
+          this.toast.error(msg);
+        }
+      });
+  }
+
+  getCustomerName(userId: string): string {
+    const found = this.customers().find(c => c.id === userId);
+    return found ? `${found.fullName} (${found.email})` : `User ${userId.slice(0, 8)}…`;
   }
 
   // ── Cancel ───────────────────────────────────────────────────────────────
@@ -349,6 +431,7 @@ export class AdminBookingsComponent implements OnInit {
           title: 'Booking Cancelled',
           message: `Booking #${booking.id.slice(0, 8)} on ${booking.stationCode || 'station'} was cancelled.`,
           link: '/admin/bookings',
+          targetUserId: booking.userId,
           data: { bookingId: booking.id, stationCode: booking.stationCode }
         });
 
@@ -405,6 +488,7 @@ export class AdminBookingsComponent implements OnInit {
           title: 'Booking Rescheduled',
           message: `Booking #${booking.id.slice(0, 8)} rescheduled to ${formattedTime}.`,
           link: '/admin/bookings',
+          targetUserId: booking.userId,
           data: { bookingId: booking.id, stationId, startTime, endTime }
         });
 

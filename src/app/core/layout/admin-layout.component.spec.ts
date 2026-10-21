@@ -21,11 +21,13 @@ describe('AdminLayoutComponent', () => {
       role: 'ADMIN'
     };
 
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['logout', 'getMyProfile'], {
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['logout', 'getMyProfile', 'getUserId'], {
       currentUser: signal({ email: 'admin@gamingcastle.lk', role: 'ADMIN', sub: 'admin-1', userId: 'admin-1', iat: 0, exp: 9999999999 }),
       isAuthenticated: signal(true),
-      userProfile: signal(null)
+      userProfile: signal(null),
+      role: signal('ADMIN')
     });
+    authServiceSpy.getUserId.and.returnValue('admin-1');
     authServiceSpy.getMyProfile.and.returnValue(of(mockAdminProfile));
 
     await TestBed.configureTestingModule({
@@ -52,6 +54,29 @@ describe('AdminLayoutComponent', () => {
 
   it('should logout and navigate to /login when onLogout is called', () => {
     component.onLogout();
+    expect(authServiceSpy.logout).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/login']);
+  });
+
+  it('should open logout modal when openLogoutModal is called', () => {
+    expect(component.showLogoutModal()).toBeFalse();
+    component.openLogoutModal();
+    expect(component.showLogoutModal()).toBeTrue();
+  });
+
+  it('should close logout modal without logging out when cancelLogout is called', () => {
+    component.openLogoutModal();
+    expect(component.showLogoutModal()).toBeTrue();
+    component.cancelLogout();
+    expect(component.showLogoutModal()).toBeFalse();
+    expect(authServiceSpy.logout).not.toHaveBeenCalled();
+  });
+
+  it('should close logout modal, logout, and navigate to /login on confirmLogout', () => {
+    component.openLogoutModal();
+    expect(component.showLogoutModal()).toBeTrue();
+    component.confirmLogout();
+    expect(component.showLogoutModal()).toBeFalse();
     expect(authServiceSpy.logout).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });

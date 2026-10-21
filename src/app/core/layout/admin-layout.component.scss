@@ -74,7 +74,11 @@
   text-decoration: none;
 
   .logo-icon {
-    font-size: 1.4rem;
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 10px var(--gc-primary-glow));
+    border-radius: var(--gc-radius-sm, 6px);
   }
 
   .logo-text {
@@ -431,3 +435,56 @@
     padding: 0.5rem 0.25rem;
   }
 }
+
+// ─── Sign Out Confirmation Modal ─────────────────────────────────────────────
+
+.logout-modal-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  padding: 0.5rem 0;
+}
+
+.logout-modal-icon-wrap {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+}
+
+.logout-modal-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.logout-modal-heading {
+  font-family: var(--gc-font-display, inherit);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--gc-text-primary, #f8fafc);
+  margin: 0;
+}
+
+.logout-modal-desc {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--gc-text-secondary, #94a3b8);
+  margin: 0;
+}
+
+.logout-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  width: 100%;
+}
+
