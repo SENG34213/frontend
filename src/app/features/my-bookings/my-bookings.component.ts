@@ -2,8 +2,14 @@ import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } 
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { BookingService } from '../../core/services/booking.service';
+<<<<<<< Updated upstream
 import { MockDataService } from '../../core/services/mock/mock-data.service';
 import { environment } from '../../../environments/environment';
+=======
+import { ToastService } from '../../shared/ui/toast/toast.service';
+import { LoyaltyService } from '../../core/services/loyalty.service';
+import { UserService } from '../../core/services/user.service';
+>>>>>>> Stashed changes
 import { BookingResponse, BookingStatus } from '../../shared/models/booking.model';
 import { CardComponent } from '../../shared/ui/card/card.component';
 import { BadgeComponent, BadgeVariant } from '../../shared/ui/badge/badge.component';
@@ -11,6 +17,23 @@ import { TabsComponent, TabItem } from '../../shared/ui/tabs/tabs.component';
 import { SkeletonComponent } from '../../shared/ui/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
+<<<<<<< Updated upstream
+=======
+import { ModalComponent } from '../../shared/ui/modal/modal.component';
+import {
+  DisplaySlot,
+  formatDateToYMD,
+  formatTimeString,
+  convertToIsoInstant,
+  getSlotStartTimestamp,
+  getSlotEndTimestamp,
+  isWithinCutoffHours,
+  calculateDurationHours,
+  RESCHEDULE_CUTOFF_HOURS,
+  BOOKING_CHANGE_CUTOFF_HOURS,
+  canCancel
+} from '../../core/utils/slot.utils';
+>>>>>>> Stashed changes
 
 export interface BookingDisplayItem extends BookingResponse {
   formattedDate: string;
@@ -21,6 +44,19 @@ export interface BookingDisplayItem extends BookingResponse {
   badgeVariant: BadgeVariant;
   isUpcoming: boolean;
   sortTimestamp: number;
+<<<<<<< Updated upstream
+=======
+  canReschedule: boolean;
+  canCancel: boolean;
+  canShowCancel: boolean;
+  isWithin2Hours: boolean;
+  durationHours: number;
+}
+
+export interface DateOption {
+  value: string;
+  label: string;
+>>>>>>> Stashed changes
 }
 
 @Component({
@@ -42,13 +78,43 @@ export interface BookingDisplayItem extends BookingResponse {
 })
 export class MyBookingsComponent implements OnInit {
   private readonly bookingService = inject(BookingService);
+<<<<<<< Updated upstream
   private readonly mockData = inject(MockDataService);
+=======
+  private readonly toastService = inject(ToastService);
+  private readonly loyaltyService = inject(LoyaltyService);
+  private readonly userService = inject(UserService);
+
+  readonly RESCHEDULE_CUTOFF_HOURS = RESCHEDULE_CUTOFF_HOURS;
+  readonly BOOKING_CHANGE_CUTOFF_HOURS = BOOKING_CHANGE_CUTOFF_HOURS;
+>>>>>>> Stashed changes
 
   readonly allBookings = signal<BookingDisplayItem[]>([]);
   readonly activeTab = signal<'upcoming' | 'played'>('upcoming');
   readonly isLoading = signal<boolean>(true);
   readonly hasError = signal<boolean>(false);
 
+<<<<<<< Updated upstream
+=======
+  // ── Reschedule Modal State ──────────────────────────────────────────────────
+  readonly isRescheduleModalOpen = signal<boolean>(false);
+  readonly selectedBookingForReschedule = signal<BookingDisplayItem | null>(null);
+  readonly selectedDateStr = signal<string>(formatDateToYMD(new Date()));
+  readonly rescheduleSlots = signal<DisplaySlot[]>([]);
+  readonly selectedSlotId = signal<string>('');
+  readonly isSlotsLoading = signal<boolean>(false);
+  readonly slotsError = signal<string | null>(null);
+  readonly isSubmitting = signal<boolean>(false);
+  readonly rescheduleError = signal<string | null>(null);
+
+  // ── Cancel Modal State ──────────────────────────────────────────────────────
+  readonly isCancelModalOpen = signal<boolean>(false);
+  readonly selectedBookingForCancel = signal<BookingDisplayItem | null>(null);
+  readonly isCancelling = signal<boolean>(false);
+  readonly cancelError = signal<string | null>(null);
+
+  // ── Computed Lists ──────────────────────────────────────────────────────────
+>>>>>>> Stashed changes
   readonly upcomingBookings = computed(() => {
     return this.allBookings()
       .filter((b) => b.isUpcoming)
@@ -121,6 +187,347 @@ export class MyBookingsComponent implements OnInit {
     }
   }
 
+<<<<<<< Updated upstream
+=======
+  // ── Reschedule Flow ─────────────────────────────────────────────────────────
+
+  openRescheduleModal(item: BookingDisplayItem): void {
+    if (item.isWithin2Hours || !item.canReschedule) return;
+
+    this.selectedBookingForReschedule.set(item);
+    this.rescheduleError.set(null);
+    this.slotsError.set(null);
+    this.selectedSlotId.set('');
+
+    const todayStr = formatDateToYMD(new Date());
+    const initialDate = item.bookingDate && item.bookingDate >= todayStr ? item.bookingDate : todayStr;
+    this.selectedDateStr.set(initialDate);
+
+    this.isRescheduleModalOpen.set(true);
+    this.loadRescheduleSlots(item.stationId, initialDate);
+  }
+
+  closeRescheduleModal(): void {
+    if (this.isSubmitting()) return;
+    this.isRescheduleModalOpen.set(false);
+    this.selectedBookingForReschedule.set(null);
+    this.selectedSlotId.set('');
+    this.rescheduleError.set(null);
+  }
+
+  onDateSelectChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    const newDate = target.value;
+    if (newDate && newDate !== this.selectedDateStr()) {
+      this.selectedDateStr.set(newDate);
+      this.selectedSlotId.set('');
+      this.rescheduleError.set(null);
+      const booking = this.selectedBookingForReschedule();
+      if (booking) {
+        this.loadRescheduleSlots(booking.stationId, newDate);
+      }
+    }
+  }
+
+  retryLoadSlots(): void {
+    const booking = this.selectedBookingForReschedule();
+    if (booking) {
+      this.loadRescheduleSlots(booking.stationId, this.selectedDateStr());
+    }
+  }
+
+  loadRescheduleSlots(stationId: string, date: string): void {
+    this.isSlotsLoading.set(true);
+    this.slotsError.set(null);
+
+    this.bookingService.getStationAvailability(stationId, date).subscribe({
+      next: (slots) => {
+        const booking = this.selectedBookingForReschedule();
+        if (!booking) {
+          this.isSlotsLoading.set(false);
+          return;
+        }
+
+        const duration = Math.max(1, booking.durationHours || 1);
+
+        const activeSlots = slots || [];
+
+        const currStartMs = booking.sortTimestamp;
+        const currEndMs = currStartMs + duration * 60 * 60 * 1000;
+
+        const mappedSlots: DisplaySlot[] = activeSlots.map((s, idx) => {
+          const startTimeFormatted = formatTimeString(s.startTime);
+          const endTimeFormatted = formatTimeString(s.endTime);
+
+          const slotStartMs = getSlotStartTimestamp(date, s.startTime);
+          const slotEndMs = getSlotEndTimestamp(date, s.endTime);
+
+          // Is this slot part of the user's current booking?
+          const isCurrent =
+            date === booking.bookingDate &&
+            slotStartMs >= currStartMs &&
+            slotEndMs <= currEndMs;
+
+          return {
+            id: `slot-${idx}-${s.startTime.replace(/[^a-zA-Z0-9]/g, '')}`,
+            startTime: startTimeFormatted,
+            endTime: endTimeFormatted,
+            rawStart: s.startTime,
+            rawEnd: s.endTime,
+            durationHours: 1,
+            isAvailable: s.isAvailable,
+            isSelected: false,
+            isCurrent
+          };
+        });
+
+        // Evaluate valid starting slots for the required duration
+        const evaluatedSlots: DisplaySlot[] = mappedSlots.map((slot, idx) => {
+          let canFit = true;
+          let disabledReason = '';
+
+          const slotStartMs = getSlotStartTimestamp(date, slot.rawStart);
+
+          // Rule 1: Booking's own current starting slot cannot be re-selected as the new slot
+          if (slot.isCurrent && slotStartMs === currStartMs && duration === 1) {
+            canFit = false;
+            disabledReason = 'Current booking time';
+          }
+
+          // Rule 2: Must have enough consecutive slots for the entire duration
+          if (canFit) {
+            if (idx + duration > mappedSlots.length) {
+              canFit = false;
+              disabledReason = `Requires ${duration} consecutive slots`;
+            } else {
+              let prevEndMs = slotStartMs;
+              for (let step = 0; step < duration; step++) {
+                const target = mappedSlots[idx + step];
+                const targetStartMs = getSlotStartTimestamp(date, target.rawStart);
+                const targetEndMs = getSlotEndTimestamp(date, target.rawEnd);
+
+                // Slot is free if either backend marked it available, or it is part of self booking
+                const isTargetFree = target.isAvailable || target.isCurrent;
+
+                if (!isTargetFree) {
+                  canFit = false;
+                  disabledReason = 'Slot unavailable';
+                  break;
+                }
+
+                // Check continuous slot progression
+                if (step > 0 && targetStartMs !== prevEndMs) {
+                  canFit = false;
+                  disabledReason = 'Slots are not consecutive';
+                  break;
+                }
+
+                prevEndMs = targetEndMs;
+              }
+
+              // Rule 3: If the entire consecutive block equals the current booking range, not a valid reschedule
+              if (canFit && date === booking.bookingDate && slotStartMs === currStartMs) {
+                canFit = false;
+                disabledReason = 'Current booking time';
+              }
+            }
+          }
+
+          return {
+            ...slot,
+            isAvailable: canFit,
+            disabledReason
+          };
+        });
+
+        this.rescheduleSlots.set(evaluatedSlots);
+        this.isSlotsLoading.set(false);
+      },
+      error: () => {
+        this.slotsError.set('Could not load availability for this date. Please try again.');
+        this.isSlotsLoading.set(false);
+      }
+    });
+  }
+
+  selectRescheduleSlot(slot: DisplaySlot): void {
+    if (!slot.isAvailable) return;
+    this.selectedSlotId.set(slot.id);
+  }
+
+  confirmReschedule(): void {
+    const booking = this.selectedBookingForReschedule();
+    const slot = this.selectedSlot();
+    if (!booking || !slot || this.isSubmitting()) return;
+
+    this.isSubmitting.set(true);
+    this.rescheduleError.set(null);
+
+    const duration = Math.max(1, booking.durationHours || 1);
+    const slots = this.rescheduleSlots();
+    const idx = slots.findIndex((s) => s.id === slot.id);
+    const endSlot = slots[idx + duration - 1] || slot;
+
+    const startIso = convertToIsoInstant(this.selectedDateStr(), slot.rawStart);
+    const endIso = convertToIsoInstant(this.selectedDateStr(), endSlot.rawEnd);
+
+    this.bookingService
+      .rescheduleBooking(booking.id, {
+        stationId: booking.stationId,
+        gameId: booking.gameId || '',
+        startTime: startIso,
+        endTime: endIso,
+        bookingDate: this.selectedDateStr()
+      })
+      .subscribe({
+        next: (updated) => {
+          this.isSubmitting.set(false);
+          this.isRescheduleModalOpen.set(false);
+
+          const formattedNewDate = new Date(startIso).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            timeZone: 'Asia/Colombo'
+          });
+          const formattedNewTime = `${formatTimeString(startIso)} – ${formatTimeString(endIso)}`;
+
+          this.toastService.success(
+            `Booking rescheduled to ${formattedNewDate}, ${formattedNewTime}`
+          );
+
+          // Update booking item in current list and preserve soonest-first order
+          const updatedItem = this.mapDisplayItem(updated);
+          this.allBookings.update((items) =>
+            items.map((item) => (item.id === updated.id ? updatedItem : item))
+          );
+          this.activeTab.set('upcoming');
+          this.selectedBookingForReschedule.set(null);
+        },
+        error: (err: ApiError) => {
+          this.isSubmitting.set(false);
+          const code = err?.code || '';
+
+          if (code === 'SLOT_UNAVAILABLE') {
+            this.rescheduleError.set('That slot was just taken. Please choose another.');
+            this.selectedSlotId.set('');
+            this.loadRescheduleSlots(booking.stationId, this.selectedDateStr());
+          } else if (code === 'TOO_LATE') {
+            this.toastService.error(
+              'Bookings cannot be rescheduled within 2 hours of the start time.',
+              'Reschedule Closed'
+            );
+            this.isRescheduleModalOpen.set(false);
+            this.loadBookings();
+          } else if (
+            code === 'INVALID_STATUS' ||
+            code === 'BOOKING_NOT_FOUND' ||
+            code === 'NOT_YOUR_BOOKING'
+          ) {
+            this.toastService.error(
+              'This booking can no longer be rescheduled. Refreshing your bookings.',
+              'Cannot Reschedule'
+            );
+            this.isRescheduleModalOpen.set(false);
+            this.loadBookings();
+          } else if (
+            code === 'STATION_INACTIVE' ||
+            code === 'GAME_INACTIVE' ||
+            code === 'GAME_NOT_ON_STATION' ||
+            code === 'GAME_NOT_FOUND'
+          ) {
+            this.rescheduleError.set(
+              'This game or station is no longer available for rescheduling'
+            );
+          } else {
+            this.rescheduleError.set(
+              err.message || 'Failed to reschedule booking. Please check your connection and try again.'
+            );
+          }
+        }
+      });
+  }
+
+  // ── Cancel Flow ─────────────────────────────────────────────────────────────
+
+  openCancelModal(item: BookingDisplayItem): void {
+    if (item.isWithin2Hours || !item.canShowCancel) return;
+
+    this.selectedBookingForCancel.set(item);
+    this.cancelError.set(null);
+    this.isCancelModalOpen.set(true);
+  }
+
+  closeCancelModal(): void {
+    if (this.isCancelling()) return;
+    this.isCancelModalOpen.set(false);
+    this.selectedBookingForCancel.set(null);
+    this.cancelError.set(null);
+  }
+
+  confirmCancel(): void {
+    const booking = this.selectedBookingForCancel();
+    if (!booking || this.isCancelling()) return;
+
+    this.isCancelling.set(true);
+    this.cancelError.set(null);
+
+    this.bookingService.cancelBooking(booking.id).subscribe({
+      next: (updatedBooking) => {
+        this.isCancelling.set(false);
+        this.isCancelModalOpen.set(false);
+        this.selectedBookingForCancel.set(null);
+
+        this.toastService.success('Booking cancelled', 'Success');
+
+        this.loyaltyService.invalidateCache();
+        this.userService.clearCachedProfile();
+
+        const mapped = this.mapDisplayItem(updatedBooking);
+        this.allBookings.update((items) =>
+          items.map((b) => (b.id === booking.id ? mapped : b))
+        );
+      },
+      error: (err: ApiError) => {
+        this.isCancelling.set(false);
+        const code = err.code || 'UNKNOWN_ERROR';
+
+        if (code === 'TOO_LATE') {
+          this.toastService.error(
+            'Bookings cannot be cancelled within 2 hours of the start time.',
+            'Cancellation Closed'
+          );
+          this.isCancelModalOpen.set(false);
+          this.selectedBookingForCancel.set(null);
+          this.loadBookings();
+        } else if (code === 'ALREADY_CANCELLED') {
+          this.toastService.error(
+            'This booking was already cancelled.',
+            'Already Cancelled'
+          );
+          this.isCancelModalOpen.set(false);
+          this.selectedBookingForCancel.set(null);
+          this.loadBookings();
+        } else if (code === 'NOT_YOUR_BOOKING' || code === 'BOOKING_NOT_FOUND') {
+          this.toastService.error(
+            'This booking can no longer be cancelled. Refreshing your bookings.',
+            'Cannot Cancel'
+          );
+          this.isCancelModalOpen.set(false);
+          this.selectedBookingForCancel.set(null);
+          this.loadBookings();
+        } else {
+          this.cancelError.set(
+            err.message || 'Failed to cancel booking. Please check your connection and try again.'
+          );
+        }
+      }
+    });
+  }
+
+  // ── Mapping Helper ──────────────────────────────────────────────────────────
+
+>>>>>>> Stashed changes
   private mapDisplayItem(raw: BookingResponse): BookingDisplayItem {
     const rawAny = raw as unknown as Record<string, unknown>;
     const stationCode = (rawAny['stationCode'] as string) || '';
@@ -161,6 +568,16 @@ export class MyBookingsComponent implements OnInit {
     const isFuture = endTimeMs >= now;
     const isUpcoming = isUpcomingStatus && isFuture && !isCancelled && !isCompleted;
 
+<<<<<<< Updated upstream
+=======
+    // Rescheduling and Cancellation rules
+    const isWithin2Hours = isWithinCutoffHours(startTimeMs, BOOKING_CHANGE_CUTOFF_HOURS);
+    const canReschedule = isUpcoming && raw.status === 'CONFIRMED';
+    const canShowCancel = isUpcoming && (raw.status === 'PENDING' || raw.status === 'CONFIRMED');
+    const isCancelEligible = canCancel(raw, now, BOOKING_CHANGE_CUTOFF_HOURS);
+    const durationHours = calculateDurationHours(raw.startTime, raw.endTime, raw.bookingDate);
+
+>>>>>>> Stashed changes
     // Formatting date and time slot
     let formattedDate = raw.bookingDate || '';
     if (startTimeMs) {
@@ -197,7 +614,16 @@ export class MyBookingsComponent implements OnInit {
       displayAmount: totalAmount,
       badgeVariant: this.resolveStatusVariant(raw.status),
       isUpcoming,
+<<<<<<< Updated upstream
       sortTimestamp: startTimeMs
+=======
+      sortTimestamp: startTimeMs,
+      canReschedule,
+      canCancel: isCancelEligible,
+      canShowCancel,
+      isWithin2Hours,
+      durationHours
+>>>>>>> Stashed changes
     };
   }
 

@@ -2371,5 +2371,53 @@ export class MockDataService {
     ];
     return of(list).pipe(delay(150));
   }
+<<<<<<< Updated upstream
+=======
+
+  rescheduleBooking(
+    bookingId: string,
+    request: { stationId: string; gameId: string; startTime: string; endTime: string; bookingDate?: string }
+  ): Observable<BookingResponse> {
+    const res: BookingResponse = {
+      id: bookingId,
+      bookingReference: 'GC-' + (bookingId ? bookingId.substring(0, 8).toUpperCase() : 'RESCHED'),
+      userId: 'usr-customer-1',
+      stationId: request.stationId,
+      stationName: 'PS5 Lounge #01',
+      gameId: request.gameId,
+      gameTitle: 'EA SPORTS FC 25',
+      bookingDate: request.bookingDate || (request.startTime.includes('T') ? request.startTime.split('T')[0] : '2026-10-25'),
+      startTime: request.startTime,
+      endTime: request.endTime,
+      totalAmount: 1000,
+      discountAmount: 0,
+      finalAmount: 1000,
+      status: 'CONFIRMED',
+      createdAt: new Date().toISOString()
+    };
+    return of(res).pipe(delay(150));
+  }
+
+  cancelBooking(bookingId: string): Observable<BookingResponse> {
+    const res: BookingResponse = {
+      id: bookingId,
+      bookingReference: 'GC-' + (bookingId ? bookingId.substring(0, 8).toUpperCase() : 'CANCELLED'),
+      userId: 'usr-customer-1',
+      stationId: 'st-01',
+      stationName: 'PS5 Lounge #01',
+      gameId: 'game-01',
+      gameTitle: 'EA SPORTS FC 25',
+      bookingDate: '2026-10-25',
+      startTime: '18:00',
+      endTime: '20:00',
+      totalAmount: 1000,
+      discountAmount: 0,
+      finalAmount: 1000,
+      status: 'CANCELLED',
+      createdAt: new Date().toISOString()
+    };
+    return of(res).pipe(delay(150));
+  }
+>>>>>>> Stashed changes
 }
 

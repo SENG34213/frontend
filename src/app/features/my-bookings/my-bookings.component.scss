@@ -151,6 +151,53 @@
       }
     }
   }
+<<<<<<< Updated upstream
+=======
+
+  .booking-card-actions {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--gc-border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+
+    .card-action-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .reschedule-btn-content,
+    .cancel-btn-content {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+
+      .calendar-clock-icon,
+      .trash-icon {
+        width: 14px;
+        height: 14px;
+      }
+    }
+
+    .card-action-hints {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .reschedule-cutoff-hint,
+    .cancel-cutoff-hint {
+      font-size: 0.75rem;
+      color: var(--gc-text-muted);
+      font-style: italic;
+    }
+  }
+>>>>>>> Stashed changes
 }
 
 .empty-state-card {
@@ -167,3 +214,394 @@
   flex-direction: column;
   gap: 0.75rem;
 }
+<<<<<<< Updated upstream
+=======
+
+/* ── Reschedule Modal Styles ────────────────────────────────────────────── */
+
+.reschedule-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gc-spacing-md);
+}
+
+.booking-summary-banner {
+  background: var(--gc-bg-elevated);
+  border: 1px solid var(--gc-border-subtle);
+  border-radius: var(--gc-radius-md);
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  .summary-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+
+    .summary-game-block {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      .summary-badge-icon {
+        font-size: 1.25rem;
+      }
+
+      .summary-game-title {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--gc-text-primary);
+        font-family: var(--gc-font-display);
+      }
+
+      .summary-station-name {
+        font-size: 0.78rem;
+        color: var(--gc-primary-light);
+        font-family: var(--gc-font-mono);
+      }
+    }
+  }
+
+  .summary-meta-row {
+    font-size: 0.82rem;
+    color: var(--gc-text-secondary);
+
+    .meta-label {
+      color: var(--gc-text-muted);
+      margin-right: 0.4rem;
+    }
+    .meta-val {
+      font-weight: 600;
+      color: var(--gc-text-primary);
+    }
+  }
+
+  .summary-price-note {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--gc-text-muted);
+    background: rgba(37, 99, 235, 0.08);
+    border-radius: var(--gc-radius-sm);
+    padding: 0.35rem 0.6rem;
+
+    strong {
+      color: var(--gc-primary-light);
+    }
+  }
+}
+
+.reschedule-error-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--gc-radius-md);
+  color: #fca5a5;
+  font-size: 0.85rem;
+}
+
+.reschedule-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+
+  .form-section-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--gc-text-primary);
+    font-family: var(--gc-font-display);
+  }
+
+  .slots-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+
+    .consecutive-tag {
+      font-size: 0.72rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: var(--gc-radius-sm);
+      background: rgba(37, 99, 235, 0.15);
+      color: var(--gc-primary-light);
+      font-weight: 600;
+    }
+  }
+}
+
+.gc-custom-select {
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  background: var(--gc-bg-elevated);
+  border: 1px solid var(--gc-border-subtle);
+  border-radius: var(--gc-radius-md);
+  color: var(--gc-text-primary);
+  font-family: inherit;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color var(--gc-transition-fast);
+
+  &:focus {
+    border-color: var(--gc-primary);
+    box-shadow: 0 0 0 2px var(--gc-primary-glow);
+  }
+
+  option {
+    background: var(--gc-bg-card);
+    color: var(--gc-text-primary);
+  }
+}
+
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.5rem;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 0.2rem;
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.slot-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.5rem 0.4rem;
+  background: var(--gc-bg-elevated);
+  border: 1px solid var(--gc-border-subtle);
+  border-radius: var(--gc-radius-md);
+  color: var(--gc-text-primary);
+  font-size: 0.8rem;
+  font-family: var(--gc-font-mono);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--gc-transition-fast);
+
+  &:hover:not(:disabled) {
+    border-color: var(--gc-primary-light);
+    transform: translateY(-1px);
+    background: rgba(37, 99, 235, 0.12);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gc-primary);
+    outline-offset: 1px;
+  }
+
+  &.slot-selected {
+    border-color: var(--gc-primary);
+    background: var(--gc-primary);
+    color: #ffffff;
+    box-shadow: 0 0 10px var(--gc-primary-glow);
+    font-weight: 700;
+  }
+
+  &.slot-current {
+    border-style: dashed;
+    border-color: var(--gc-border-focus);
+    background: rgba(148, 163, 184, 0.08);
+
+    .slot-current-badge {
+      font-size: 0.65rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: var(--gc-radius-sm);
+      background: var(--gc-bg-card);
+      color: var(--gc-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+  }
+
+  &.slot-disabled,
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.02);
+    border-color: transparent;
+    color: var(--gc-text-muted);
+  }
+}
+
+.selection-indicator {
+  margin-top: 0.3rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--gc-radius-sm);
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-size: 0.8rem;
+  color: #6ee7b7;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  .indicator-icon {
+    font-weight: 800;
+  }
+}
+
+.slots-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.5rem;
+}
+
+.slots-error-state,
+.slots-empty-state {
+  padding: 1rem;
+  text-align: center;
+}
+
+.reschedule-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  width: 100%;
+
+  @media (max-width: 480px) {
+    flex-direction: column-reverse;
+    button,
+    gc-button {
+      width: 100%;
+    }
+  }
+}
+
+// ─── Cancel Booking Confirmation Modal ───────────────────────────────────────
+
+.cancel-modal-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  padding: 0.5rem 0;
+}
+
+.cancel-modal-icon-wrap {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.15);
+}
+
+.cancel-modal-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  .cancel-modal-heading {
+    font-family: var(--gc-font-display, inherit);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--gc-text-primary, #f8fafc);
+    margin: 0;
+  }
+
+  .cancel-modal-desc {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--gc-text-secondary, #94a3b8);
+    margin: 0;
+  }
+}
+
+.cancel-booking-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.75rem;
+  background: var(--gc-bg-surface-elevated, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--gc-border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: var(--gc-radius-md, 8px);
+  padding: 0.85rem 1rem;
+  margin: 1rem 0 0.75rem;
+
+  .summary-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    .summary-lbl {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      color: var(--gc-text-muted);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .summary-val {
+      font-size: 0.85rem;
+      color: var(--gc-text-primary);
+      font-weight: 600;
+
+      &.font-display {
+        font-family: var(--gc-font-display);
+        font-size: 0.95rem;
+      }
+    }
+  }
+}
+
+.cancel-policy-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: var(--gc-radius-sm, 6px);
+  font-size: 0.825rem;
+  line-height: 1.45;
+  color: var(--gc-text-secondary);
+  margin-bottom: 0.75rem;
+
+  .policy-note-icon {
+    color: #3b82f6;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+}
+
+.cancel-error-alert {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--gc-radius-sm, 6px);
+  color: #f87171;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.cancel-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  width: 100%;
+
+  @media (max-width: 480px) {
+    flex-direction: column-reverse;
+    button,
+    gc-button {
+      width: 100%;
+    }
+  }
+}
+>>>>>>> Stashed changes
