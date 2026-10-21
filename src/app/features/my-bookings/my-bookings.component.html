@@ -1,0 +1,415 @@
+<div class="page-container container">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">My <span class="text-gradient">Bookings</span></h1>
+      <p class="page-subtitle">Track your upcoming reservations and past played sessions</p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/bookings" class="new-booking-btn">
+        + Book New Session
+      </a>
+    </div>
+  </header>
+
+  <!-- Error State with Retry -->
+  @if (hasError()) {
+    <gc-card class="state-card">
+      <gc-empty-state
+        icon="⚠️"
+        title="Could not load bookings"
+        description="Unable to fetch your booking history right now. Please try again."
+        actionLabel="Retry"
+        (actionClick)="loadBookings()">
+      </gc-empty-state>
+    </gc-card>
+  } @else if (isLoading()) {
+    <!-- Skeletons -->
+    <div class="tabs-skeleton">
+      <gc-skeleton shape="rect" width="220px" height="42px"></gc-skeleton>
+    </div>
+    <div class="bookings-grid">
+      @for (i of [1, 2, 3]; track i) {
+        <gc-card class="booking-skeleton-card">
+          <gc-skeleton shape="text" width="60%" height="22px"></gc-skeleton>
+          <gc-skeleton shape="text" width="40%" height="16px"></gc-skeleton>
+          <gc-skeleton shape="rect" width="100%" height="60px"></gc-skeleton>
+        </gc-card>
+      }
+    </div>
+  } @else {
+    <!-- Tabs Navigation -->
+    <div class="tabs-wrapper">
+      <gc-tabs
+        [tabs]="tabs()"
+        [activeTab]="activeTab()"
+        (tabChange)="onTabChange($event)">
+      </gc-tabs>
+    </div>
+
+    <!-- Bookings List -->
+    @if (currentList().length === 0) {
+      <gc-card class="empty-state-card">
+        @if (activeTab() === 'upcoming') {
+          <gc-empty-state
+            icon="🎮"
+            title="No upcoming bookings"
+            description="You don't have any reservations scheduled. Ready to jump into the action?"
+            actionLabel="Book a Station"
+            (actionClick)="loadBookings()">
+          </gc-empty-state>
+        } @else {
+          <gc-empty-state
+            icon="🕹️"
+            title="No played sessions yet"
+            description="Your completed and historical gaming sessions will appear here.">
+          </gc-empty-state>
+        }
+      </gc-card>
+    } @else {
+      <div class="bookings-grid">
+        @for (item of currentList(); track item.id) {
+          <gc-card
+            [glow]="item.isUpcoming ? 'blue' : 'none'"
+            class="booking-card">
+            <!-- Card Header -->
+            <div class="booking-card-header">
+              <div class="game-info">
+                <span class="game-badge-icon">🎮</span>
+                <div>
+                  <h3 class="game-title">{{ item.displayGame }}</h3>
+                  <span class="station-code">{{ item.displayStation }}</span>
+                </div>
+              </div>
+              <gc-badge [variant]="item.badgeVariant">
+                {{ item.status }}
+              </gc-badge>
+            </div>
+
+            <div class="booking-card-divider"></div>
+
+            <!-- Booking Details Info -->
+            <div class="booking-meta-grid">
+              <div class="meta-item">
+                <span class="meta-label">Date</span>
+                <span class="meta-value">{{ item.formattedDate }}</span>
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Time Slot</span>
+                <span class="meta-value">{{ item.formattedTimeSlot }}</span>
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Reference</span>
+                <span class="meta-value font-mono">{{ item.bookingReference || item.id.substring(0, 8).toUpperCase() }}</span>
+              </div>
+
+              <div class="meta-item amount-item">
+                <span class="meta-label">Total Amount</span>
+                <span class="meta-value amount-val text-gradient">
+                  LKR {{ item.displayAmount | number:'1.2-2' }}
+                </span>
+              </div>
+            </div>
+<<<<<<< Updated upstream
+=======
+
+            <!-- Actions Row: Reschedule & Cancel Buttons (Visible for Upcoming PENDING/CONFIRMED) -->
+            @if (item.canReschedule || item.canShowCancel) {
+              <div class="booking-card-actions">
+                <div class="card-action-buttons">
+                  @if (item.canReschedule) {
+                    <gc-button
+                      variant="secondary"
+                      size="sm"
+                      [disabled]="item.isWithin2Hours"
+                      [attr.aria-label]="item.isWithin2Hours ? 'Rescheduling closes 2 hours before the start time' : 'Reschedule booking ' + (item.bookingReference || item.id)"
+                      (btnClick)="openRescheduleModal(item)">
+                      <span class="reschedule-btn-content">
+                        <svg class="calendar-clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                          <line x1="16" y1="2" x2="16" y2="6"></line>
+                          <line x1="8" y1="2" x2="8" y2="6"></line>
+                          <line x1="3" y1="10" x2="21" y2="10"></line>
+                          <polyline points="12 14 12 16 14 16"></polyline>
+                        </svg>
+                        Reschedule
+                      </span>
+                    </gc-button>
+                  }
+
+                  @if (item.canShowCancel) {
+                    <gc-button
+                      variant="danger"
+                      size="sm"
+                      class="cancel-booking-btn"
+                      [disabled]="item.isWithin2Hours"
+                      [attr.aria-label]="item.isWithin2Hours ? 'Cancellation closes 2 hours before the start time' : 'Cancel booking ' + (item.bookingReference || item.id)"
+                      (btnClick)="openCancelModal(item)">
+                      <span class="cancel-btn-content">
+                        <svg class="trash-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          <line x1="10" y1="11" x2="10" y2="17"></line>
+                          <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                        Cancel booking
+                      </span>
+                    </gc-button>
+                  }
+                </div>
+
+                @if (item.isWithin2Hours) {
+                  <div class="card-action-hints">
+                    @if (item.canReschedule) {
+                      <span class="reschedule-cutoff-hint" role="note">
+                        Rescheduling closes 2 hours before the start time
+                      </span>
+                    }
+                    <span class="cancel-cutoff-hint" role="note">
+                      Cancellation closes 2 hours before the start time
+                    </span>
+                  </div>
+                }
+              </div>
+            }
+>>>>>>> Stashed changes
+          </gc-card>
+        }
+      </div>
+    }
+  }
+</div>
+<<<<<<< Updated upstream
+=======
+
+<!-- Reschedule Modal -->
+<gc-modal
+  [isOpen]="isRescheduleModalOpen()"
+  [title]="'Reschedule Booking'"
+  (closed)="closeRescheduleModal()">
+  @if (selectedBookingForReschedule(); as booking) {
+    <div class="reschedule-modal-body">
+      <!-- Read-only Booking Summary Banner -->
+      <section class="booking-summary-banner" aria-label="Current booking summary">
+        <div class="summary-top">
+          <div class="summary-game-block">
+            <span class="summary-badge-icon" aria-hidden="true">🎮</span>
+            <div>
+              <h4 class="summary-game-title">{{ booking.displayGame }}</h4>
+              <span class="summary-station-name">{{ booking.displayStation }}</span>
+            </div>
+          </div>
+          <gc-badge variant="info">
+            {{ booking.durationHours }} {{ booking.durationHours === 1 ? 'Hour' : 'Hours' }}
+          </gc-badge>
+        </div>
+
+        <div class="summary-meta-row">
+          <div class="meta-col">
+            <span class="meta-label">Current Scheduled Time</span>
+            <span class="meta-val">{{ booking.formattedDate }} &bull; {{ booking.formattedTimeSlot }}</span>
+          </div>
+        </div>
+
+        <div class="summary-price-note">
+          <span class="price-note-icon" aria-hidden="true">💡</span>
+          <span>Price stays <strong>LKR {{ booking.displayAmount | number:'1.2-2' }}</strong> (same duration)</span>
+        </div>
+      </section>
+
+      <!-- Reschedule Error Banner -->
+      @if (rescheduleError()) {
+        <div class="reschedule-error-alert" role="alert" aria-live="polite">
+          <span class="alert-icon" aria-hidden="true">⚠️</span>
+          <span class="alert-text">{{ rescheduleError() }}</span>
+        </div>
+      }
+
+      <!-- Date Selection Section -->
+      <section class="reschedule-form-section">
+        <label for="reschedule-date-select" class="form-section-title">
+          Choose New Date
+        </label>
+        <div class="date-select-wrapper">
+          <select
+            id="reschedule-date-select"
+            class="gc-custom-select"
+            [value]="selectedDateStr()"
+            [disabled]="isSubmitting()"
+            (change)="onDateSelectChange($event)">
+            @for (opt of dateOptions(); track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+      </section>
+
+      <!-- Available Slots Section -->
+      <section class="reschedule-form-section" aria-label="Available time slots">
+        <div class="slots-header">
+          <span class="form-section-title">Available Slots for {{ selectedDateFormatted() }}</span>
+          @if (booking.durationHours > 1) {
+            <span class="consecutive-tag">Needs {{ booking.durationHours }} consecutive slots</span>
+          }
+        </div>
+
+        @if (isSlotsLoading()) {
+          <div class="slots-skeleton-grid" aria-busy="true">
+            @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+              <gc-skeleton shape="rect" width="100%" height="48px"></gc-skeleton>
+            }
+          </div>
+        } @else if (slotsError()) {
+          <div class="slots-error-state" role="alert">
+            <p>{{ slotsError() }}</p>
+            <gc-button variant="outline" size="sm" (btnClick)="retryLoadSlots()">Retry</gc-button>
+          </div>
+        } @else if (rescheduleSlots().length === 0 || !hasAvailableSlots()) {
+          <div class="slots-empty-state">
+            <gc-empty-state
+              icon="📅"
+              title="No free slots on this date"
+              description="This station has no slots available that fit your booking on this date. Please select a different date.">
+            </gc-empty-state>
+          </div>
+        } @else {
+          <div class="slots-grid" role="group" aria-label="Time slots">
+            @for (slot of rescheduleSlots(); track slot.id) {
+              <button
+                type="button"
+                class="slot-btn"
+                [class.slot-selected]="slot.id === selectedSlotId()"
+                [class.slot-current]="slot.isCurrent"
+                [class.slot-disabled]="!slot.isAvailable"
+                [disabled]="!slot.isAvailable"
+                [attr.aria-pressed]="slot.id === selectedSlotId()"
+                [attr.aria-disabled]="!slot.isAvailable"
+                [attr.title]="slot.disabledReason || slot.startTime + ' – ' + slot.endTime"
+                (click)="selectRescheduleSlot(slot)">
+                <span class="slot-time-text">{{ slot.startTime }} – {{ slot.endTime }}</span>
+                @if (slot.isCurrent) {
+                  <span class="slot-current-badge">Current</span>
+                }
+              </button>
+            }
+          </div>
+
+          @if (selectedSlot(); as slot) {
+            <div class="selection-indicator" aria-live="polite">
+              <span class="indicator-icon" aria-hidden="true">✓</span>
+              <span>New Slot: <strong>{{ selectedRangeFormatted() }}</strong></span>
+            </div>
+          }
+        }
+      </section>
+    </div>
+  }
+
+  @if (selectedBookingForReschedule()) {
+    <!-- Modal Footer Actions -->
+    <div modal-actions class="reschedule-modal-footer">
+      <gc-button
+        variant="secondary"
+        [disabled]="isSubmitting()"
+        (btnClick)="closeRescheduleModal()">
+        Keep current booking
+      </gc-button>
+
+      <gc-button
+        variant="primary"
+        [disabled]="!canConfirmReschedule()"
+        [loading]="isSubmitting()"
+        (btnClick)="confirmReschedule()">
+        Confirm reschedule
+      </gc-button>
+    </div>
+  }
+</gc-modal>
+
+<!-- Cancel Booking Confirmation Modal -->
+<gc-modal
+  [isOpen]="isCancelModalOpen()"
+  [title]="'Cancel this booking?'"
+  [closeOnBackdrop]="!isCancelling()"
+  (closed)="closeCancelModal()">
+  @if (selectedBookingForCancel(); as booking) {
+    <div class="cancel-modal-body" id="cancel-modal-desc">
+      <div class="cancel-modal-icon-wrap" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <div class="cancel-modal-text">
+        <h3 class="cancel-modal-heading">Cancel this booking?</h3>
+        <p class="cancel-modal-desc">
+          Are you sure you want to cancel your reservation for <strong>{{ booking.displayGame }}</strong>?
+        </p>
+      </div>
+    </div>
+
+    <!-- Booking Summary of the booking (game, station, date, time, amount) -->
+    <div class="cancel-booking-summary" aria-label="Booking details">
+      <div class="summary-col">
+        <span class="summary-lbl">Game</span>
+        <span class="summary-val">{{ booking.displayGame }}</span>
+      </div>
+      <div class="summary-col">
+        <span class="summary-lbl">Station</span>
+        <span class="summary-val">{{ booking.displayStation }}</span>
+      </div>
+      <div class="summary-col">
+        <span class="summary-lbl">Date</span>
+        <span class="summary-val">{{ booking.formattedDate }}</span>
+      </div>
+      <div class="summary-col">
+        <span class="summary-lbl">Time</span>
+        <span class="summary-val">{{ booking.formattedTimeSlot }}</span>
+      </div>
+      <div class="summary-col">
+        <span class="summary-lbl">Amount</span>
+        <span class="summary-val font-display text-gradient">LKR {{ booking.displayAmount | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <!-- Short neutral note -->
+    <div class="cancel-policy-note" role="note">
+      <svg class="policy-note-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <span>This frees your slot. Loyalty points earned from this booking will be reversed. Cancellation is allowed until 2 hours before the start time.</span>
+    </div>
+
+    @if (cancelError()) {
+      <div class="cancel-error-alert" role="alert" aria-live="polite">
+        {{ cancelError() }}
+      </div>
+    }
+  }
+
+  @if (selectedBookingForCancel()) {
+    <div modal-actions class="cancel-modal-actions">
+      <gc-button
+        variant="secondary"
+        size="md"
+        [disabled]="isCancelling()"
+        (btnClick)="closeCancelModal()">
+        Keep booking
+      </gc-button>
+      <gc-button
+        variant="danger"
+        size="md"
+        [loading]="isCancelling()"
+        [disabled]="isCancelling()"
+        (btnClick)="confirmCancel()">
+        Yes, cancel booking
+      </gc-button>
+    </div>
+  }
+</gc-modal>
+>>>>>>> Stashed changes
