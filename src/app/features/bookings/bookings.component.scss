@@ -384,6 +384,64 @@
     border-radius: 3px;
     border: 1px solid rgba(239, 68, 68, 0.35);
   }
+
+  &.holding {
+    opacity: 0.75;
+    cursor: not-allowed;
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.35);
+
+    .slot-start,
+    .slot-divider,
+    .slot-end {
+      color: #fbbf24;
+    }
+  }
+
+  .holding-badge {
+    position: absolute;
+    top: -6px;
+    right: 4px;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.25);
+    backdrop-filter: blur(4px);
+    padding: 0.5px 4px;
+    border-radius: 3px;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+  }
+}
+
+.card-brand-badge {
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--gc-radius-sm, 4px);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--gc-text-muted, #94a3b8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  &.visa {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border-color: rgba(59, 130, 246, 0.4);
+  }
+
+  &.mastercard {
+    background: rgba(249, 115, 22, 0.2);
+    color: #fb923c;
+    border-color: rgba(249, 115, 22, 0.4);
+  }
+
+  &.amex {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.4);
+  }
 }
 
 // ── RIGHT COLUMN: BOOKING SUMMARY ───────────────────────────────────────────
