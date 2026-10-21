@@ -16,7 +16,8 @@ import {
   BookingResponse,
   BookingStatus,
   LoyaltyBalanceDto,
-  RescheduleBookingRequest
+  RescheduleBookingRequest,
+  BookingReview
 } from '../../shared/models';
 
 export interface BackendStationResponse {
@@ -395,16 +396,16 @@ export class BookingService {
 
   // ─── Reviews (SDS Table C.3 / C.5 & Section 2.4) ─────────────────────────────
 
-  submitReview(bookingId: string, rating: number, comment?: string): Observable<any> {
-    return this.api.post(`/bookings/${bookingId}/review`, { rating, comment });
+  submitReview(bookingId: string, rating: number, comment?: string): Observable<BookingReview> {
+    return this.api.post<BookingReview>(`/bookings/${bookingId}/review`, { rating, comment });
   }
 
-  getReviewByBooking(bookingId: string): Observable<any> {
-    return this.api.get(`/bookings/${bookingId}/review`);
+  getReviewByBooking(bookingId: string): Observable<BookingReview> {
+    return this.api.get<BookingReview>(`/bookings/${bookingId}/review`);
   }
 
-  getMyReviews(): Observable<any[]> {
-    return this.api.get<any[]>('/reviews/mine');
+  getMyReviews(): Observable<BookingReview[]> {
+    return this.api.get<BookingReview[]>('/reviews/mine');
   }
 
   getStationRating(stationId: string): Observable<{ stationId: string; averageRating: number }> {

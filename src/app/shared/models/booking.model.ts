@@ -39,3 +39,16 @@ export interface RescheduleBookingRequest {
   endTime: string;   // HH:mm or ISO
   bookingDate?: string; // YYYY-MM-DD
 }
+
+export interface BookingReview {
+  id: string;
+  bookingId: string;
+  userId: string;
+  stationId?: string;
+  stationCode?: string;
+  gameTitle?: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+  updatedAt?: string;
+}

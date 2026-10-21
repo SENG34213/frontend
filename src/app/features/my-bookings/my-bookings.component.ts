@@ -11,7 +11,7 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BookingService } from '../../core/services/booking.service';
 import { ToastService } from '../../shared/ui/toast/toast.service';
-import { BookingResponse, BookingStatus } from '../../shared/models/booking.model';
+import { BookingResponse, BookingStatus, BookingReview } from '../../shared/models/booking.model';
 import { ApiError } from '../../shared/models/api-response.model';
 import { CardComponent } from '../../shared/ui/card/card.component';
 import { BadgeComponent, BadgeVariant } from '../../shared/ui/badge/badge.component';
@@ -93,7 +93,7 @@ export class MyBookingsComponent implements OnInit {
   readonly rescheduleError = signal<string | null>(null);
 
   // ── Session Review State (SDS Table C.3 / C.5) ──────────────────────────────
-  readonly userReviews = signal<Record<string, any>>({});
+  readonly userReviews = signal<Record<string, BookingReview>>({});
   readonly isReviewModalOpen = signal<boolean>(false);
   readonly selectedBookingForReview = signal<BookingDisplayItem | null>(null);
   readonly reviewRating = signal<number>(5);
@@ -225,7 +225,7 @@ export class MyBookingsComponent implements OnInit {
   loadReviews(): void {
     this.bookingService.getMyReviews().subscribe({
       next: (reviews) => {
-        const map: Record<string, any> = {};
+        const map: Record<string, BookingReview> = {};
         if (Array.isArray(reviews)) {
           reviews.forEach((r) => {
             if (r.bookingId) map[r.bookingId] = r;
