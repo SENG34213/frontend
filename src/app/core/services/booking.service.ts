@@ -297,26 +297,7 @@ export class BookingService {
     return this.api.get<BackendBookingResponse[]>('/bookings/mine').pipe(
       map((list) => {
         if (!list || !Array.isArray(list)) return [];
-        return list.map((res) => {
-          const item: BookingResponse = {
-            id: res.id,
-            bookingReference: res.bookingReference || `GC-${res.id ? String(res.id).substring(0, 8).toUpperCase() : 'BK'}`,
-            userId: res.userId,
-            stationId: res.stationId,
-            stationName: res.stationName || (res.stationCode ? `PS5 ${res.stationCode}` : 'PS5 Station'),
-            bookingDate: res.bookingDate || (res.startTime && String(res.startTime).includes('T') ? String(res.startTime).split('T')[0] : ''),
-            startTime: res.startTime,
-            endTime: res.endTime,
-            totalAmount: Number(res.totalAmount ?? 0),
-            discountAmount: Number(res.discountAmount ?? 0),
-            finalAmount: Number(res.finalAmount ?? res.payableAmount ?? res.totalAmount ?? 0),
-            status: (res.status || 'CONFIRMED') as BookingStatus,
-            createdAt: res.createdAt || ''
-          };
-          if (res.gameId) item.gameId = res.gameId;
-          if (res.gameTitle) item.gameTitle = res.gameTitle;
-          return item;
-        });
+        return list.map((res) => this.mapBookingItem(res));
       }),
       catchError(() => of([]))
     );
@@ -346,40 +327,60 @@ export class BookingService {
     }
 
     const payload = {
-    stationId: request.stationId,
-    ...(request.gameId ? { gameId: request.gameId } : {}),
-    startTime: startIso,
-    endTime: endIso
-  };
+      stationId: request.stationId,
+      ...(request.gameId ? { gameId: request.gameId } : {}),
+      startTime: startIso,
+      endTime: endIso
+    };
 
     return this.api.patch<BackendBookingResponse>(`/bookings/${bookingId}/reschedule`, payload).pipe(
-      map((res: BackendBookingResponse) => {
-        const item: BookingResponse = {
-          id: res.id,
-          bookingReference: res.bookingReference || `GC-${res.id ? String(res.id).substring(0, 8).toUpperCase() : 'BK'}`,
-          userId: res.userId,
-          stationId: res.stationId,
-          stationName: res.stationName || (res.stationCode ? `PS5 ${res.stationCode}` : 'PS5 Station'),
-          gameId: res.gameId || request.gameId,
-          gameTitle: res.gameTitle,
-          bookingDate: res.bookingDate || (res.startTime && String(res.startTime).includes('T') ? String(res.startTime).split('T')[0] : (request.bookingDate || '')),
-          startTime: res.startTime,
-          endTime: res.endTime,
-          totalAmount: Number(res.totalAmount ?? 0),
-          discountAmount: Number(res.discountAmount ?? 0),
-          finalAmount: Number(res.finalAmount ?? res.payableAmount ?? res.totalAmount ?? 0),
-          status: (res.status || 'CONFIRMED') as BookingStatus,
-          createdAt: res.createdAt || ''
-        };
-        return item;
-      }),
+      map((res: BackendBookingResponse) => this.mapBookingItem(res, 'CONFIRMED')),
       catchError((error: unknown) => {
-        // ErrorMapper.map() is idempotent: if the error interceptor already produced
-        // an ApiError, this call returns it unchanged — preserving the real code/message.
         const mappedError = ErrorMapper.map(error);
+        const errObj = error as Record<string, unknown> | null;
+        const serverError = errObj && typeof errObj['error'] === 'object' && errObj['error'] !== null
+          ? (errObj['error'] as Record<string, unknown>)
+          : null;
+        const fallbackRaw = serverError ? (serverError['error'] as string | undefined) : undefined;
+        const rawCode = mappedError.code ||
+          (typeof fallbackRaw === 'string' && /^[A-Z0-9_]+$/.test(fallbackRaw) ? fallbackRaw : undefined);
+        const code = rawCode || 'UNKNOWN_ERROR';
 
-        // Prefer the code already on the mapped error; fall back to error.error.error
-        // for raw HttpErrorResponses that somehow bypass the interceptor.
+        return throwError(() => ({ ...mappedError, code } as ApiError));
+      })
+    );
+  }
+
+  private mapBookingItem(res: BackendBookingResponse, fallbackStatus: BookingStatus = 'CONFIRMED'): BookingResponse {
+    const item: BookingResponse = {
+      id: res.id,
+      bookingReference: res.bookingReference || `GC-${res.id ? String(res.id).substring(0, 8).toUpperCase() : 'BK'}`,
+      userId: res.userId,
+      stationId: res.stationId,
+      stationName: res.stationName || (res.stationCode ? `PS5 ${res.stationCode}` : 'PS5 Station'),
+      bookingDate: res.bookingDate || (res.startTime && String(res.startTime).includes('T') ? String(res.startTime).split('T')[0] : ''),
+      startTime: res.startTime,
+      endTime: res.endTime,
+      totalAmount: Number(res.totalAmount ?? 0),
+      discountAmount: Number(res.discountAmount ?? 0),
+      finalAmount: Number(res.finalAmount ?? res.payableAmount ?? res.totalAmount ?? 0),
+      status: (res.status || fallbackStatus) as BookingStatus,
+      createdAt: res.createdAt || ''
+    };
+    if (res.gameId) item.gameId = res.gameId;
+    if (res.gameTitle) item.gameTitle = res.gameTitle;
+    return item;
+  }
+
+  cancelBooking(bookingId: string): Observable<BookingResponse> {
+    if (environment.useMocks) {
+      return this.mockData.cancelBooking(bookingId);
+    }
+
+    return this.api.patch<BackendBookingResponse>(`/bookings/${bookingId}/cancel`).pipe(
+      map((res: BackendBookingResponse) => this.mapBookingItem(res, 'CANCELLED')),
+      catchError((error: unknown) => {
+        const mappedError = ErrorMapper.map(error);
         const errObj = error as Record<string, unknown> | null;
         const serverError = errObj && typeof errObj['error'] === 'object' && errObj['error'] !== null
           ? (errObj['error'] as Record<string, unknown>)

@@ -7,7 +7,8 @@ import {
   getSlotEndTimestamp,
   isWithinCutoffHours,
   calculateDurationHours,
-  RESCHEDULE_CUTOFF_HOURS
+  RESCHEDULE_CUTOFF_HOURS,
+  canCancel
 } from './slot.utils';
 
 describe('slot.utils', () => {
@@ -160,6 +161,107 @@ describe('slot.utils', () => {
 
       // Assert
       expect(duration).toBe(1);
+    });
+  });
+  describe('canCancel', () => {
+    const fixedNow = new Date('2026-10-25T10:00:00Z').getTime();
+
+    it('should return true given booking starts in exactly 2 hours and status is CONFIRMED', () => {
+      // Arrange: exactly 2 hours = 12:00:00Z
+      const booking = {
+        status: 'CONFIRMED',
+        startTime: '2026-10-25T12:00:00Z'
+      };
+
+      // Act
+      const result = canCancel(booking, fixedNow);
+
+      // Assert
+      expect(result).toBeTrue();
+    });
+
+    it('should return false given booking starts in 1 hour 59 minutes (within cutoff)', () => {
+      // Arrange: 1h59m = 11:59:00Z
+      const booking = {
+        status: 'CONFIRMED',
+        startTime: '2026-10-25T11:59:00Z'
+      };
+
+      // Act
+      const result = canCancel(booking, fixedNow);
+
+      // Assert
+      expect(result).toBeFalse();
+    });
+
+    it('should return false given booking start time is in the past', () => {
+      // Arrange
+      const booking = {
+        status: 'CONFIRMED',
+        startTime: '2026-10-25T09:00:00Z'
+      };
+
+      // Act
+      const result = canCancel(booking, fixedNow);
+
+      // Assert
+      expect(result).toBeFalse();
+    });
+
+    it('should return true given status is PENDING and starts more than 2 hours in the future', () => {
+      // Arrange: 3 hours in future
+      const booking = {
+        status: 'PENDING',
+        startTime: '2026-10-25T13:00:00Z'
+      };
+
+      // Act
+      const result = canCancel(booking, fixedNow);
+
+      // Assert
+      expect(result).toBeTrue();
+    });
+
+    it('should return true given status is CONFIRMED and starts more than 2 hours in the future', () => {
+      // Arrange
+      const booking = {
+        status: 'CONFIRMED',
+        startTime: '2026-10-25T14:00:00Z'
+      };
+
+      // Act
+      const result = canCancel(booking, fixedNow);
+
+      // Assert
+      expect(result).toBeTrue();
+    });
+
+    it('should return false given status is CANCELLED even if start time is in the future', () => {
+      // Arrange
+      const booking = {
+        status: 'CANCELLED',
+        startTime: '2026-10-25T14:00:00Z'
+      };
+
+      // Act
+      const result = canCancel(booking, fixedNow);
+
+      // Assert
+      expect(result).toBeFalse();
+    });
+
+    it('should return false given status is COMPLETED', () => {
+      // Arrange
+      const booking = {
+        status: 'COMPLETED',
+        startTime: '2026-10-25T14:00:00Z'
+      };
+
+      // Act
+      const result = canCancel(booking, fixedNow);
+
+      // Assert
+      expect(result).toBeFalse();
     });
   });
 });

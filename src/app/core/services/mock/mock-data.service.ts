@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@angular/core';
-import { Observable, delay, of } from 'rxjs';
-import { UserProfile } from '../../../shared/models/auth.model';
-import { BookingResponse } from '../../../shared/models/booking.model';
-import { LoyaltyBalanceDto, LoyaltyTransactionDto } from '../../../shared/models/loyalty.model';
+import { Observable, of, delay } from 'rxjs';
+import {
+  LoyaltyBalanceDto,
+  BookingResponse,
+  UserRole,
+  LoyaltyTransactionDto,
+  UserProfile
+} from '../../../shared/models';
 
 /**
  * @deprecated Production data comes from backend services. This service provides minimal fallback
@@ -70,29 +74,60 @@ export class MockDataService {
     return of(null);
   }
 
-  getUserProfile(userId = ''): Observable<UserProfile> {
+  rescheduleBooking(
+    bookingId: string,
+    request: { stationId: string; gameId: string; startTime: string; endTime: string; bookingDate?: string }
+  ): Observable<BookingResponse> {
+    const res: BookingResponse = {
+      id: bookingId,
+      bookingReference: 'GC-' + (bookingId ? bookingId.substring(0, 8).toUpperCase() : 'RESCHED'),
+      userId: 'usr-customer-1',
+      stationId: request.stationId,
+      stationName: 'PS5 Lounge #01',
+      gameId: request.gameId,
+      gameTitle: 'EA SPORTS FC 25',
+      bookingDate: request.bookingDate || (request.startTime.includes('T') ? request.startTime.split('T')[0] : '2026-10-25'),
+      startTime: request.startTime,
+      endTime: request.endTime,
+      totalAmount: 1000,
+      discountAmount: 0,
+      finalAmount: 1000,
+      status: 'CONFIRMED',
+      createdAt: new Date().toISOString()
+    };
+    return of(res).pipe(delay(150));
+  }
+
+  getUserProfile(userId?: string): Observable<UserProfile> {
+    const uid = userId || 'usr-customer-1';
     return of({
-      id: userId,
-      email: '',
-      fullName: '',
-      role: 'CUSTOMER',
+      id: uid,
+      email: 'player@gamingcastle.lk',
+      fullName: 'Kasun Perera',
+      phoneNumber: '+94771234567',
+      role: 'CUSTOMER' as UserRole,
       active: true,
-      enabled: true
-    });
+      enabled: true,
+      createdAt: '2026-09-02T10:00:00Z'
+    }).pipe(delay(150));
   }
 
   getMyLoyaltyHistory(
-    _userId?: string,
+    userId?: string,
     page = 0,
     size = 10
   ): Observable<{ content: LoyaltyTransactionDto[]; totalElements: number; totalPages: number; number: number; size: number }> {
+    void userId;
+    const items: LoyaltyTransactionDto[] = [];
+    const start = page * size;
+    const paged = items.slice(start, start + size);
     return of({
-      content: [],
-      totalElements: 0,
-      totalPages: 0,
+      content: paged,
+      totalElements: items.length,
+      totalPages: Math.max(1, Math.ceil(items.length / size)),
       number: page,
       size
-    });
+    }).pipe(delay(150));
   }
 
   getMyCustomerBookings(): Observable<BookingResponse[]> {
@@ -165,25 +200,22 @@ export class MockDataService {
     return of(list).pipe(delay(150));
   }
 
-  rescheduleBooking(
-    bookingId: string,
-    request: { stationId: string; gameId: string; startTime: string; endTime: string; bookingDate?: string }
-  ): Observable<BookingResponse> {
+  cancelBooking(bookingId: string): Observable<BookingResponse> {
     const res: BookingResponse = {
       id: bookingId,
-      bookingReference: 'GC-' + (bookingId ? bookingId.substring(0, 8).toUpperCase() : 'RESCHED'),
+      bookingReference: 'GC-' + (bookingId ? bookingId.substring(0, 8).toUpperCase() : 'CANCELLED'),
       userId: 'usr-customer-1',
-      stationId: request.stationId,
+      stationId: 'st-01',
       stationName: 'PS5 Lounge #01',
-      gameId: request.gameId,
+      gameId: 'game-01',
       gameTitle: 'EA SPORTS FC 25',
-      bookingDate: request.bookingDate || (request.startTime.includes('T') ? request.startTime.split('T')[0] : '2026-10-25'),
-      startTime: request.startTime,
-      endTime: request.endTime,
+      bookingDate: '2026-10-25',
+      startTime: '18:00',
+      endTime: '20:00',
       totalAmount: 1000,
       discountAmount: 0,
       finalAmount: 1000,
-      status: 'CONFIRMED',
+      status: 'CANCELLED',
       createdAt: new Date().toISOString()
     };
     return of(res).pipe(delay(150));

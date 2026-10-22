@@ -4,6 +4,7 @@ import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { DashboardComponent } from './dashboard.component';
 import { BookingService } from '../../core/services/booking.service';
+import { TournamentService } from '../../core/services/tournament.service';
 import { Game } from '../../shared/models';
 
 describe('DashboardComponent', () => {
@@ -11,6 +12,7 @@ describe('DashboardComponent', () => {
   let fixture: ComponentFixture<DashboardComponent>;
   let router: Router;
   let mockBookingService: jasmine.SpyObj<BookingService>;
+  let mockTournamentService: jasmine.SpyObj<TournamentService>;
 
   const mockGames: Game[] = [
     { id: 'g-1', title: 'Spider-Man 2', featured: true, coverImage: 'spiderman.jpg' },
@@ -30,12 +32,18 @@ describe('DashboardComponent', () => {
     mockBookingService.getStations.and.returnValue(of([]));
     mockBookingService.getStationGames.and.returnValue(of([]));
 
+    mockTournamentService = jasmine.createSpyObj<TournamentService>('TournamentService', [
+      'getTournaments'
+    ]);
+    mockTournamentService.getTournaments.and.returnValue(of([]));
+
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
       providers: [
         provideHttpClient(),
         provideRouter([]),
-        { provide: BookingService, useValue: mockBookingService }
+        { provide: BookingService, useValue: mockBookingService },
+        { provide: TournamentService, useValue: mockTournamentService }
       ]
     }).compileComponents();
 

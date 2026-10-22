@@ -648,6 +648,38 @@ describe('BookingService', () => {
       service.getReviewByBooking('bk-123').subscribe((res) => {
         expect(apiSpy.get).toHaveBeenCalledWith('/bookings/bk-123/review');
         expect(res).toEqual(mockReview);
+  describe('cancelBooking', () => {
+    it('should call PATCH /bookings/{id}/cancel with no body and map response given valid booking ID and useMocks is false', (done) => {
+      // Arrange
+      const orig = environment.useMocks;
+      environment.useMocks = false;
+
+      const backendResponse: BackendBookingResponse = {
+        id: 'bk-cancel-1',
+        userId: 'usr-1',
+        stationId: 'st-01',
+        stationCode: 'CONSOLE-01',
+        gameId: 'game-01',
+        gameTitle: 'EA SPORTS FC 25',
+        startTime: '2026-10-25T14:00:00Z',
+        endTime: '2026-10-25T16:00:00Z',
+        status: 'CANCELLED',
+        totalAmount: 1000,
+        payableAmount: 1000
+      };
+
+      apiSpy.patch.and.returnValue(of(backendResponse));
+
+      // Act
+      service.cancelBooking('bk-cancel-1').subscribe((res) => {
+        // Assert
+        expect(apiSpy.patch).toHaveBeenCalledWith('/bookings/bk-cancel-1/cancel');
+        expect(res.id).toBe('bk-cancel-1');
+        expect(res.status).toBe('CANCELLED');
+        expect(res.stationName).toBe('PS5 CONSOLE-01');
+        expect(res.gameTitle).toBe('EA SPORTS FC 25');
+
+        environment.useMocks = orig;
         done();
       });
     });
@@ -662,6 +694,18 @@ describe('BookingService', () => {
       service.getMyReviews().subscribe((res) => {
         expect(apiSpy.get).toHaveBeenCalledWith('/reviews/mine');
         expect(res).toEqual(mockReviews);
+    it('should return mock cancelled response given useMocks is true', (done) => {
+      // Arrange
+      const orig = environment.useMocks;
+      environment.useMocks = true;
+
+      // Act
+      service.cancelBooking('bk-mock-cancel').subscribe((res) => {
+        // Assert
+        expect(res.id).toBe('bk-mock-cancel');
+        expect(res.status).toBe('CANCELLED');
+
+        environment.useMocks = orig;
         done();
       });
     });
@@ -674,6 +718,30 @@ describe('BookingService', () => {
         expect(apiSpy.get).toHaveBeenCalledWith('/reviews/station/st-01/rating');
         expect(res).toEqual(mockRating);
         done();
+    it('should expose backend error code given backend returns an error', (done) => {
+      // Arrange
+      const orig = environment.useMocks;
+      environment.useMocks = false;
+
+      const httpError = {
+        status: 400,
+        error: {
+          error: 'TOO_LATE',
+          message: 'Bookings cannot be cancelled within 2 hours of the scheduled start time'
+        }
+      };
+
+      apiSpy.patch.and.returnValue(throwError(() => httpError));
+
+      // Act
+      service.cancelBooking('bk-cancel-1').subscribe({
+        next: () => fail('Expected cancel to fail'),
+        error: (err) => {
+          // Assert
+          expect(err.code).toBe('TOO_LATE');
+          environment.useMocks = orig;
+          done();
+        }
       });
     });
   });

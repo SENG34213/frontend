@@ -112,32 +112,62 @@
                 </span>
               </div>
             </div>
-
-            <!-- Actions Row: Reschedule Button (Visible for Upcoming CONFIRMED only) -->
-            @if (item.canReschedule) {
+            <!-- Actions Row: Reschedule & Cancel Buttons (Visible for Upcoming PENDING/CONFIRMED) -->
+            @if (item.canReschedule || item.canShowCancel) {
               <div class="booking-card-actions">
-                <gc-button
-                  variant="secondary"
-                  size="sm"
-                  [disabled]="item.isWithin2Hours"
-                  [attr.aria-label]="item.isWithin2Hours ? 'Rescheduling closes 2 hours before the start time' : 'Reschedule booking ' + (item.bookingReference || item.id)"
-                  (btnClick)="openRescheduleModal(item)">
-                  <span class="reschedule-btn-content">
-                    <svg class="calendar-clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                      <line x1="16" y1="2" x2="16" y2="6"></line>
-                      <line x1="8" y1="2" x2="8" y2="6"></line>
-                      <line x1="3" y1="10" x2="21" y2="10"></line>
-                      <polyline points="12 14 12 16 14 16"></polyline>
-                    </svg>
-                    Reschedule
-                  </span>
-                </gc-button>
+                <div class="card-action-buttons">
+                  @if (item.canReschedule) {
+                    <gc-button
+                      variant="secondary"
+                      size="sm"
+                      [disabled]="item.isWithin2Hours"
+                      [attr.aria-label]="item.isWithin2Hours ? 'Rescheduling closes 2 hours before the start time' : 'Reschedule booking ' + (item.bookingReference || item.id)"
+                      (btnClick)="openRescheduleModal(item)">
+                      <span class="reschedule-btn-content">
+                        <svg class="calendar-clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                          <line x1="16" y1="2" x2="16" y2="6"></line>
+                          <line x1="8" y1="2" x2="8" y2="6"></line>
+                          <line x1="3" y1="10" x2="21" y2="10"></line>
+                          <polyline points="12 14 12 16 14 16"></polyline>
+                        </svg>
+                        Reschedule
+                      </span>
+                    </gc-button>
+                  }
+
+                  @if (item.canShowCancel) {
+                    <gc-button
+                      variant="danger"
+                      size="sm"
+                      class="cancel-booking-btn"
+                      [disabled]="item.isWithin2Hours"
+                      [attr.aria-label]="item.isWithin2Hours ? 'Cancellation closes 2 hours before the start time' : 'Cancel booking ' + (item.bookingReference || item.id)"
+                      (btnClick)="openCancelModal(item)">
+                      <span class="cancel-btn-content">
+                        <svg class="trash-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          <line x1="10" y1="11" x2="10" y2="17"></line>
+                          <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                        Cancel booking
+                      </span>
+                    </gc-button>
+                  }
+                </div>
 
                 @if (item.isWithin2Hours) {
-                  <span class="reschedule-cutoff-hint" role="note">
-                    Rescheduling closes 2 hours before the start time
-                  </span>
+                  <div class="card-action-hints">
+                    @if (item.canReschedule) {
+                      <span class="reschedule-cutoff-hint" role="note">
+                        Rescheduling closes 2 hours before the start time
+                      </span>
+                    }
+                    <span class="cancel-cutoff-hint" role="note">
+                      Cancellation closes 2 hours before the start time
+                    </span>
+                  </div>
                 }
               </div>
             } @else if (!item.isUpcoming && (item.status === 'CONFIRMED' || item.status === 'COMPLETED')) {
@@ -167,7 +197,6 @@
     }
   }
 </div>
-
 <!-- Reschedule Modal -->
 <gc-modal
   [isOpen]="isRescheduleModalOpen()"
@@ -377,6 +406,87 @@
           Submit Review
         </gc-button>
       </div>
+<!-- Cancel Booking Confirmation Modal -->
+<gc-modal
+  [isOpen]="isCancelModalOpen()"
+  [title]="'Cancel this booking?'"
+  [closeOnBackdrop]="!isCancelling()"
+  (closed)="closeCancelModal()">
+  @if (selectedBookingForCancel(); as booking) {
+    <div class="cancel-modal-body" id="cancel-modal-desc">
+      <div class="cancel-modal-icon-wrap" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <div class="cancel-modal-text">
+        <h3 class="cancel-modal-heading">Cancel this booking?</h3>
+        <p class="cancel-modal-desc">
+          Are you sure you want to cancel your reservation for <strong>{{ booking.displayGame }}</strong>?
+        </p>
+      </div>
+    </div>
+
+    <!-- Booking Summary of the booking (game, station, date, time, amount) -->
+    <div class="cancel-booking-summary" aria-label="Booking details">
+      <div class="summary-col">
+        <span class="summary-lbl">Game</span>
+        <span class="summary-val">{{ booking.displayGame }}</span>
+      </div>
+      <div class="summary-col">
+        <span class="summary-lbl">Station</span>
+        <span class="summary-val">{{ booking.displayStation }}</span>
+      </div>
+      <div class="summary-col">
+        <span class="summary-lbl">Date</span>
+        <span class="summary-val">{{ booking.formattedDate }}</span>
+      </div>
+      <div class="summary-col">
+        <span class="summary-lbl">Time</span>
+        <span class="summary-val">{{ booking.formattedTimeSlot }}</span>
+      </div>
+      <div class="summary-col">
+        <span class="summary-lbl">Amount</span>
+        <span class="summary-val font-display text-gradient">LKR {{ booking.displayAmount | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <!-- Short neutral note -->
+    <div class="cancel-policy-note" role="note">
+      <svg class="policy-note-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <span>This frees your slot. Loyalty points earned from this booking will be reversed. Cancellation is allowed until 2 hours before the start time.</span>
+    </div>
+
+    @if (cancelError()) {
+      <div class="cancel-error-alert" role="alert" aria-live="polite">
+        {{ cancelError() }}
+      </div>
+    }
+  }
+
+  @if (selectedBookingForCancel()) {
+    <div modal-actions class="cancel-modal-actions">
+      <gc-button
+        variant="secondary"
+        size="md"
+        [disabled]="isCancelling()"
+        (btnClick)="closeCancelModal()">
+        Keep booking
+      </gc-button>
+      <gc-button
+        variant="danger"
+        size="md"
+        [loading]="isCancelling()"
+        [disabled]="isCancelling()"
+        (btnClick)="confirmCancel()">
+        Yes, cancel booking
+      </gc-button>
     </div>
   }
 </gc-modal>

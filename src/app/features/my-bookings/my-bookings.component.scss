@@ -151,7 +151,6 @@
       }
     }
   }
-
   .booking-card-actions {
     margin-top: 1rem;
     padding-top: 0.75rem;
@@ -162,18 +161,34 @@
     gap: 0.75rem;
     flex-wrap: wrap;
 
-    .reschedule-btn-content {
+    .card-action-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .reschedule-btn-content,
+    .cancel-btn-content {
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
 
-      .calendar-clock-icon {
+      .calendar-clock-icon,
+      .trash-icon {
         width: 14px;
         height: 14px;
       }
     }
 
-    .reschedule-cutoff-hint {
+    .card-action-hints {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .reschedule-cutoff-hint,
+    .cancel-cutoff-hint {
       font-size: 0.75rem;
       color: var(--gc-text-muted);
       font-style: italic;
@@ -195,7 +210,6 @@
   flex-direction: column;
   gap: 0.75rem;
 }
-
 /* ── Reschedule Modal Styles ────────────────────────────────────────────── */
 
 .reschedule-modal-body {
@@ -589,5 +603,129 @@
     border: 1px solid rgba(239, 68, 68, 0.35);
     color: #fca5a5;
     font-size: 0.85rem;
+  }
+// ─── Cancel Booking Confirmation Modal ───────────────────────────────────────
+
+.cancel-modal-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  padding: 0.5rem 0;
+}
+
+.cancel-modal-icon-wrap {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.15);
+}
+
+.cancel-modal-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  .cancel-modal-heading {
+    font-family: var(--gc-font-display, inherit);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--gc-text-primary, #f8fafc);
+    margin: 0;
+  }
+
+  .cancel-modal-desc {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--gc-text-secondary, #94a3b8);
+    margin: 0;
+  }
+}
+
+.cancel-booking-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.75rem;
+  background: var(--gc-bg-surface-elevated, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--gc-border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: var(--gc-radius-md, 8px);
+  padding: 0.85rem 1rem;
+  margin: 1rem 0 0.75rem;
+
+  .summary-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    .summary-lbl {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      color: var(--gc-text-muted);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .summary-val {
+      font-size: 0.85rem;
+      color: var(--gc-text-primary);
+      font-weight: 600;
+
+      &.font-display {
+        font-family: var(--gc-font-display);
+        font-size: 0.95rem;
+      }
+    }
+  }
+}
+
+.cancel-policy-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: var(--gc-radius-sm, 6px);
+  font-size: 0.825rem;
+  line-height: 1.45;
+  color: var(--gc-text-secondary);
+  margin-bottom: 0.75rem;
+
+  .policy-note-icon {
+    color: #3b82f6;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+}
+
+.cancel-error-alert {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--gc-radius-sm, 6px);
+  color: #f87171;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.cancel-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  width: 100%;
+
+  @media (max-width: 480px) {
+    flex-direction: column-reverse;
+    button,
+    gc-button {
+      width: 100%;
+    }
   }
 }
