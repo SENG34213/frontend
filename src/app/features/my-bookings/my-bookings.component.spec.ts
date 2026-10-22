@@ -5,7 +5,7 @@ import { MyBookingsComponent } from './my-bookings.component';
 import { BookingService } from '../../core/services/booking.service';
 import { MockDataService } from '../../core/services/mock/mock-data.service';
 import { ToastService } from '../../shared/ui/toast/toast.service';
-import { BookingResponse } from '../../shared/models/booking.model';
+import { BookingResponse, BookingReview } from '../../shared/models/booking.model';
 import { SlotAvailability } from '../../shared/models/station.model';
 import { LoyaltyService } from '../../core/services/loyalty.service';
 import { UserService } from '../../core/services/user.service';
@@ -126,6 +126,12 @@ describe('MyBookingsComponent', () => {
       'getMyBookings',
       'getStationAvailability',
       'rescheduleBooking',
+      'getMyReviews',
+      'submitReview'
+    ]);
+    mockDataSpy = jasmine.createSpyObj('MockDataService', [
+      'getMyCustomerBookings',
+      'rescheduleBooking'
       'cancelBooking'
     ]);
     mockDataSpy = jasmine.createSpyObj('MockDataService', ['getMyCustomerBookings']);
@@ -134,6 +140,7 @@ describe('MyBookingsComponent', () => {
     userServiceSpy = jasmine.createSpyObj('UserService', ['clearCachedProfile', 'getMyProfile']);
 
     bookingServiceSpy.getStationAvailability.and.returnValue(of(mockSlots));
+    bookingServiceSpy.getMyReviews.and.returnValue(of([]));
 
     bookingServiceSpy.getMyBookings.and.returnValue(of(mockBookings));
     mockDataSpy.getMyCustomerBookings.and.returnValue(of(mockBookings));
@@ -526,6 +533,109 @@ describe('MyBookingsComponent', () => {
     expect(component.isRescheduleModalOpen()).toBeTrue();
     expect(component.rescheduleError()).toContain('Connection failed');
   });
+
+  // ── Session Reviews Feature Tests ───────────────────────────────────────────
+
+  describe('Session Reviews Feature', () => {
+    it('should load user reviews on init and populate userReviews signal', () => {
+      const mockReviews: BookingReview[] = [
+        { id: 'rev-1', bookingId: 'bk-3', userId: 'usr-1', rating: 5, comment: 'Awesome!', createdAt: '2026-10-21T10:00:00Z' }
+      ];
+      bookingServiceSpy.getMyReviews.and.returnValue(of(mockReviews));
+
+      component.loadReviews();
+
+      expect(component.userReviews()['bk-3']).toBeDefined();
+      expect(component.userReviews()['bk-3'].rating).toBe(5);
+    });
+
+    it('should open review modal with default rating 5', () => {
+      fixture.detectChanges();
+      const playedItem = component.playedBookings()[0];
+
+      component.openReviewModal(playedItem);
+
+      expect(component.isReviewModalOpen()).toBeTrue();
+      expect(component.selectedBookingForReview()).toEqual(playedItem);
+      expect(component.reviewRating()).toBe(5);
+      expect(component.reviewComment()).toBe('');
+      expect(component.reviewError()).toBeNull();
+    });
+
+    it('should set rating using setRating', () => {
+      component.setRating(4);
+      expect(component.reviewRating()).toBe(4);
+    });
+
+    it('should close review modal when not submitting', () => {
+      component.isReviewModalOpen.set(true);
+      component.isSubmittingReview.set(false);
+
+      component.closeReviewModal();
+
+      expect(component.isReviewModalOpen()).toBeFalse();
+      expect(component.selectedBookingForReview()).toBeNull();
+    });
+
+    it('should not close review modal if submission is in flight', () => {
+      component.isReviewModalOpen.set(true);
+      component.isSubmittingReview.set(true);
+
+      component.closeReviewModal();
+
+      expect(component.isReviewModalOpen()).toBeTrue();
+    });
+
+    it('should submit review successfully, toast, update reviews signal and close modal', () => {
+      fixture.detectChanges();
+      const playedItem = component.playedBookings()[0];
+      component.openReviewModal(playedItem);
+      component.setRating(5);
+      component.reviewComment.set('Great station and atmosphere');
+
+      const mockCreated: BookingReview = {
+        id: 'rev-new',
+        bookingId: playedItem.id,
+        userId: 'usr-1',
+        rating: 5,
+        comment: 'Great station and atmosphere',
+        createdAt: '2026-10-21T10:00:00Z'
+      };
+      bookingServiceSpy.submitReview.and.returnValue(of(mockCreated));
+
+      component.submitReview();
+
+      expect(bookingServiceSpy.submitReview).toHaveBeenCalledWith(playedItem.id, 5, 'Great station and atmosphere');
+      expect(toastServiceSpy.success).toHaveBeenCalledWith('Review Submitted', jasmine.any(String));
+      expect(component.userReviews()[playedItem.id]).toEqual(mockCreated);
+      expect(component.isReviewModalOpen()).toBeFalse();
+    });
+
+    it('should set reviewError on failed review submission', () => {
+      fixture.detectChanges();
+      const playedItem = component.playedBookings()[0];
+      component.openReviewModal(playedItem);
+
+      bookingServiceSpy.submitReview.and.returnValue(
+        throwError(() => ({ error: { message: 'Review already submitted' } }))
+      );
+
+      component.submitReview();
+
+      expect(component.isSubmittingReview()).toBeFalse();
+      expect(component.reviewError()).toBe('Review already submitted');
+      expect(component.isReviewModalOpen()).toBeTrue();
+    });
+
+    it('should not submit review if no booking selected', () => {
+      component.selectedBookingForReview.set(null);
+      component.submitReview();
+      expect(bookingServiceSpy.submitReview).not.toHaveBeenCalled();
+    });
+  });
+});
+
+
   // ── Cancel Feature Tests ──────────────────────────────────────────────────
 
   describe('Cancellation Flow', () => {

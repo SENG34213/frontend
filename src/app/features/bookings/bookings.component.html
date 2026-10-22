@@ -92,20 +92,23 @@
                   <button
                     type="button"
                     class="slot-btn"
-                    [class.selected]="slot.id === selectedSlotId() && slot.isAvailable"
+                    [class.selected]="slot.id === selectedSlotId() && slot.isAvailable && !isSlotHeld(slot)"
                     [class.occupied]="!slot.isAvailable"
                     [class.booked]="!slot.isAvailable"
-                    [class.deactive]="!slot.isAvailable"
-                    [disabled]="!slot.isAvailable"
-                    [attr.aria-disabled]="!slot.isAvailable"
+                    [class.holding]="isSlotHeld(slot)"
+                    [class.deactive]="!slot.isAvailable || isSlotHeld(slot)"
+                    [disabled]="!slot.isAvailable || isSlotHeld(slot)"
+                    [attr.aria-disabled]="!slot.isAvailable || isSlotHeld(slot)"
                     (click)="selectSlot(slot)"
-                    [attr.aria-pressed]="slot.id === selectedSlotId() && slot.isAvailable"
-                    [attr.aria-label]="slot.startTime + ' to ' + slot.endTime + (!slot.isAvailable ? ' (Booked)' : '')">
+                    [attr.aria-pressed]="slot.id === selectedSlotId() && slot.isAvailable && !isSlotHeld(slot)"
+                    [attr.aria-label]="slot.startTime + ' to ' + slot.endTime + (!slot.isAvailable ? ' (Booked)' : (isSlotHeld(slot) ? ' (Currently being reserved)' : ''))">
                     <span class="slot-start">{{ slot.startTime }}</span>
                     <span class="slot-divider">→</span>
                     <span class="slot-end">{{ slot.endTime }}</span>
                     @if (!slot.isAvailable) {
                       <span class="slot-badge booked-badge">Booked</span>
+                    } @else if (isSlotHeld(slot)) {
+                      <span class="slot-badge holding-badge">⏳ Holding</span>
                     }
                   </button>
                 }
@@ -452,18 +455,49 @@
         </div>
 
         <div class="form-group mb-sm">
-          <label class="form-label" for="card-number">Card Number</label>
-          <input type="text" id="card-number" name="cardNumber" autocomplete="cc-number" [(ngModel)]="cardNumber" class="form-input" placeholder="4242 •••• •••• 4242" />
+          <label class="form-label flex justify-between items-center" for="card-number">
+            <span>Card Number</span>
+            <span class="card-brand-badge font-mono text-xs uppercase" [class.visa]="cardBrand() === 'visa'" [class.mastercard]="cardBrand() === 'mastercard'" [class.amex]="cardBrand() === 'amex'">
+              {{ cardBrand() === 'generic' ? 'Card' : cardBrand() }}
+            </span>
+          </label>
+          <input
+            type="text"
+            id="card-number"
+            name="cardNumber"
+            autocomplete="cc-number"
+            [ngModel]="cardNumber"
+            (input)="onCardNumberInput($event)"
+            maxlength="19"
+            class="form-input"
+            placeholder="4242 4242 4242 4242" />
         </div>
 
         <div class="grid grid-cols-2 gap-sm">
           <div class="form-group">
             <label class="form-label" for="card-expiry">Expiry Date</label>
-            <input type="text" id="card-expiry" name="cardExpiry" autocomplete="cc-exp" [(ngModel)]="cardExpiry" class="form-input" placeholder="MM/YY" />
+            <input
+              type="text"
+              id="card-expiry"
+              name="cardExpiry"
+              autocomplete="cc-exp"
+              [ngModel]="cardExpiry"
+              (input)="onCardExpiryInput($event)"
+              maxlength="5"
+              class="form-input"
+              placeholder="MM/YY" />
           </div>
           <div class="form-group">
             <label class="form-label" for="card-cvv">Security Code (CVV)</label>
-            <input type="password" id="card-cvv" name="cardCvv" autocomplete="cc-csc" [(ngModel)]="cardCvv" maxlength="4" class="form-input" placeholder="•••" />
+            <input
+              type="password"
+              id="card-cvv"
+              name="cardCvv"
+              autocomplete="cc-csc"
+              [(ngModel)]="cardCvv"
+              maxlength="4"
+              class="form-input"
+              placeholder="•••" />
           </div>
         </div>
       </form>

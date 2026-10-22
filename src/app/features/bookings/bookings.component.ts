@@ -111,11 +111,76 @@ export class BookingsComponent implements OnInit {
   readonly bookingSuccessReceipt = signal<BookingResponse | null>(null);
   readonly bookingErrorMessage = signal<string | null>(null);
 
-  // Card form fields
-  cardNumber = '4242 •••• •••• 4242';
+  // Card form fields with dynamic formatting
+  readonly cardNumberSignal = signal<string>('4242 4242 4242 4242');
+  get cardNumber(): string {
+    return this.cardNumberSignal();
+  }
+  set cardNumber(val: string) {
+    this.cardNumberSignal.set(val);
+  }
   cardExpiry = '12/28';
   cardCvv = '888';
   cardholderName = 'Player One';
+
+  // Detected card brand: visa, mastercard, amex, or generic
+  readonly cardBrand = computed<'visa' | 'mastercard' | 'amex' | 'generic'>(() => {
+    const raw = this.cardNumberSignal().replace(/\D/g, '');
+    if (/^4/.test(raw)) return 'visa';
+    if (/^5[1-5]/.test(raw) || /^2[2-7]/.test(raw)) return 'mastercard';
+    if (/^3[47]/.test(raw)) return 'amex';
+    return 'generic';
+  });
+
+  readonly isCardNumberValid = computed<boolean>(() => {
+    const raw = this.cardNumberSignal().replace(/\D/g, '');
+    if (raw.length < 13) return false;
+    return this.validateLuhn(raw);
+  });
+
+  validateLuhn(val: string): boolean {
+    let sum = 0;
+    let shouldDouble = false;
+    for (let i = val.length - 1; i >= 0; i--) {
+      let digit = parseInt(val.charAt(i), 10);
+      if (shouldDouble) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      sum += digit;
+      shouldDouble = !shouldDouble;
+    }
+    return sum % 10 === 0;
+  }
+
+  onCardNumberInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    let val = input.value.replace(/\D/g, '');
+    if (val.length > 16) val = val.substring(0, 16);
+    const groups = val.match(/.{1,4}/g);
+    this.cardNumber = groups ? groups.join(' ') : val;
+    input.value = this.cardNumber;
+  }
+
+  onCardExpiryInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    let val = input.value.replace(/\D/g, '');
+    if (val.length > 4) val = val.substring(0, 4);
+    if (val.length >= 3) {
+      this.cardExpiry = val.substring(0, 2) + '/' + val.substring(2);
+    } else {
+      this.cardExpiry = val;
+    }
+    input.value = this.cardExpiry;
+  }
+
+  isSlotHeld(slot: DisplaySlot): boolean {
+    return this.notifSocketService.isSlotHeldByOther(
+      this.selectedStationId(),
+      this.selectedDateStr(),
+      slot.rawStart || slot.id
+    );
+  }
 
   // ── Computed helpers ─────────────────────────────────────────────────────────
   readonly monthNames = [
@@ -470,11 +535,27 @@ export class BookingsComponent implements OnInit {
 
   onProceedToPayment(): void {
     if (!this.canProceedToPayment()) return;
+    const slot = this.selectedSlot();
+    if (slot) {
+      this.notifSocketService.lockSlot(
+        this.selectedStationId(),
+        this.selectedDateStr(),
+        slot.rawStart || slot.id
+      );
+    }
     this.bookingErrorMessage.set(null);
     this.paymentModalOpen.set(true);
   }
 
   closePaymentModal(): void {
+    const slot = this.selectedSlot();
+    if (slot && !this.bookingSuccessReceipt()) {
+      this.notifSocketService.unlockSlot(
+        this.selectedStationId(),
+        this.selectedDateStr(),
+        slot.rawStart || slot.id
+      );
+    }
     this.paymentModalOpen.set(false);
     this.bookingSuccessReceipt.set(null);
     this.bookingErrorMessage.set(null);
@@ -505,6 +586,13 @@ export class BookingsComponent implements OnInit {
       pointsToRedeem: this.effectivePointsToRedeem()
     }).subscribe({
       next: (response) => {
+        // Broadcast slot booked live across real-time socket
+        this.notifSocketService.confirmSlotBooked(
+          this.selectedStationId(),
+          this.selectedDateStr(),
+          slot.rawStart || slot.id
+        );
+
         // Enrich response with game title from local state
         const enriched: BookingResponse = {
           ...response,

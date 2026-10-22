@@ -68,8 +68,13 @@ describe('BookingsComponent', () => {
       'createBooking'
     ]);
     mockNotificationSocketService = jasmine.createSpyObj<NotificationSocketService>('NotificationSocketService', [
-      'sendNotification'
+      'sendNotification',
+      'isSlotHeldByOther',
+      'lockSlot',
+      'unlockSlot',
+      'confirmSlotBooked'
     ]);
+    mockNotificationSocketService.isSlotHeldByOther.and.returnValue(false);
 
     mockBookingService.getStations.and.returnValue(of(testStations));
     mockBookingService.getStationGames.and.callFake((id: string) => {
@@ -451,4 +456,141 @@ describe('BookingsComponent', () => {
       expect(component.bookingSuccessReceipt()).toBeTruthy();
     });
   });
+
+  describe('Payment Modal, Card Validation and Slot Soft-Locking', () => {
+    it('should detect cardBrand based on card number prefixes', () => {
+      component.cardNumber = '4111 1111 1111 1111';
+      expect(component.cardBrand()).toBe('visa');
+
+      component.cardNumber = '5500 0000 0000 0000';
+      expect(component.cardBrand()).toBe('mastercard');
+
+      component.cardNumber = '2221 0000 0000 0000';
+      expect(component.cardBrand()).toBe('mastercard');
+
+      component.cardNumber = '3400 0000 0000 000';
+      expect(component.cardBrand()).toBe('amex');
+
+      component.cardNumber = '3700 0000 0000 000';
+      expect(component.cardBrand()).toBe('amex');
+
+      component.cardNumber = '6011 0000 0000 0000';
+      expect(component.cardBrand()).toBe('generic');
+    });
+
+    it('should validate card number using Luhn algorithm', () => {
+      // 4242 4242 4242 4242 is valid Luhn
+      component.cardNumber = '4242 4242 4242 4242';
+      expect(component.validateLuhn('4242424242424242')).toBeTrue();
+      expect(component.isCardNumberValid()).toBeTrue();
+
+      // Invalid checksum
+      component.cardNumber = '4242 4242 4242 4243';
+      expect(component.validateLuhn('4242424242424243')).toBeFalse();
+      expect(component.isCardNumberValid()).toBeFalse();
+
+      // Too short (< 13 digits)
+      component.cardNumber = '4242 4242';
+      expect(component.isCardNumberValid()).toBeFalse();
+    });
+
+    it('should format card number input in 4-digit groups up to 16 digits', () => {
+      const inputEl = document.createElement('input');
+      inputEl.value = '4242123456789012999';
+      const event = { target: inputEl } as unknown as Event;
+
+      component.onCardNumberInput(event);
+
+      expect(component.cardNumber).toBe('4242 1234 5678 9012');
+      expect(inputEl.value).toBe('4242 1234 5678 9012');
+    });
+
+    it('should format card expiry input as MM/YY', () => {
+      const inputEl = document.createElement('input');
+
+      // Less than 3 digits
+      inputEl.value = '12';
+      component.onCardExpiryInput({ target: inputEl } as unknown as Event);
+      expect(component.cardExpiry).toBe('12');
+
+      // 3 or more digits
+      inputEl.value = '1228';
+      component.onCardExpiryInput({ target: inputEl } as unknown as Event);
+      expect(component.cardExpiry).toBe('12/28');
+      expect(inputEl.value).toBe('12/28');
+    });
+
+    it('should check if slot is held via NotificationSocketService', () => {
+      component.selectedStationId.set('st-01');
+      mockNotificationSocketService.isSlotHeldByOther.and.returnValue(true);
+
+      const held = component.isSlotHeld({
+        id: '10:00',
+        rawStart: '10:00',
+        rawEnd: '11:00',
+        startTime: '10:00 AM',
+        endTime: '11:00 AM',
+        durationHours: 1,
+        isSelected: false,
+        isAvailable: true
+      });
+
+      expect(held).toBeTrue();
+      expect(mockNotificationSocketService.isSlotHeldByOther).toHaveBeenCalledWith(
+        'st-01',
+        component.selectedDateStr(),
+        '10:00'
+      );
+    });
+
+    it('should lock slot when proceeding to payment', () => {
+      component.selectedStationId.set('st-01');
+      component.selectedGameId.set('game-01');
+      const firstAvail = component.availableSlots().find((s) => s.isAvailable);
+      if (firstAvail) component.selectedSlotId.set(firstAvail.id);
+
+      component.onProceedToPayment();
+
+      expect(component.paymentModalOpen()).toBeTrue();
+      expect(mockNotificationSocketService.lockSlot).toHaveBeenCalledWith(
+        'st-01',
+        component.selectedDateStr(),
+        jasmine.any(String)
+      );
+    });
+
+    it('should unlock slot when closing payment modal without receipt', () => {
+      component.selectedStationId.set('st-01');
+      const firstAvail = component.availableSlots().find((s) => s.isAvailable);
+      if (firstAvail) component.selectedSlotId.set(firstAvail.id);
+      component.paymentModalOpen.set(true);
+      component.bookingSuccessReceipt.set(null);
+
+      component.closePaymentModal();
+
+      expect(component.paymentModalOpen()).toBeFalse();
+      expect(mockNotificationSocketService.unlockSlot).toHaveBeenCalledWith(
+        'st-01',
+        component.selectedDateStr(),
+        jasmine.any(String)
+      );
+    });
+
+    it('should confirm slot booked when payment succeeds', () => {
+      component.selectedStationId.set('st-01');
+      component.stationGames.set(testGamesStation1);
+      component.selectedGameId.set('game-01');
+      const firstAvail = component.availableSlots().find((s) => s.isAvailable);
+      if (firstAvail) component.selectedSlotId.set(firstAvail.id);
+
+      component.confirmPayment();
+
+      expect(mockNotificationSocketService.confirmSlotBooked).toHaveBeenCalledWith(
+        'st-01',
+        component.selectedDateStr(),
+        jasmine.any(String)
+      );
+    });
+  });
 });
+

@@ -321,6 +321,45 @@ app.delete('/api/notifications', (req, res) => {
   res.json({ success: true, unreadCount: 0 });
 });
 
+// ── Slot Locks Store for Real-Time Soft-Locking ──────────────────────────────
+const activeSlotLocks = new Map();
+
+// Periodic cleanup of expired locks (5-minute hold limit)
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, lock] of activeSlotLocks.entries()) {
+    if (lock.expiresAt <= now) {
+      activeSlotLocks.delete(key);
+      io.emit('slot_unlocked', { key, stationId: lock.stationId, date: lock.date, timeSlot: lock.timeSlot });
+      console.log(`[SlotLock] Auto-released expired hold on: ${key}`);
+    }
+  }
+}, 5000);
+
+// GET /api/slots/locks
+app.get('/api/slots/locks', (req, res) => {
+  res.json({ success: true, locks: Array.from(activeSlotLocks.values()) });
+});
+
+// POST /api/slots/event (Bridge from backend Spring Boot services)
+app.post('/api/slots/event', (req, res) => {
+  const { event, stationId, date, timeSlot } = req.body;
+  if (!stationId || !date || !timeSlot) {
+    return res.status(400).json({ error: 'Missing slot details (stationId, date, timeSlot)' });
+  }
+  const key = `${stationId}_${date}_${timeSlot}`;
+  if (event === 'BOOKED') {
+    activeSlotLocks.delete(key);
+    io.emit('slot_booked_live', { key, stationId, date, timeSlot });
+    console.log(`[SlotLock HTTP] Slot booked live via backend Spring Boot event: ${key}`);
+  } else if (event === 'RELEASED') {
+    activeSlotLocks.delete(key);
+    io.emit('slot_unlocked', { key, stationId, date, timeSlot });
+    console.log(`[SlotLock HTTP] Slot released/unlocked live via backend Spring Boot event: ${key}`);
+  }
+  res.json({ success: true, key, event });
+});
+
 // ── Socket.IO Connection Handler ──────────────────────────────────────────────
 io.on('connection', (socket) => {
   const handshakeUserId = socket.handshake.auth?.userId || socket.handshake.query?.userId || null;
@@ -349,9 +388,48 @@ io.on('connection', (socket) => {
       notifications: getNotificationsFor(socket.data.userId, socket.data.role, socket.data.email),
       unreadCount: getUnreadCountFor(socket.data.userId, socket.data.role, socket.data.email)
     });
+    // Send active slot locks to client
+    socket.emit('slot_locks', Array.from(activeSlotLocks.values()));
   }
 
   setupClient(handshakeUserId, handshakeRole, handshakeEmail);
+
+  // ── Slot Hold and Release Events ───────────────────────────────────────────
+  socket.on('lock_slot', ({ stationId, date, timeSlot }) => {
+    if (!stationId || !date || !timeSlot) return;
+    const key = `${stationId}_${date}_${timeSlot}`;
+    const expiresAt = Date.now() + 5 * 60 * 1000;
+    const lockInfo = {
+      key,
+      stationId,
+      date,
+      timeSlot,
+      userId: socket.data.userId || 'anonymous',
+      userEmail: socket.data.email,
+      expiresAt
+    };
+    activeSlotLocks.set(key, lockInfo);
+    io.emit('slot_locked', lockInfo);
+    console.log(`[SlotLock] Slot held: ${key} by ${socket.data.email || socket.data.userId}`);
+  });
+
+  socket.on('unlock_slot', ({ stationId, date, timeSlot }) => {
+    if (!stationId || !date || !timeSlot) return;
+    const key = `${stationId}_${date}_${timeSlot}`;
+    if (activeSlotLocks.has(key)) {
+      activeSlotLocks.delete(key);
+      io.emit('slot_unlocked', { key, stationId, date, timeSlot });
+      console.log(`[SlotLock] Slot released: ${key}`);
+    }
+  });
+
+  socket.on('booking_confirmed_slot', ({ stationId, date, timeSlot }) => {
+    if (!stationId || !date || !timeSlot) return;
+    const key = `${stationId}_${date}_${timeSlot}`;
+    activeSlotLocks.delete(key);
+    io.emit('slot_booked_live', { key, stationId, date, timeSlot });
+    console.log(`[SlotLock] Slot booked live: ${key}`);
+  });
 
   socket.on('identify', (payload) => {
     if (payload) {

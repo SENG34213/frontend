@@ -170,6 +170,26 @@
                   </div>
                 }
               </div>
+            } @else if (!item.isUpcoming && (item.status === 'CONFIRMED' || item.status === 'COMPLETED')) {
+              <!-- Actions Row: Session Rating & Review (SDS Section 2.4 & Table C.3) -->
+              <div class="booking-card-actions review-actions">
+                @if (userReviews()[item.id]; as rev) {
+                  <div class="existing-review-pill">
+                    <span class="stars-gold">
+                      {{ '★'.repeat(rev.rating) }}{{ '☆'.repeat(5 - rev.rating) }}
+                    </span>
+                    <span class="review-label">Rated {{ rev.rating }}/5</span>
+                  </div>
+                } @else {
+                  <gc-button
+                    variant="outline"
+                    size="sm"
+                    [attr.aria-label]="'Rate gaming session for ' + item.displayGame"
+                    (btnClick)="openReviewModal(item)">
+                    ⭐ Rate Session
+                  </gc-button>
+                }
+              </div>
             }
           </gc-card>
         }
@@ -320,6 +340,72 @@
     </div>
   }
 </gc-modal>
+
+<!-- Rating & Review Modal (SDS Table C.3 / Table C.5 & Section 2.4) -->
+<gc-modal
+  [isOpen]="isReviewModalOpen()"
+  [title]="'Rate Gaming Session'"
+  (closed)="closeReviewModal()">
+  @if (selectedBookingForReview(); as booking) {
+    <div class="review-modal-body">
+      <div class="review-session-banner">
+        <div class="review-game-title">🎮 {{ booking.displayGame }}</div>
+        <div class="review-station-info">{{ booking.displayStation }} &bull; {{ booking.formattedDate }}</div>
+      </div>
+
+      <div class="rating-picker-section">
+        <span class="rating-picker-label">How was your session?</span>
+        <div class="star-rating-row" role="radiogroup" aria-label="Select star rating from 1 to 5">
+          @for (star of [1, 2, 3, 4, 5]; track star) {
+            <button
+              type="button"
+              class="star-btn"
+              [class.active]="star <= reviewRating()"
+              (click)="setRating(star)"
+              [attr.aria-label]="star + ' star' + (star > 1 ? 's' : '')">
+              ★
+            </button>
+          }
+        </div>
+        <span class="rating-feedback-text">
+          @switch (reviewRating()) {
+            @case (5) { Excellent! DualSense immersion at its peak. }
+            @case (4) { Great session, really enjoyed it. }
+            @case (3) { Good experience overall. }
+            @case (2) { Could have been better. }
+            @case (1) { Had issues with console/game. }
+          }
+        </span>
+      </div>
+
+      <div class="review-comment-section">
+        <label for="review-comment-text" class="comment-label">Feedback or Comments (Optional)</label>
+        <textarea
+          id="review-comment-text"
+          rows="3"
+          [(ngModel)]="reviewComment"
+          class="review-textarea"
+          placeholder="Share your thoughts on the PS5 performance, controllers, or games..."></textarea>
+      </div>
+
+      @if (reviewError()) {
+        <div class="review-error-banner" role="alert">
+          ⚠️ {{ reviewError() }}
+        </div>
+      }
+
+      <div class="modal-actions mt-md flex justify-end gap-sm">
+        <gc-button variant="outline" size="sm" (btnClick)="closeReviewModal()">
+          Cancel
+        </gc-button>
+        <gc-button
+          variant="primary"
+          size="sm"
+          [loading]="isSubmittingReview()"
+          (btnClick)="submitReview()">
+          Submit Review
+        </gc-button>
+      </div>
 <!-- Cancel Booking Confirmation Modal -->
 <gc-modal
   [isOpen]="isCancelModalOpen()"
