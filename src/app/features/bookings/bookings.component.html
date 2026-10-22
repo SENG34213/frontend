@@ -1,11 +1,31 @@
 <div class="booking-page-container container">
+  <!-- Booking Hero Header -->
+  <header class="booking-hero">
+    <div class="hero-badge">
+      <span class="pulse-indicator"></span>
+      <span class="badge-text">INSTANT RESERVATION PORTAL</span>
+    </div>
+    <h1 class="booking-hero-title">BOOK YOUR BATTLE STATION</h1>
+    <p class="booking-hero-subtitle">
+      Pick your date, lock in an hourly slot, choose high-performance hardware, and select your favorite title.
+    </p>
+  </header>
+
   <div class="booking-layout">
     <!-- LEFT COLUMN: Session Date & Time, Console, Games -->
     <div class="booking-content-col">
 
       <!-- 1. SELECT YOUR SESSION -->
       <section class="section-block session-section" aria-labelledby="session-title">
-        <h2 id="session-title" class="section-title">SELECT YOUR SESSION</h2>
+        <div class="section-heading-bar">
+          <div class="section-step-indicator">
+            <span class="step-badge">STEP 01</span>
+          </div>
+          <div class="section-title-wrap">
+            <h2 id="session-title" class="section-title">SELECT YOUR SESSION</h2>
+            <p class="section-subheading">Choose your date and select an available 1-hour time slot</p>
+          </div>
+        </div>
 
         <div class="session-picker-grid">
           <!-- Calendar Card -->
@@ -92,6 +112,7 @@
                   <button
                     type="button"
                     class="slot-btn"
+                    [class.available]="slot.isAvailable && !isSlotHeld(slot)"
                     [class.selected]="slot.id === selectedSlotId() && slot.isAvailable && !isSlotHeld(slot)"
                     [class.occupied]="!slot.isAvailable"
                     [class.booked]="!slot.isAvailable"
@@ -119,8 +140,21 @@
       </section>
 
       <!-- 2. CHOOSE STATION -->
-      <section class="section-block" aria-labelledby="console-title">
-        <h2 id="console-title" class="section-title">CHOOSE STATION</h2>
+      <section class="section-block station-section" aria-labelledby="console-title">
+        <div class="section-heading-bar">
+          <div class="section-step-indicator">
+            <span class="step-badge">STEP 02</span>
+          </div>
+          <div class="section-title-wrap">
+            <div class="title-with-pill">
+              <h2 id="console-title" class="section-title">CHOOSE STATION</h2>
+              @if (activeStations().length > 0) {
+                <span class="station-count-pill">{{ activeStations().length }} Stations Available</span>
+              }
+            </div>
+            <p class="section-subheading">Select your combat rig or console setup</p>
+          </div>
+        </div>
 
         @if (loading()) {
           <div class="consoles-grid">
@@ -165,7 +199,7 @@
                     {{ getStationTypeLabel(station.type) }}
                   </gc-badge>
                   @if (station.id === selectedStationId()) {
-                    <span class="selected-badge">SELECTED</span>
+                    <span class="selected-badge">✓ SELECTED</span>
                   }
                 </div>
 
@@ -189,8 +223,21 @@
       </section>
 
       <!-- 3. AVAILABLE GAMES (station-specific) -->
-      <section class="section-block" aria-labelledby="games-title" aria-live="polite">
-        <h2 id="games-title" class="section-title">AVAILABLE GAMES</h2>
+      <section class="section-block games-section" aria-labelledby="games-title" aria-live="polite">
+        <div class="section-heading-bar">
+          <div class="section-step-indicator">
+            <span class="step-badge">STEP 03</span>
+          </div>
+          <div class="section-title-wrap">
+            <div class="title-with-pill">
+              <h2 id="games-title" class="section-title">AVAILABLE GAMES</h2>
+              @if (selectedStation() && stationGames().length > 0) {
+                <span class="station-count-pill">{{ stationGames().length }} Titles on {{ selectedStation()?.name }}</span>
+              }
+            </div>
+            <p class="section-subheading">Choose which title to have loaded and ready for your arrival</p>
+          </div>
+        </div>
 
         @if (!selectedStationId()) {
           <gc-empty-state
@@ -258,17 +305,24 @@
 
         <!-- Validation hint when game is not selected -->
         @if (selectedStationId() && !selectedGameId() && stationGames().length > 0) {
-          <p class="game-required-hint" role="alert" aria-live="polite">
-            ⚠️ Please select a game to proceed to payment.
-          </p>
+          <div class="game-required-banner" role="alert" aria-live="polite">
+            <span class="banner-icon">⚠️</span>
+            <span class="banner-text">Please select a game to complete reservation and proceed to payment.</span>
+          </div>
         }
       </section>
     </div>
 
-    <!-- RIGHT COLUMN: Booking Summary Panel -->
+    <!-- RIGHT COLUMN: Sticky Booking Summary Panel -->
     <aside class="booking-summary-col">
       <div class="summary-panel" role="complementary" aria-label="Booking Summary">
-        <h2 class="summary-title">BOOKING SUMMARY</h2>
+        <div class="summary-header">
+          <div class="summary-live-tag">
+            <span class="live-pulse"></span>
+            <span>LIVE OVERVIEW</span>
+          </div>
+          <h2 class="summary-title">BOOKING SUMMARY</h2>
+        </div>
 
         <!-- Global error/info banner -->
         @if (bookingErrorMessage() && !paymentModalOpen()) {
@@ -404,7 +458,31 @@
       </div>
     </aside>
   </div>
+
+  <!-- MOBILE STICKY BOTTOM CHECKOUT BAR (Visible only on <= 960px) -->
+  <div class="mobile-sticky-checkout" [class.ready]="canProceedToPayment()">
+    <div class="mobile-checkout-details">
+      <div class="mobile-selection-summary">
+        <span class="mobile-summary-item">{{ selectedStation()?.name || 'No Station' }}</span>
+        <span class="mobile-summary-divider">•</span>
+        <span class="mobile-summary-item">{{ selectedGame()?.title || 'No Game' }}</span>
+      </div>
+      <div class="mobile-checkout-amount">
+        <span class="mobile-amount-label">TOTAL:</span>
+        <span class="mobile-amount-val">LKR {{ totalAmount() | number:'1.2-2' }}</span>
+      </div>
+    </div>
+    <button
+      type="button"
+      class="mobile-checkout-btn"
+      [disabled]="!canProceedToPayment()"
+      (click)="onProceedToPayment()"
+      aria-label="Proceed to checkout">
+      Proceed →
+    </button>
+  </div>
 </div>
+
 
 <!-- CHECKOUT / PAYMENT MODAL -->
 <gc-modal
