@@ -383,7 +383,8 @@
         <textarea
           id="review-comment-text"
           rows="3"
-          [(ngModel)]="reviewComment"
+          [ngModel]="reviewComment()"
+          (ngModelChange)="reviewComment.set($event)"
           class="review-textarea"
           placeholder="Share your thoughts on the PS5 performance, controllers, or games..."></textarea>
       </div>
@@ -406,6 +407,10 @@
           Submit Review
         </gc-button>
       </div>
+    </div>
+  }
+</gc-modal>
+
 <!-- Cancel Booking Confirmation Modal -->
 <gc-modal
   [isOpen]="isCancelModalOpen()"

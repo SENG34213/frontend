@@ -7,6 +7,7 @@ import {
   ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { BookingService } from '../../core/services/booking.service';
 import { MockDataService } from '../../core/services/mock/mock-data.service';
@@ -63,6 +64,7 @@ export interface DateOption {
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     RouterModule,
     CardComponent,
     BadgeComponent,

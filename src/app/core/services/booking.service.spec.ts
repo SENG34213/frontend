@@ -648,6 +648,36 @@ describe('BookingService', () => {
       service.getReviewByBooking('bk-123').subscribe((res) => {
         expect(apiSpy.get).toHaveBeenCalledWith('/bookings/bk-123/review');
         expect(res).toEqual(mockReview);
+        done();
+      });
+    });
+
+    it('should fetch current user reviews via GET /reviews/mine', (done) => {
+      const mockReviews: BookingReview[] = [
+        { id: 'rev-1', bookingId: 'bk-1', userId: 'usr-1', rating: 5, createdAt: '2026-10-21T10:00:00Z' },
+        { id: 'rev-2', bookingId: 'bk-2', userId: 'usr-1', rating: 4, createdAt: '2026-10-21T10:00:00Z' }
+      ];
+      apiSpy.get.and.returnValue(of(mockReviews));
+
+      service.getMyReviews().subscribe((res) => {
+        expect(apiSpy.get).toHaveBeenCalledWith('/reviews/mine');
+        expect(res).toEqual(mockReviews);
+        done();
+      });
+    });
+
+    it('should fetch station rating via GET /reviews/station/:stationId/rating', (done) => {
+      const mockRating = { stationId: 'st-01', averageRating: 4.8 };
+      apiSpy.get.and.returnValue(of(mockRating));
+
+      service.getStationRating('st-01').subscribe((res) => {
+        expect(apiSpy.get).toHaveBeenCalledWith('/reviews/station/st-01/rating');
+        expect(res).toEqual(mockRating);
+        done();
+      });
+    });
+  });
+
   describe('cancelBooking', () => {
     it('should call PATCH /bookings/{id}/cancel with no body and map response given valid booking ID and useMocks is false', (done) => {
       // Arrange
@@ -684,16 +714,6 @@ describe('BookingService', () => {
       });
     });
 
-    it('should fetch current user reviews via GET /reviews/mine', (done) => {
-      const mockReviews: BookingReview[] = [
-        { id: 'rev-1', bookingId: 'bk-1', userId: 'usr-1', rating: 5, createdAt: '2026-10-21T10:00:00Z' },
-        { id: 'rev-2', bookingId: 'bk-2', userId: 'usr-1', rating: 4, createdAt: '2026-10-21T10:00:00Z' }
-      ];
-      apiSpy.get.and.returnValue(of(mockReviews));
-
-      service.getMyReviews().subscribe((res) => {
-        expect(apiSpy.get).toHaveBeenCalledWith('/reviews/mine');
-        expect(res).toEqual(mockReviews);
     it('should return mock cancelled response given useMocks is true', (done) => {
       // Arrange
       const orig = environment.useMocks;
@@ -710,14 +730,6 @@ describe('BookingService', () => {
       });
     });
 
-    it('should fetch station rating via GET /reviews/station/:stationId/rating', (done) => {
-      const mockRating = { stationId: 'st-01', averageRating: 4.8 };
-      apiSpy.get.and.returnValue(of(mockRating));
-
-      service.getStationRating('st-01').subscribe((res) => {
-        expect(apiSpy.get).toHaveBeenCalledWith('/reviews/station/st-01/rating');
-        expect(res).toEqual(mockRating);
-        done();
     it('should expose backend error code given backend returns an error', (done) => {
       // Arrange
       const orig = environment.useMocks;

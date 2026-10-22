@@ -126,15 +126,15 @@ describe('MyBookingsComponent', () => {
       'getMyBookings',
       'getStationAvailability',
       'rescheduleBooking',
+      'cancelBooking',
       'getMyReviews',
       'submitReview'
     ]);
     mockDataSpy = jasmine.createSpyObj('MockDataService', [
       'getMyCustomerBookings',
-      'rescheduleBooking'
+      'rescheduleBooking',
       'cancelBooking'
     ]);
-    mockDataSpy = jasmine.createSpyObj('MockDataService', ['getMyCustomerBookings']);
     toastServiceSpy = jasmine.createSpyObj('ToastService', ['success', 'error', 'info', 'warning']);
     loyaltyServiceSpy = jasmine.createSpyObj('LoyaltyService', ['invalidateCache', 'getBalance', 'getHistory']);
     userServiceSpy = jasmine.createSpyObj('UserService', ['clearCachedProfile', 'getMyProfile']);
@@ -633,8 +633,6 @@ describe('MyBookingsComponent', () => {
       expect(bookingServiceSpy.submitReview).not.toHaveBeenCalled();
     });
   });
-});
-
 
   // ── Cancel Feature Tests ──────────────────────────────────────────────────
 
