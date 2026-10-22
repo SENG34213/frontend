@@ -1,5 +1,6 @@
 export const SRI_LANKA_TIMEZONE = 'Asia/Colombo';
-export const RESCHEDULE_CUTOFF_HOURS = 2;
+export const BOOKING_CHANGE_CUTOFF_HOURS = 2;
+export const RESCHEDULE_CUTOFF_HOURS = BOOKING_CHANGE_CUTOFF_HOURS;
 
 export interface DisplaySlot {
   id: string;
@@ -124,3 +125,42 @@ export function calculateDurationHours(
   return Math.max(1, Math.round(diffMs / (60 * 60 * 1000)));
 }
 
+/**
+ * Calculates start timestamp in milliseconds from startTime and optional bookingDate
+ */
+export function getBookingStartTimestamp(startTime: string, bookingDate?: string): number {
+  if (!startTime) return 0;
+  if (startTime.includes('T')) {
+    const ms = new Date(startTime).getTime();
+    return isNaN(ms) ? 0 : ms;
+  }
+  if (bookingDate) {
+    const normalizedTime = startTime.length === 5 ? `${startTime}:00` : startTime;
+    const ms = new Date(`${bookingDate}T${normalizedTime}+05:30`).getTime();
+    return isNaN(ms) ? 0 : ms;
+  }
+  const ms = new Date(startTime).getTime();
+  return isNaN(ms) ? 0 : ms;
+}
+
+/**
+ * Pure helper to determine if a booking can be cancelled:
+ * status is PENDING or CONFIRMED and now + cutoff <= startTime
+ */
+export function canCancel(
+  booking: { status: string; startTime: string; bookingDate?: string },
+  now: number | Date = Date.now(),
+  cutoffHours = BOOKING_CHANGE_CUTOFF_HOURS
+): boolean {
+  if (!booking) return false;
+  if (booking.status !== 'PENDING' && booking.status !== 'CONFIRMED') {
+    return false;
+  }
+
+  const nowMs = typeof now === 'number' ? now : now.getTime();
+  const startMs = getBookingStartTimestamp(booking.startTime, booking.bookingDate);
+  if (!startMs) return false;
+
+  const cutoffMs = cutoffHours * 60 * 60 * 1000;
+  return nowMs + cutoffMs <= startMs;
+}

@@ -8,11 +8,14 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { BookingService } from '../../core/services/booking.service';
+import { MockDataService } from '../../core/services/mock/mock-data.service';
+import { environment } from '../../../environments/environment';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 import { BookingResponse, BookingStatus } from '../../shared/models/booking.model';
 import { ApiError } from '../../shared/models/api-response.model';
+import { LoyaltyService } from '../../core/services/loyalty.service';
+import { UserService } from '../../core/services/user.service';
 import { CardComponent } from '../../shared/ui/card/card.component';
 import { BadgeComponent, BadgeVariant } from '../../shared/ui/badge/badge.component';
 import { TabsComponent, TabItem } from '../../shared/ui/tabs/tabs.component';
@@ -29,7 +32,9 @@ import {
   getSlotEndTimestamp,
   isWithinCutoffHours,
   calculateDurationHours,
-  RESCHEDULE_CUTOFF_HOURS
+  RESCHEDULE_CUTOFF_HOURS,
+  BOOKING_CHANGE_CUTOFF_HOURS,
+  canCancel
 } from '../../core/utils/slot.utils';
 
 export interface BookingDisplayItem extends BookingResponse {
@@ -42,6 +47,8 @@ export interface BookingDisplayItem extends BookingResponse {
   isUpcoming: boolean;
   sortTimestamp: number;
   canReschedule: boolean;
+  canCancel: boolean;
+  canShowCancel: boolean;
   isWithin2Hours: boolean;
   durationHours: number;
 }
@@ -57,7 +64,6 @@ export interface DateOption {
   imports: [
     CommonModule,
     RouterModule,
-    FormsModule,
     CardComponent,
     BadgeComponent,
     TabsComponent,
@@ -72,9 +78,13 @@ export interface DateOption {
 })
 export class MyBookingsComponent implements OnInit {
   private readonly bookingService = inject(BookingService);
+  private readonly mockData = inject(MockDataService);
   private readonly toastService = inject(ToastService);
+  private readonly loyaltyService = inject(LoyaltyService);
+  private readonly userService = inject(UserService);
 
   readonly RESCHEDULE_CUTOFF_HOURS = RESCHEDULE_CUTOFF_HOURS;
+  readonly BOOKING_CHANGE_CUTOFF_HOURS = BOOKING_CHANGE_CUTOFF_HOURS;
 
   readonly allBookings = signal<BookingDisplayItem[]>([]);
   readonly activeTab = signal<'upcoming' | 'played'>('upcoming');
@@ -91,6 +101,12 @@ export class MyBookingsComponent implements OnInit {
   readonly slotsError = signal<string | null>(null);
   readonly isSubmitting = signal<boolean>(false);
   readonly rescheduleError = signal<string | null>(null);
+
+  // ── Cancel Modal State ──────────────────────────────────────────────────────
+  readonly isCancelModalOpen = signal<boolean>(false);
+  readonly selectedBookingForCancel = signal<BookingDisplayItem | null>(null);
+  readonly isCancelling = signal<boolean>(false);
+  readonly cancelError = signal<string | null>(null);
 
   // ── Computed Lists ──────────────────────────────────────────────────────────
   readonly upcomingBookings = computed(() => {
@@ -198,8 +214,22 @@ export class MyBookingsComponent implements OnInit {
     this.isLoading.set(true);
     this.hasError.set(false);
 
-    this.bookingService.getMyBookings().subscribe({
+    // If in mock mode, use rich customer mock bookings
+    const fetch$ = environment.useMocks
+      ? this.mockData.getMyCustomerBookings()
+      : this.bookingService.getMyBookings();
+
+    fetch$.subscribe({
       next: (list) => {
+        // If real backend returns empty in dev, check fallback
+        if ((!list || list.length === 0) && environment.useMocks) {
+          this.mockData.getMyCustomerBookings().subscribe((mocks) => {
+            this.allBookings.set(mocks.map((b) => this.mapDisplayItem(b)));
+            this.isLoading.set(false);
+          });
+          return;
+        }
+
         const items = (list || []).map((b) => this.mapDisplayItem(b));
         this.allBookings.set(items);
         this.isLoading.set(false);
@@ -476,6 +506,83 @@ export class MyBookingsComponent implements OnInit {
       });
   }
 
+  // ── Cancel Flow ─────────────────────────────────────────────────────────────
+
+  openCancelModal(item: BookingDisplayItem): void {
+    if (item.isWithin2Hours || !item.canShowCancel) return;
+
+    this.selectedBookingForCancel.set(item);
+    this.cancelError.set(null);
+    this.isCancelModalOpen.set(true);
+  }
+
+  closeCancelModal(): void {
+    if (this.isCancelling()) return;
+    this.isCancelModalOpen.set(false);
+    this.selectedBookingForCancel.set(null);
+    this.cancelError.set(null);
+  }
+
+  confirmCancel(): void {
+    const booking = this.selectedBookingForCancel();
+    if (!booking || this.isCancelling()) return;
+
+    this.isCancelling.set(true);
+    this.cancelError.set(null);
+
+    this.bookingService.cancelBooking(booking.id).subscribe({
+      next: (updatedBooking) => {
+        this.isCancelling.set(false);
+        this.isCancelModalOpen.set(false);
+        this.selectedBookingForCancel.set(null);
+
+        this.toastService.success('Booking cancelled', 'Success');
+
+        this.loyaltyService.invalidateCache();
+        this.userService.clearCachedProfile();
+
+        const mapped = this.mapDisplayItem(updatedBooking);
+        this.allBookings.update((items) =>
+          items.map((b) => (b.id === booking.id ? mapped : b))
+        );
+      },
+      error: (err: ApiError) => {
+        this.isCancelling.set(false);
+        const code = err.code || 'UNKNOWN_ERROR';
+
+        if (code === 'TOO_LATE') {
+          this.toastService.error(
+            'Bookings cannot be cancelled within 2 hours of the start time.',
+            'Cancellation Closed'
+          );
+          this.isCancelModalOpen.set(false);
+          this.selectedBookingForCancel.set(null);
+          this.loadBookings();
+        } else if (code === 'ALREADY_CANCELLED') {
+          this.toastService.error(
+            'This booking was already cancelled.',
+            'Already Cancelled'
+          );
+          this.isCancelModalOpen.set(false);
+          this.selectedBookingForCancel.set(null);
+          this.loadBookings();
+        } else if (code === 'NOT_YOUR_BOOKING' || code === 'BOOKING_NOT_FOUND') {
+          this.toastService.error(
+            'This booking can no longer be cancelled. Refreshing your bookings.',
+            'Cannot Cancel'
+          );
+          this.isCancelModalOpen.set(false);
+          this.selectedBookingForCancel.set(null);
+          this.loadBookings();
+        } else {
+          this.cancelError.set(
+            err.message || 'Failed to cancel booking. Please check your connection and try again.'
+          );
+        }
+      }
+    });
+  }
+
   // ── Mapping Helper ──────────────────────────────────────────────────────────
 
   private mapDisplayItem(raw: BookingResponse): BookingDisplayItem {
@@ -518,9 +625,11 @@ export class MyBookingsComponent implements OnInit {
     const isFuture = endTimeMs >= now;
     const isUpcoming = isUpcomingStatus && isFuture && !isCancelled && !isCompleted;
 
-    // Rescheduling rules
-    const isWithin2Hours = isWithinCutoffHours(startTimeMs, RESCHEDULE_CUTOFF_HOURS);
+    // Rescheduling and Cancellation rules
+    const isWithin2Hours = isWithinCutoffHours(startTimeMs, BOOKING_CHANGE_CUTOFF_HOURS);
     const canReschedule = isUpcoming && raw.status === 'CONFIRMED';
+    const canShowCancel = isUpcoming && (raw.status === 'PENDING' || raw.status === 'CONFIRMED');
+    const isCancelEligible = canCancel(raw, now, BOOKING_CHANGE_CUTOFF_HOURS);
     const durationHours = calculateDurationHours(raw.startTime, raw.endTime, raw.bookingDate);
 
     // Formatting date and time slot
@@ -564,6 +673,8 @@ export class MyBookingsComponent implements OnInit {
       isUpcoming,
       sortTimestamp: startTimeMs,
       canReschedule,
+      canCancel: isCancelEligible,
+      canShowCancel,
       isWithin2Hours,
       durationHours
     };
