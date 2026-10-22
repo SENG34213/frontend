@@ -1,0 +1,57 @@
+@if (isLoading()) {
+  <aside class="tournament-ticker loading-ticker" role="region" aria-label="Upcoming tournaments">
+    <div class="ticker-skeleton-wrap">
+      <gc-skeleton shape="text" height="16px" width="70%"></gc-skeleton>
+    </div>
+  </aside>
+} @else if (tournaments().length > 0) {
+  <aside class="tournament-ticker" role="region" aria-label="Upcoming tournaments">
+    <div class="ticker-viewport">
+      <div
+        class="ticker-track"
+        [style.animationDuration]="animationDuration()">
+        <!-- Primary accessible items -->
+        <div class="ticker-group">
+          @for (item of tournaments(); track item.id) {
+            <a [routerLink]="['/tournaments', item.id]" class="ticker-item">
+              <svg class="trophy-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                <path d="M4 22h16"/>
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+              </svg>
+              <span class="ticker-badge">UPCOMING:</span>
+              <span class="ticker-content">
+                {{ item.name }} · {{ item.formattedDate }} · {{ item.formattedFee }} · {{ item.formattedSpots }}
+              </span>
+              <span class="ticker-separator" aria-hidden="true">|</span>
+            </a>
+          }
+        </div>
+
+        <!-- Duplicated copy for seamless infinite loop (hidden from assistive technologies) -->
+        <div class="ticker-group" aria-hidden="true">
+          @for (item of tournaments(); track 'dup-' + item.id) {
+            <a [routerLink]="['/tournaments', item.id]" tabindex="-1" class="ticker-item">
+              <svg class="trophy-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                <path d="M4 22h16"/>
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+              </svg>
+              <span class="ticker-badge">UPCOMING:</span>
+              <span class="ticker-content">
+                {{ item.name }} · {{ item.formattedDate }} · {{ item.formattedFee }} · {{ item.formattedSpots }}
+              </span>
+              <span class="ticker-separator" aria-hidden="true">|</span>
+            </a>
+          }
+        </div>
+      </div>
+    </div>
+  </aside>
+}
