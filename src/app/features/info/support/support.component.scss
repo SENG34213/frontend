@@ -1,0 +1,394 @@
+.support-page {
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+}
+
+// ── Hero Header ──────────────────────────────────────────────────────────────
+.page-hero {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto 3rem;
+
+  .hero-badge-wrap {
+    display: inline-block;
+    margin-bottom: 0.75rem;
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+    color: var(--gc-text-primary);
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1rem, 1.8vw, 1.15rem);
+    color: var(--gc-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+}
+
+// ── Channels Grid ────────────────────────────────────────────────────────────
+.channels-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 3.5rem;
+}
+
+.channel-card {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--gc-transition-fast), border-color var(--gc-transition-fast);
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: var(--gc-primary);
+  }
+
+  .channel-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--gc-radius-sm);
+    background: rgba(37, 99, 235, 0.12);
+    border: 1px solid rgba(37, 99, 235, 0.25);
+    color: var(--gc-primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .channel-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    flex-grow: 1;
+    margin-bottom: 1.25rem;
+  }
+
+  .channel-title {
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: var(--gc-text-muted);
+  }
+
+  .channel-value {
+    font-family: var(--gc-font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gc-text-primary);
+  }
+
+  .channel-desc {
+    font-size: 0.84rem;
+    color: var(--gc-text-secondary);
+    line-height: 1.45;
+    margin: 0.25rem 0 0;
+  }
+
+  .channel-action {
+    display: flex;
+    align-items: center;
+
+    .channel-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--gc-primary-light);
+      text-decoration: none;
+      padding: 0.4rem 0.8rem;
+      background: rgba(37, 99, 235, 0.1);
+      border: 1px solid rgba(37, 99, 235, 0.3);
+      border-radius: var(--gc-radius-sm);
+      transition: all var(--gc-transition-fast);
+
+      &:hover {
+        background: var(--gc-primary);
+        color: #ffffff;
+      }
+    }
+  }
+}
+
+// ── Split Layout: Form & FAQ ─────────────────────────────────────────────────
+.support-split-layout {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ── Ticket Form ──────────────────────────────────────────────────────────────
+.ticket-card {
+  padding: 2.25rem;
+
+  .ticket-card-header {
+    margin-bottom: 1.75rem;
+
+    .ticket-heading {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--gc-text-primary);
+      margin: 0.5rem 0 0.35rem;
+    }
+
+    .ticket-sub {
+      font-size: 0.88rem;
+      color: var(--gc-text-secondary);
+      margin: 0;
+    }
+  }
+}
+
+.support-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .field-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--gc-text-muted);
+  }
+
+  .form-input,
+  .form-select,
+  .form-textarea {
+    width: 100%;
+    background: rgba(8, 11, 17, 0.6);
+    border: 1px solid var(--gc-border-default);
+    border-radius: var(--gc-radius-sm);
+    color: var(--gc-text-primary);
+    padding: 0.65rem 0.85rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color var(--gc-transition-fast), box-shadow var(--gc-transition-fast);
+
+    &:focus {
+      border-color: var(--gc-border-focus);
+      box-shadow: 0 0 10px var(--gc-primary-glow);
+    }
+  }
+
+  .form-select {
+    cursor: pointer;
+
+    option {
+      background: var(--gc-bg-card);
+      color: var(--gc-text-primary);
+    }
+  }
+
+  .form-textarea {
+    resize: vertical;
+    min-height: 90px;
+  }
+
+  .field-error {
+    font-size: 0.75rem;
+    color: var(--gc-status-occupied);
+  }
+
+  .form-submit-row {
+    margin-top: 0.5rem;
+  }
+}
+
+.ticket-success-box {
+  padding: 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+
+  .success-icon-wrap {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: var(--gc-status-available);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .success-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--gc-text-primary);
+    margin: 0;
+  }
+
+  .success-ticket-id {
+    font-size: 0.95rem;
+    color: var(--gc-text-secondary);
+    margin: 0;
+
+    .highlight-id {
+      font-family: var(--gc-font-mono);
+      font-weight: 700;
+      color: var(--gc-primary-light);
+      background: rgba(37, 99, 235, 0.15);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+    }
+  }
+
+  .success-desc {
+    font-size: 0.88rem;
+    color: var(--gc-text-muted);
+    line-height: 1.5;
+    max-width: 420px;
+    margin: 0;
+  }
+
+  .success-actions {
+    margin-top: 0.75rem;
+  }
+}
+
+// ── FAQ Column ───────────────────────────────────────────────────────────────
+.faq-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  .faq-header-box {
+    .faq-heading {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--gc-text-primary);
+      margin: 0.5rem 0 0.35rem;
+    }
+
+    .faq-sub {
+      font-size: 0.88rem;
+      color: var(--gc-text-secondary);
+      margin: 0 0 1rem;
+    }
+  }
+
+  .faq-filter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .faq-filter-btn {
+    background: var(--gc-bg-card);
+    border: 1px solid var(--gc-border-default);
+    color: var(--gc-text-secondary);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all var(--gc-transition-fast);
+
+    &:hover {
+      color: var(--gc-text-primary);
+      border-color: var(--gc-primary);
+    }
+
+    &.active {
+      background: var(--gc-primary);
+      border-color: var(--gc-primary);
+      color: #ffffff;
+    }
+  }
+}
+
+.faq-accordion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.faq-item {
+  border-radius: var(--gc-radius-md);
+  overflow: hidden;
+  transition: border-color var(--gc-transition-fast);
+
+  &.open {
+    border-color: var(--gc-border-focus);
+  }
+
+  .faq-question-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.15rem 1.25rem;
+    background: none;
+    border: none;
+    color: var(--gc-text-primary);
+    text-align: left;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+
+    &:hover {
+      color: var(--gc-primary-light);
+    }
+
+    .faq-toggle-icon {
+      font-family: var(--gc-font-mono);
+      font-size: 1.3rem;
+      line-height: 1;
+      color: var(--gc-text-muted);
+      flex-shrink: 0;
+    }
+  }
+
+  .faq-answer-panel {
+    padding: 0 1.25rem 1.15rem;
+    animation: fadeIn 150ms ease-out;
+
+    .faq-answer-text {
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: var(--gc-text-secondary);
+      margin: 0;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

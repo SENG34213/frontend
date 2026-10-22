@@ -277,5 +277,14 @@ describe('CustomerLayoutComponent', () => {
       notifButtons[0].click();
       expect(notifSocketSpy.toggleDrawer).toHaveBeenCalled();
     });
+
+    it('should render footer links for Location, Privacy, Terms, and Support', () => {
+      const footerLinks = fixture.nativeElement.querySelectorAll('.footer-links a');
+      expect(footerLinks.length).toBe(4);
+      expect(footerLinks[0].getAttribute('href') || footerLinks[0].getAttribute('ng-reflect-router-link')).toContain('location');
+      expect(footerLinks[1].getAttribute('href') || footerLinks[1].getAttribute('ng-reflect-router-link')).toContain('privacy');
+      expect(footerLinks[2].getAttribute('href') || footerLinks[2].getAttribute('ng-reflect-router-link')).toContain('terms');
+      expect(footerLinks[3].getAttribute('href') || footerLinks[3].getAttribute('ng-reflect-router-link')).toContain('support');
+    });
   });
 });

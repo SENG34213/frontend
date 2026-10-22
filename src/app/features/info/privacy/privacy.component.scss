@@ -1,0 +1,247 @@
+.privacy-page {
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+}
+
+// ── Hero Header ──────────────────────────────────────────────────────────────
+.page-hero {
+  text-align: center;
+  max-width: 840px;
+  margin: 0 auto 3rem;
+
+  .hero-badge-wrap {
+    display: inline-block;
+    margin-bottom: 0.75rem;
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+    color: var(--gc-text-primary);
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1rem, 1.8vw, 1.15rem);
+    color: var(--gc-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+}
+
+// ── Table of Contents Pills ──────────────────────────────────────────────────
+.toc-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.toc-pill-btn {
+  background: var(--gc-bg-card);
+  border: 1px solid var(--gc-border-default);
+  color: var(--gc-text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all var(--gc-transition-fast);
+
+  &:hover {
+    color: var(--gc-text-primary);
+    border-color: var(--gc-primary);
+    background: rgba(37, 99, 235, 0.1);
+  }
+
+  &.active {
+    background: var(--gc-primary);
+    border-color: var(--gc-primary);
+    color: #ffffff;
+    box-shadow: 0 0 12px var(--gc-primary-glow);
+  }
+}
+
+// ── Highlights Grid ──────────────────────────────────────────────────────────
+.highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 3rem;
+}
+
+.highlight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: var(--gc-bg-card);
+  border: 1px solid var(--gc-border-default);
+  border-radius: var(--gc-radius-md);
+  box-shadow: var(--gc-shadow-sm);
+
+  .highlight-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--gc-radius-sm);
+    background: rgba(37, 99, 235, 0.12);
+    border: 1px solid rgba(37, 99, 235, 0.25);
+    color: var(--gc-primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.15rem;
+  }
+
+  .highlight-heading {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--gc-text-primary);
+    margin: 0 0 0.25rem;
+  }
+
+  .highlight-desc {
+    font-size: 0.82rem;
+    color: var(--gc-text-muted);
+    line-height: 1.45;
+    margin: 0;
+  }
+}
+
+// ── Policy Section Cards ─────────────────────────────────────────────────────
+.policy-sections-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.policy-section-card {
+  padding: 2rem;
+  scroll-margin-top: 100px;
+  transition: border-color var(--gc-transition-fast);
+
+  &:hover {
+    border-color: var(--gc-border-focus);
+  }
+
+  .section-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gc-text-primary);
+    margin: 0;
+  }
+
+  .section-card-summary {
+    font-size: 0.92rem;
+    color: var(--gc-text-secondary);
+    line-height: 1.6;
+    margin: 0 0 1.25rem;
+  }
+}
+
+.section-bullets-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  .bullet-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+
+    .bullet-dot {
+      flex-shrink: 0;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gc-primary-light);
+      box-shadow: 0 0 6px var(--gc-primary);
+      margin-top: 0.55rem;
+    }
+
+    .bullet-text {
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: var(--gc-text-secondary);
+    }
+  }
+}
+
+// ── DPO Contact Card ─────────────────────────────────────────────────────────
+.dpo-contact-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(139, 92, 246, 0.1) 100%), var(--gc-bg-card);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+
+  @media (max-width: 650px) {
+    flex-direction: column;
+  }
+
+  .dpo-icon-box {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: var(--gc-radius-md);
+    background: rgba(37, 99, 235, 0.18);
+    border: 1px solid rgba(37, 99, 235, 0.35);
+    color: var(--gc-primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .dpo-text {
+    flex-grow: 1;
+
+    .dpo-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--gc-text-primary);
+      margin: 0 0 0.4rem;
+    }
+
+    .dpo-desc {
+      font-size: 0.88rem;
+      color: var(--gc-text-secondary);
+      line-height: 1.5;
+      margin: 0 0 1.25rem;
+    }
+
+    .dpo-links {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+
+      .dpo-email-btn {
+        color: var(--gc-primary-light);
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+}

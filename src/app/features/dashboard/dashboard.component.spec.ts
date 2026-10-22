@@ -82,6 +82,85 @@ describe('DashboardComponent', () => {
     });
   });
 
+  describe('Current Event Loading', () => {
+    const mockTournaments = [
+      {
+        id: 'trn-1',
+        name: 'FC24 Pro Cup',
+        gameTitle: 'EA Sports FC 24',
+        startDate: '2026-11-01T14:00:00Z',
+        entryFee: 1500,
+        maxParticipants: 16,
+        participantCount: 12,
+        registrationDeadline: '2026-10-31T23:59:59Z',
+        status: 'UPCOMING' as const,
+        spotsLeft: 4,
+        progressPercent: 75,
+        isFull: false,
+        isClosingSoon: false
+      },
+      {
+        id: 'trn-2',
+        name: 'Tekken 8 Clash',
+        gameTitle: 'Tekken 8',
+        startDate: '2026-10-25T10:00:00Z',
+        entryFee: 1000,
+        maxParticipants: 32,
+        participantCount: 30,
+        registrationDeadline: '2026-10-24T23:59:59Z',
+        status: 'IN_PROGRESS' as const,
+        spotsLeft: 2,
+        progressPercent: 94,
+        isFull: false,
+        isClosingSoon: false
+      }
+    ];
+
+    it('should prioritize live/ongoing tournament as current event', () => {
+      mockTournamentService.getTournaments.and.returnValue(of(mockTournaments));
+
+      component.loadCurrentEvent();
+
+      expect(component.currentEvent()).toEqual(mockTournaments[1]);
+      expect(component.currentEvent()?.name).toBe('Tekken 8 Clash');
+      expect(component.currentEventLoading()).toBeFalse();
+    });
+
+    it('should select nearest upcoming tournament when no tournament is live', () => {
+      const upcomingTournaments = [
+        { ...mockTournaments[0], startDate: '2026-11-10T14:00:00Z' },
+        { ...mockTournaments[0], id: 'trn-earlier', name: 'Earlier Cup', startDate: '2026-10-28T14:00:00Z' }
+      ];
+      mockTournamentService.getTournaments.and.returnValue(of(upcomingTournaments));
+
+      component.loadCurrentEvent();
+
+      expect(component.currentEvent()?.id).toBe('trn-earlier');
+      expect(component.currentEvent()?.name).toBe('Earlier Cup');
+    });
+
+    it('should set currentEvent to null and currentEventLoading to false on error', () => {
+      mockTournamentService.getTournaments.and.returnValue(throwError(() => new Error('API error')));
+
+      component.loadCurrentEvent();
+
+      expect(component.currentEvent()).toBeNull();
+      expect(component.currentEventLoading()).toBeFalse();
+    });
+
+    it('should navigate to tournament detail on onEventClick with tournament', () => {
+      component.onEventClick(mockTournaments[0]);
+
+      expect(router.navigate).toHaveBeenCalledWith(['/tournaments', 'trn-1']);
+    });
+
+    it('should navigate to tournaments list on onEventClick without tournament', () => {
+      component.onEventClick(null);
+
+      expect(router.navigate).toHaveBeenCalledWith(['/tournaments']);
+    });
+  });
+
   describe('Carousel Navigation', () => {
     it('should slice visibleFeaturedGames correctly according to featuredOffset and featuredVisible', () => {
       // Arrange: 5 games loaded, visible = 3, offset = 0

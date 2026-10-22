@@ -344,6 +344,13 @@
     &:hover {
       color: var(--gc-primary-light);
     }
+
+    &.active {
+      color: var(--gc-primary-light);
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
   }
 }
 

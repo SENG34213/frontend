@@ -1,0 +1,571 @@
+.location-page {
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+}
+
+// ── Hero Header ──────────────────────────────────────────────────────────────
+.page-hero {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto 3rem;
+
+  .hero-badge-wrap {
+    display: inline-block;
+    margin-bottom: 0.75rem;
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+    color: var(--gc-text-primary);
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1rem, 1.8vw, 1.15rem);
+    color: var(--gc-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.75rem;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    .btn-icon {
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+  }
+}
+
+// ── Highlights Grid ──────────────────────────────────────────────────────────
+.highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.highlight-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--gc-bg-card);
+  border: 1px solid var(--gc-border-default);
+  border-radius: var(--gc-radius-md);
+  box-shadow: var(--gc-shadow-sm);
+  transition: transform var(--gc-transition-fast), border-color var(--gc-transition-fast);
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: var(--gc-primary);
+  }
+
+  .highlight-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--gc-radius-sm);
+    background: rgba(37, 99, 235, 0.12);
+    border: 1px solid rgba(37, 99, 235, 0.25);
+    color: var(--gc-primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .highlight-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .highlight-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gc-text-primary);
+    font-family: var(--gc-font-display);
+  }
+
+  .highlight-label {
+    font-size: 0.8rem;
+    color: var(--gc-text-muted);
+  }
+}
+
+// ── Info Split Layout ────────────────────────────────────────────────────────
+.info-split-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 1.5rem;
+  margin-bottom: 3.5rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card-header-styled {
+  margin-bottom: 1.5rem;
+
+  .badge-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+
+  .coord-label {
+    font-family: var(--gc-font-mono);
+    font-size: 0.75rem;
+    color: var(--gc-text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .card-heading {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--gc-text-primary);
+    margin: 0.4rem 0 0;
+  }
+}
+
+.contact-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+
+  .item-icon-box {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--gc-radius-sm);
+    background: rgba(139, 92, 246, 0.12);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    color: var(--gc-accent-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.2rem;
+  }
+
+  .item-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .item-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: var(--gc-text-muted);
+  }
+
+  .item-value {
+    color: var(--gc-text-primary);
+    font-size: 0.95rem;
+    margin: 0;
+  }
+
+  .item-link {
+    color: var(--gc-primary-light);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .item-sub {
+    font-size: 0.8rem;
+    color: var(--gc-text-muted);
+  }
+}
+
+// ── Map Radar Simulation ─────────────────────────────────────────────────────
+.map-simulation-box {
+  position: relative;
+  height: 180px;
+  background: #080c16;
+  border: 1px solid var(--gc-border-default);
+  border-radius: var(--gc-radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--gc-transition-fast), box-shadow var(--gc-transition-fast);
+
+  &:hover {
+    border-color: var(--gc-primary);
+    box-shadow: 0 0 20px rgba(37, 99, 235, 0.2);
+
+    .map-caption {
+      color: var(--gc-primary-light);
+    }
+  }
+
+  .map-grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(37, 99, 235, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(37, 99, 235, 0.08) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .radar-scan {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(37, 99, 235, 0.18) 0%, transparent 60%);
+    animation: radarPulse 3s infinite ease-out;
+  }
+
+  .map-pin-pulse {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+
+    .pin-point {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #3b82f6;
+      box-shadow: 0 0 12px #3b82f6;
+    }
+
+    .pulse-ring {
+      position: absolute;
+      top: -7px;
+      left: calc(50% - 14px);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid #3b82f6;
+      animation: pingRing 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+
+    .pin-text {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #ffffff;
+      background: rgba(15, 23, 42, 0.85);
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+  }
+
+  .map-caption {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--gc-text-muted);
+    transition: color var(--gc-transition-fast);
+  }
+}
+
+@keyframes radarPulse {
+  0% { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+@keyframes pingRing {
+  0% { transform: scale(0.9); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+// ── Schedule Table ───────────────────────────────────────────────────────────
+.schedule-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.schedule-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(15, 21, 35, 0.6);
+  border: 1px solid var(--gc-border-subtle);
+  border-radius: var(--gc-radius-sm);
+
+  .day-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .day-name {
+    font-weight: 600;
+    color: var(--gc-text-primary);
+    font-size: 0.9rem;
+  }
+
+  .day-note {
+    font-size: 0.75rem;
+    color: var(--gc-text-muted);
+  }
+
+  .hours-badge {
+    font-family: var(--gc-font-mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gc-status-available);
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+}
+
+.transport-box {
+  padding: 1.25rem;
+  background: rgba(19, 26, 44, 0.5);
+  border: 1px solid var(--gc-border-default);
+  border-radius: var(--gc-radius-sm);
+
+  .transport-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--gc-text-primary);
+    margin: 0 0 0.75rem;
+
+    svg {
+      color: var(--gc-primary-light);
+    }
+  }
+
+  .transport-list {
+    margin: 0;
+    padding-left: 1.2rem;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--gc-text-secondary);
+
+    li + li {
+      margin-top: 0.4rem;
+    }
+
+    strong {
+      color: var(--gc-text-primary);
+    }
+  }
+}
+
+// ── Hardware Section ─────────────────────────────────────────────────────────
+.stations-section {
+  margin-bottom: 3.5rem;
+}
+
+.section-header-centered {
+  text-align: center;
+  max-width: 650px;
+  margin: 0 auto 2.5rem;
+
+  .section-title {
+    font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+    font-weight: 800;
+    color: var(--gc-text-primary);
+    margin: 0.5rem 0 0.75rem;
+  }
+
+  .section-subtitle {
+    font-size: 0.95rem;
+    color: var(--gc-text-secondary);
+    line-height: 1.5;
+  }
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.feature-card {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .feature-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .feature-icon-wrap {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--gc-radius-sm);
+    background: rgba(37, 99, 235, 0.15);
+    border: 1px solid rgba(37, 99, 235, 0.3);
+    color: var(--gc-primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .feature-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--gc-text-primary);
+    margin: 0;
+  }
+
+  .feature-desc {
+    font-size: 0.88rem;
+    color: var(--gc-text-secondary);
+    line-height: 1.5;
+    margin: 0 0 1.25rem;
+    flex-grow: 1;
+  }
+
+  .specs-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .spec-tag {
+    font-size: 0.75rem;
+    color: var(--gc-text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--gc-border-subtle);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+  }
+}
+
+// ── Amenities Section ────────────────────────────────────────────────────────
+.amenities-section {
+  margin-bottom: 3.5rem;
+
+  .amenities-box {
+    padding: 2rem;
+  }
+
+  .amenities-heading {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gc-text-primary);
+    margin: 0 0 1.5rem;
+  }
+
+  .amenities-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .amenity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+
+    .check-icon {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--gc-status-available);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0.2rem;
+    }
+
+    .amenity-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--gc-text-primary);
+      margin: 0 0 0.25rem;
+    }
+
+    .amenity-desc {
+      font-size: 0.82rem;
+      color: var(--gc-text-muted);
+      line-height: 1.45;
+      margin: 0;
+    }
+  }
+}
+
+// ── Bottom CTA ───────────────────────────────────────────────────────────────
+.bottom-cta-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 2.25rem;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(139, 92, 246, 0.12) 100%), var(--gc-bg-card);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .cta-text {
+    h3 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--gc-text-primary);
+      margin: 0 0 0.4rem;
+    }
+
+    p {
+      font-size: 0.9rem;
+      color: var(--gc-text-secondary);
+      margin: 0;
+    }
+  }
+
+  .cta-btn-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+}

@@ -57,18 +57,76 @@
         </div>
       </div>
 
-      <div class="hero-right" aria-hidden="true">
-        <!-- Event card overlay -->
-        <div class="hero-event-card">
-          <span class="event-label">CURRENT EVENT</span>
-          <p class="event-name">FC24 OPEN CUP</p>
-          <p class="event-time">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-            Starts Saturday, 4PM
-          </p>
-        </div>
+      <div class="hero-right">
+        <!-- Event card overlay with real event data -->
+        @if (currentEventLoading()) {
+          <div class="hero-event-card loading">
+            <gc-skeleton shape="text" width="55%" height="12px"></gc-skeleton>
+            <gc-skeleton shape="text" width="85%" height="22px"></gc-skeleton>
+            <gc-skeleton shape="text" width="70%" height="14px"></gc-skeleton>
+          </div>
+        } @else if (currentEvent()) {
+          <div
+            class="hero-event-card interactive"
+            role="button"
+            tabindex="0"
+            (click)="onEventClick(currentEvent())"
+            (keydown.enter)="onEventClick(currentEvent())"
+            (keydown.space)="onEventClick(currentEvent()); $event.preventDefault()"
+            [attr.aria-label]="currentEvent()!.name + ' - Click to view tournament details'">
+            <div class="event-card-top">
+              <span class="event-label" [class.live]="currentEvent()!.status === 'ONGOING' || currentEvent()!.status === 'IN_PROGRESS'">
+                @if (currentEvent()!.status === 'ONGOING' || currentEvent()!.status === 'IN_PROGRESS') {
+                  <span class="live-dot"></span>
+                  LIVE EVENT
+                } @else {
+                  CURRENT EVENT
+                }
+              </span>
+              @if (currentEvent()!.gameTitle) {
+                <span class="event-game-chip">{{ currentEvent()!.gameTitle }}</span>
+              }
+            </div>
+
+            <p class="event-name">{{ currentEvent()!.name }}</p>
+
+            <p class="event-time">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              {{ getEventTimeDisplay(currentEvent()!) }}
+            </p>
+
+            <div class="event-meta-footer">
+              <span class="event-fee-badge">
+                {{ currentEvent()!.entryFee === 0 ? 'FREE ENTRY' : ('LKR ' + (currentEvent()!.entryFee | number)) }}
+              </span>
+              @if (currentEvent()!.spotsLeft !== undefined) {
+                <span class="event-spots-badge">
+                  {{ currentEvent()!.spotsLeft }} {{ currentEvent()!.spotsLeft === 1 ? 'spot left' : 'spots left' }}
+                </span>
+              }
+            </div>
+          </div>
+        } @else {
+          <!-- Fallback when no active tournaments exist -->
+          <div
+            class="hero-event-card interactive"
+            role="button"
+            tabindex="0"
+            (click)="joinTournament()"
+            (keydown.enter)="joinTournament()"
+            aria-label="View upcoming tournaments">
+            <span class="event-label">CURRENT EVENT</span>
+            <p class="event-name">TOURNAMENTS HUB</p>
+            <p class="event-time">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              Click to browse upcoming events
+            </p>
+          </div>
+        }
       </div>
     </div>
   </section>

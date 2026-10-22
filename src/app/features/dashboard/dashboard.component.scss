@@ -202,39 +202,136 @@
 }
 
 .hero-event-card {
-  background: var(--gc-bg-card);
+  background: linear-gradient(135deg, rgba(19, 26, 44, 0.95) 0%, rgba(13, 18, 31, 0.98) 100%);
   border: 1px solid var(--gc-border-default);
   border-radius: var(--gc-radius-lg);
-  padding: var(--gc-spacing-md) var(--gc-spacing-lg);
-  min-width: 220px;
+  padding: 1.15rem 1.35rem;
+  min-width: 250px;
+  max-width: 320px;
   backdrop-filter: var(--gc-backdrop-blur);
-  box-shadow: var(--gc-shadow-md);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: all var(--gc-transition-fast);
+
+  &.interactive {
+    cursor: pointer;
+
+    &:hover {
+      transform: translateY(-3px);
+      border-color: var(--gc-primary-light);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 16px var(--gc-primary-glow);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--gc-primary);
+      outline-offset: 2px;
+    }
+  }
+
+  &.loading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+}
+
+.event-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
 .event-label {
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--gc-accent-light);
+
+  &.live {
+    color: #34d399;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 6px #10b981;
+      animation: blink 1.4s ease-in-out infinite;
+    }
+  }
+}
+
+.event-game-chip {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--gc-primary-light);
+  background: rgba(37, 99, 235, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 1px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
 }
 
 .event-name {
   font-family: var(--gc-font-display);
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: var(--gc-text-primary);
-  margin: var(--gc-spacing-xs) 0;
+  margin: 0.15rem 0 0.25rem;
   text-transform: uppercase;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
 }
 
 .event-time {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: var(--gc-text-muted);
   display: flex;
   align-items: center;
-  gap: var(--gc-spacing-xs);
+  gap: 0.4rem;
   margin: 0;
+
+  svg {
+    color: var(--gc-primary-light);
+    flex-shrink: 0;
+  }
+}
+
+.event-meta-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+  .event-fee-badge {
+    font-family: var(--gc-font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--gc-primary-light);
+  }
+
+  .event-spots-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--gc-text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
 }
 
 // ─── FEATURED GAMES ───────────────────────────────────────────────────────────

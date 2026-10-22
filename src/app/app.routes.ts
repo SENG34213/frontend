@@ -106,6 +106,26 @@ export const routes: Routes = [
           import('./features/loyalty/loyalty.component').then((m) => m.LoyaltyComponent)
       },
       {
+        path: 'location',
+        loadComponent: () =>
+          import('./features/info/location/location.component').then((m) => m.LocationComponent)
+      },
+      {
+        path: 'privacy',
+        loadComponent: () =>
+          import('./features/info/privacy/privacy.component').then((m) => m.PrivacyComponent)
+      },
+      {
+        path: 'terms',
+        loadComponent: () =>
+          import('./features/info/terms/terms.component').then((m) => m.TermsComponent)
+      },
+      {
+        path: 'support',
+        loadComponent: () =>
+          import('./features/info/support/support.component').then((m) => m.SupportComponent)
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'

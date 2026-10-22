@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { BookingService } from '../../core/services/booking.service';
+import { TournamentService, TournamentViewItem } from '../../core/services/tournament.service';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { BadgeComponent } from '../../shared/ui/badge/badge.component';
 import { SkeletonComponent } from '../../shared/ui/skeleton/skeleton.component';
@@ -37,12 +38,16 @@ export class DashboardComponent implements OnInit {
   readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly bookingService = inject(BookingService);
+  private readonly tournamentService = inject(TournamentService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly featuredGames = signal<Game[]>([]);
   readonly featuredLoading = signal(true);
   readonly featuredOffset = signal(0);
   readonly featuredVisible = 3; // cards shown at once
+
+  readonly currentEvent = signal<TournamentViewItem | null>(null);
+  readonly currentEventLoading = signal<boolean>(true);
 
   readonly whyItems = [
     {
@@ -73,6 +78,7 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadFeaturedGames();
+    this.loadCurrentEvent();
   }
 
   private loadFeaturedGames(): void {
@@ -88,6 +94,75 @@ export class DashboardComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  loadCurrentEvent(): void {
+    this.currentEventLoading.set(true);
+    this.tournamentService.getTournaments().subscribe({
+      next: (tournaments) => {
+        if (tournaments && tournaments.length > 0) {
+          // 1. Look for live/ongoing tournament
+          const ongoing = tournaments.find(
+            (t) => t.status === 'ONGOING' || t.status === 'IN_PROGRESS'
+          );
+          if (ongoing) {
+            this.currentEvent.set(ongoing);
+          } else {
+            // 2. Pick nearest upcoming tournament
+            const now = Date.now();
+            const upcoming = tournaments
+              .filter((t) => {
+                const isUpcomingStatus = t.status === 'UPCOMING' || t.status === 'REGISTRATION_OPEN';
+                const start = new Date(t.startDate).getTime();
+                return isUpcomingStatus && (!isNaN(start) ? start >= now : true);
+              })
+              .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+            this.currentEvent.set(upcoming[0] || tournaments[0]);
+          }
+        } else {
+          this.currentEvent.set(null);
+        }
+        this.currentEventLoading.set(false);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.currentEvent.set(null);
+        this.currentEventLoading.set(false);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  getEventTimeDisplay(event: TournamentViewItem): string {
+    if (event.status === 'ONGOING' || event.status === 'IN_PROGRESS') {
+      return 'Live Now • In Progress';
+    }
+    return this.formatEventDate(event.startDate);
+  }
+
+  private formatEventDate(isoString?: string): string {
+    if (!isoString) return 'Starts Saturday, 4PM';
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return 'Starts soon';
+
+    try {
+      const weekday = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Colombo', weekday: 'short' }).format(date);
+      const day = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Colombo', day: 'numeric' }).format(date);
+      const month = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Colombo', month: 'short' }).format(date);
+      const time = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Colombo', hour: 'numeric', minute: '2-digit', hour12: true }).format(date);
+      return `Starts ${weekday} ${day} ${month}, ${time}`;
+    } catch {
+      return `Starts ${date.toLocaleDateString()}`;
+    }
+  }
+
+  onEventClick(event?: TournamentViewItem | null): void {
+    if (event?.id) {
+      this.router.navigate(['/tournaments', event.id]);
+    } else {
+      this.router.navigate(['/tournaments']);
+    }
   }
 
   // ─── Featured carousel ────────────────────────────────────────────────────

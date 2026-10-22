@@ -1,0 +1,79 @@
+<div class="terms-page container">
+  <!-- Header -->
+  <header class="page-hero">
+    <div class="hero-badge-wrap">
+      <gc-badge variant="accent" [showDot]="true">HOUSE GUIDELINES</gc-badge>
+    </div>
+    <h1 class="hero-title">
+      Terms of Service & <span class="text-gradient">Lounge Rules</span>
+    </h1>
+    <p class="hero-subtitle">
+      Last Updated: {{ lastUpdated }} • Terms Version {{ version }}<br>
+      Ensuring an exhilarating, fair, and safe gaming experience for all players in Jaffna.
+    </p>
+
+    <!-- Category Filter Bar -->
+    <div class="category-tabs" role="tablist" aria-label="Terms Categories">
+      @for (cat of categories; track cat.id) {
+        <button
+          type="button"
+          class="category-tab-btn"
+          role="tab"
+          [attr.aria-selected]="selectedCategory() === cat.id"
+          [class.active]="selectedCategory() === cat.id"
+          (click)="setCategory(cat.id)">
+          {{ cat.label }}
+        </button>
+      }
+    </div>
+  </header>
+
+  <!-- Rules List -->
+  <section class="rules-container" aria-label="Lounge Rules and Guidelines">
+    @for (rule of filteredRules(); track rule.number) {
+      <article class="rule-card glass-panel">
+        <div class="rule-card-header">
+          <span class="rule-number">{{ rule.number }}</span>
+          <div class="rule-header-content">
+            <span class="rule-badge-tag">{{ rule.category | uppercase }}</span>
+            <h2 class="rule-title">{{ rule.title }}</h2>
+          </div>
+        </div>
+
+        <p class="rule-summary">{{ rule.description }}</p>
+
+        <div class="clauses-grid">
+          @for (clause of rule.clauses; track clause) {
+            <div class="clause-item">
+              <div class="clause-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+              <p class="clause-text">{{ clause }}</p>
+            </div>
+          }
+        </div>
+      </article>
+    }
+  </section>
+
+  <!-- Support & Acceptance Notice -->
+  <div class="terms-acceptance-banner glass-panel">
+    <div class="banner-icon-box">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
+      </svg>
+    </div>
+    <div class="banner-content">
+      <h3 class="banner-heading">Need Clarification on Our Policies?</h3>
+      <p class="banner-desc">
+        By creating an account or reserving a console pod, you agree to adhere to these house rules. If you have questions about tournament registration fees, hardware policies, or refunds, our desk team is ready to help.
+      </p>
+      <div class="banner-actions">
+        <gc-button variant="outline" size="sm" routerLink="/support">CONTACT SUPPORT</gc-button>
+        <gc-button variant="primary" size="sm" routerLink="/bookings">BOOK A SLOT</gc-button>
+      </div>
+    </div>
+  </div>
+</div>
