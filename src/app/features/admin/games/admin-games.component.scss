@@ -1,33 +1,29 @@
 .games-page-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  padding: 1.5rem;
+  gap: 24px;
+  padding: 0;
+  max-width: 1600px;
+  margin: 0 auto;
   width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   color: var(--color-text-main, #f8fafc);
-
-  @media (max-width: 425px) {
-    padding: 1rem 0.75rem;
-  }
-
-  @media (max-width: 360px) {
-    padding: 0.75rem 0.5rem;
-  }
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: flex-end;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 16px;
+  margin-bottom: 8px;
 
   .header-tags {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.5rem;
+    gap: 12px;
+    margin-bottom: 8px;
     flex-wrap: wrap;
 
     .subtext {
@@ -39,9 +35,11 @@
   }
 
   .page-title {
-    font-size: clamp(1.35rem, 4.5vw, 1.75rem);
-    font-weight: 700;
-    margin: 0;
+    font-family: var(--gc-font-display);
+    font-size: clamp(1.4rem, 3.5vw, 2rem);
+    font-weight: 800;
+    margin: 0 0 6px 0;
+    line-height: 1.2;
     letter-spacing: -0.02em;
     background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
     -webkit-background-clip: text;
@@ -49,32 +47,42 @@
   }
 
   .page-subtitle {
-    font-size: 0.9375rem;
+    font-size: 0.925rem;
     color: var(--color-text-muted, #94a3b8);
-    margin: 0.25rem 0 0 0;
-    max-width: 620px;
-
-    @media (max-width: 425px) {
-      font-size: 0.875rem;
-    }
+    margin: 0;
+    max-width: 760px;
+    line-height: 1.5;
   }
 }
 
 // ── Stat KPI Cards ───────────────────────────────────────────────────────────
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+
+  @media (min-width: 1280px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  @media (min-width: 1024px) and (max-width: 1279px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+  }
 
   .stat-card {
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 1.25rem;
+    background: var(--gc-bg-card);
+    border: 1px solid var(--gc-border-default);
+    border-radius: 16px;
+    padding: 24px;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    gap: 16px;
+    box-shadow: var(--gc-shadow-sm);
 
     .stat-icon {
       font-size: 2rem;

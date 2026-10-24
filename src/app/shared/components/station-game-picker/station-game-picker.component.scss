@@ -54,16 +54,21 @@
 
 .sgp-stations-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--gc-spacing-md);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+  align-items: stretch;
+  padding: 4px;
 }
 
 .sgp-station-card {
   background: var(--gc-bg-card);
   border: 1px solid var(--gc-border-default);
-  border-radius: var(--gc-radius-lg);
+  border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   transition: transform var(--gc-transition-normal), border-color var(--gc-transition-normal),
     box-shadow var(--gc-transition-normal);
   outline: none;
@@ -122,6 +127,9 @@
 
 .sgp-station-info {
   padding: var(--gc-spacing-md);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .sgp-station-name {
@@ -153,6 +161,8 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--gc-spacing-xs);
+  margin-top: auto;
+  padding-top: var(--gc-spacing-sm);
 }
 
 .sgp-rate {
@@ -235,20 +245,25 @@
 
 .sgp-games-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--gc-spacing-md);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+  align-items: stretch;
+  padding: 4px;
 }
 
 .sgp-game-card {
-  border-radius: var(--gc-radius-md);
+  border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
   border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   transition: transform var(--gc-transition-normal), border-color var(--gc-transition-normal);
   outline: none;
 
   &:hover {
-    transform: scale(1.04);
+    transform: translateY(-3px);
     border-color: var(--gc-accent);
 
     .sgp-book-prompt {
@@ -264,14 +279,15 @@
 
   &.sgp-game-selected {
     border-color: var(--gc-primary);
-    box-shadow: 0 0 0 2px var(--gc-primary-glow);
+    box-shadow: 0 0 0 2px var(--gc-primary), var(--gc-shadow-glow-blue);
   }
 }
 
 .sgp-game-cover-wrap {
   position: relative;
   width: 100%;
-  padding-top: 140%; // portrait ratio
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
 
   .sgp-game-cover {
     position: absolute;
@@ -383,19 +399,17 @@
 
 // ─── Responsive ───────────────────────────────────────────────────────────────
 
-@media (max-width: 640px) {
-  .sgp-stations-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
+@media (min-width: 768px) and (max-width: 1023px) {
+  .sgp-stations-grid,
   .sgp-games-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 400px) {
+@media (max-width: 767px) {
   .sgp-stations-grid,
   .sgp-games-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
