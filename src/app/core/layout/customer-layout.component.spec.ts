@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { signal } from '@angular/core';
+import { signal, WritableSignal } from '@angular/core';
 import { of } from 'rxjs';
 import { CustomerLayoutComponent } from './customer-layout.component';
 import { AuthService } from '../services/auth.service';
@@ -292,7 +292,7 @@ describe('CustomerLayoutComponent', () => {
   describe('Guest / Landing Page Mode (Unauthenticated)', () => {
     beforeEach(() => {
       authServiceSpy.currentUser.set(null);
-      (authServiceSpy.isAuthenticated as any).set(false);
+      (authServiceSpy.isAuthenticated as WritableSignal<boolean>).set(false);
       fixture.detectChanges();
     });
 

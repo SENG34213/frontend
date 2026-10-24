@@ -4,11 +4,12 @@ import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { DashboardComponent } from './dashboard.component';
 import { BookingService } from '../../core/services/booking.service';
-import { TournamentService } from '../../core/services/tournament.service';
+import { TournamentService, TournamentViewItem } from '../../core/services/tournament.service';
 import { Game } from '../../shared/models';
 
-import { signal } from '@angular/core';
+import { signal, WritableSignal } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
+import { TokenPayload } from '../../shared/models/auth.model';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
@@ -24,6 +25,47 @@ describe('DashboardComponent', () => {
     { id: 'g-3', title: 'Gran Turismo 7', featured: true, coverImage: 'gt7.jpg' },
     { id: 'g-4', title: 'Elden Ring', featured: true, coverImage: 'eldenring.jpg' },
     { id: 'g-5', title: 'EA FC 24', featured: true, coverImage: 'eafc24.jpg' }
+  ];
+
+  const mockTournaments: TournamentViewItem[] = [
+    {
+      id: 'trn-1',
+      name: 'FC24 Pro Cup',
+      gameTitle: 'EA Sports FC 24',
+      startDate: '2026-11-01T14:00:00Z',
+      endDate: '2026-11-01T20:00:00Z',
+      entryFee: 1500,
+      maxParticipants: 16,
+      participantCount: 12,
+      registrationDeadline: '2026-10-31T23:59:59Z',
+      status: 'UPCOMING',
+      isRegistrationOpen: true,
+      createdByAdminId: 'admin-1',
+      createdAt: '2026-10-01T00:00:00Z',
+      spotsLeft: 4,
+      progressPercent: 75,
+      isFull: false,
+      isClosingSoon: false
+    },
+    {
+      id: 'trn-2',
+      name: 'Tekken 8 Clash',
+      gameTitle: 'Tekken 8',
+      startDate: '2026-10-25T10:00:00Z',
+      endDate: '2026-10-25T18:00:00Z',
+      entryFee: 1000,
+      maxParticipants: 32,
+      participantCount: 30,
+      registrationDeadline: '2026-10-24T23:59:59Z',
+      status: 'IN_PROGRESS',
+      isRegistrationOpen: false,
+      createdByAdminId: 'admin-1',
+      createdAt: '2026-10-01T00:00:00Z',
+      spotsLeft: 2,
+      progressPercent: 94,
+      isFull: false,
+      isClosingSoon: false
+    }
   ];
 
   beforeEach(async () => {
@@ -105,39 +147,6 @@ describe('DashboardComponent', () => {
   });
 
   describe('Current Event Loading', () => {
-    const mockTournaments = [
-      {
-        id: 'trn-1',
-        name: 'FC24 Pro Cup',
-        gameTitle: 'EA Sports FC 24',
-        startDate: '2026-11-01T14:00:00Z',
-        entryFee: 1500,
-        maxParticipants: 16,
-        participantCount: 12,
-        registrationDeadline: '2026-10-31T23:59:59Z',
-        status: 'UPCOMING' as const,
-        spotsLeft: 4,
-        progressPercent: 75,
-        isFull: false,
-        isClosingSoon: false
-      },
-      {
-        id: 'trn-2',
-        name: 'Tekken 8 Clash',
-        gameTitle: 'Tekken 8',
-        startDate: '2026-10-25T10:00:00Z',
-        entryFee: 1000,
-        maxParticipants: 32,
-        participantCount: 30,
-        registrationDeadline: '2026-10-24T23:59:59Z',
-        status: 'IN_PROGRESS' as const,
-        spotsLeft: 2,
-        progressPercent: 94,
-        isFull: false,
-        isClosingSoon: false
-      }
-    ];
-
     it('should prioritize live/ongoing tournament as current event', () => {
       mockTournamentService.getTournaments.and.returnValue(of(mockTournaments));
 
@@ -268,7 +277,7 @@ describe('DashboardComponent', () => {
     });
 
     it('should navigate to tournament detail on onTournamentClick when authenticated', () => {
-      component.onTournamentClick({ id: 'trn-1' } as any);
+      component.onTournamentClick(mockTournaments[0]);
       expect(router.navigate).toHaveBeenCalledWith(['/tournaments', 'trn-1']);
     });
 
@@ -279,8 +288,8 @@ describe('DashboardComponent', () => {
 
     describe('Guest / Unauthenticated Landing Mode', () => {
       beforeEach(() => {
-        (mockAuthService.isAuthenticated as any).set(false);
-        (mockAuthService.currentUser as any).set(null);
+        (mockAuthService.isAuthenticated as WritableSignal<boolean>).set(false);
+        (mockAuthService.currentUser as WritableSignal<TokenPayload | null>).set(null);
       });
 
       it('should redirect to /login with returnUrl when bookSlot is called by guest', () => {
@@ -319,14 +328,14 @@ describe('DashboardComponent', () => {
       });
 
       it('should redirect to /login with returnUrl when onEventClick is called by guest', () => {
-        component.onEventClick({ id: 'trn-1' } as any);
+        component.onEventClick(mockTournaments[0]);
         expect(router.navigate).toHaveBeenCalledWith(['/login'], {
           queryParams: { returnUrl: '/tournaments/trn-1' }
         });
       });
 
       it('should redirect to /login with returnUrl when onTournamentClick is called by guest', () => {
-        component.onTournamentClick({ id: 'trn-1' } as any);
+        component.onTournamentClick(mockTournaments[0]);
         expect(router.navigate).toHaveBeenCalledWith(['/login'], {
           queryParams: { returnUrl: '/tournaments/trn-1' }
         });
