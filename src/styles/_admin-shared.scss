@@ -1,0 +1,368 @@
+/* ==========================================================================
+   Gaming Castle — Shared Admin Stylesheet (_admin-shared.scss)
+   Harmonized spacing tokens, card layouts, tables, headers, and forms
+   ========================================================================== */
+
+/* ── Container Layout ───────────────────────────────────────────────────────── */
+.admin-page-container {
+  padding: var(--space-6, 32px);
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+
+  @media (max-width: 1024px) {
+    padding: var(--space-5, 24px);
+  }
+
+  @media (max-width: 768px) {
+    padding: var(--space-4, 16px);
+  }
+}
+
+/* ── Unified Page Header ────────────────────────────────────────────────────── */
+.admin-page-header,
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-4, 16px);
+  margin-bottom: var(--space-5, 24px);
+  flex-wrap: wrap;
+
+  .header-left {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2, 8px);
+    min-width: 0;
+    flex: 1 1 320px;
+  }
+
+  .header-tags,
+  .badge-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 8px);
+    margin-bottom: 2px;
+    flex-wrap: wrap;
+  }
+
+  .page-title {
+    font-family: var(--gc-font-display);
+    font-size: clamp(1.4rem, 3.5vw, 2rem);
+    font-weight: 800;
+    color: var(--gc-text-primary);
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle,
+  .page-subtitle {
+    color: var(--gc-text-secondary);
+    font-size: 0.925rem;
+    line-height: 1.5;
+    max-width: 760px;
+    margin: 0;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3, 12px);
+    flex-wrap: wrap;
+
+    @media (max-width: 480px) {
+      width: 100%;
+      button, .gc-button, ::ng-deep .gc-button {
+        flex: 1 1 auto;
+      }
+    }
+  }
+}
+
+/* ── Consistent Stat & KPI Grid ─────────────────────────────────────────────── */
+.admin-stat-grid,
+.stat-grid,
+.stats-grid,
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-5, 24px);
+  margin-bottom: var(--space-6, 32px);
+  align-items: stretch;
+
+  @media (min-width: 1280px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  @media (min-width: 1024px) and (max-width: 1279px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Standard Stat Cards (when not using gc-card) ────────────────────────────── */
+.admin-stat-card,
+.stat-card {
+  background: var(--gc-bg-card);
+  border: 1px solid var(--gc-border-default);
+  border-radius: 16px;
+  padding: var(--space-5, 24px);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 16px);
+  transition: all var(--gc-transition-fast);
+  box-shadow: var(--gc-shadow-sm);
+
+  &:hover {
+    border-color: var(--gc-border-focus);
+    transform: translateY(-2px);
+    box-shadow: var(--gc-shadow-md);
+  }
+
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .stat-info,
+  .stat-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gc-text-muted);
+  }
+
+  .stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    font-family: var(--gc-font-display);
+    color: var(--gc-text-primary);
+    line-height: 1.1;
+  }
+}
+
+/* ── Consistent Filter / Search Bar ─────────────────────────────────────────── */
+.admin-filter-bar,
+.filter-toolbar,
+.search-filter-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5, 24px);
+
+  .filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2, 8px);
+    min-width: 140px;
+
+    label,
+    .filter-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gc-text-muted);
+    }
+  }
+
+  input,
+  select,
+  .gc-select-native {
+    height: 40px !important;
+    border-radius: 10px;
+    box-sizing: border-box;
+  }
+
+  button,
+  .gc-button {
+    height: 40px !important;
+    padding: 0 18px !important;
+    border-radius: 10px !important;
+    box-sizing: border-box;
+  }
+}
+
+/* ── Unified Tables ─────────────────────────────────────────────────────────── */
+.admin-table-container,
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 14px;
+  border: 1px solid var(--gc-border-default);
+  background: var(--gc-bg-card);
+  margin-bottom: var(--space-5, 24px);
+  box-shadow: var(--gc-shadow-sm);
+}
+
+.admin-table,
+.gc-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  min-width: 640px;
+
+  thead tr {
+    background: rgba(15, 21, 35, 0.9);
+    border-bottom: 1px solid var(--gc-border-default);
+  }
+
+  th {
+    padding: 14px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gc-text-muted);
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    min-height: 52px;
+    height: 52px;
+    border-bottom: 1px solid var(--gc-border-subtle);
+    transition: background var(--gc-transition-fast);
+
+    &:hover {
+      background: rgba(59, 130, 246, 0.04);
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  td {
+    padding: 14px 16px;
+    font-size: 0.875rem;
+    color: var(--gc-text-primary);
+    vertical-align: middle;
+  }
+}
+
+/* ── Unified Forms & Modals ─────────────────────────────────────────────────── */
+.admin-modal-body,
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 4px 0;
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gc-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input,
+    select,
+    textarea {
+      box-sizing: border-box;
+      border-radius: 10px;
+      border: 1px solid var(--gc-border-default);
+      background: var(--gc-bg-surface);
+      color: var(--gc-text-primary);
+      padding: 10px 14px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: border-color var(--gc-transition-fast), box-shadow var(--gc-transition-fast);
+
+      &:focus {
+        outline: none;
+        border-color: var(--gc-border-focus);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      }
+    }
+
+    input,
+    select {
+      height: 40px;
+    }
+  }
+}
+
+.admin-modal-actions,
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+
+  button,
+  .gc-button {
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 10px;
+  }
+}
+
+/* ── Global Card Overrides for Admin (16px radius, 24px padding) ─────────────── */
+.admin-content {
+  ::ng-deep .gc-card {
+    border-radius: 16px;
+    background: var(--gc-bg-card);
+    border: 1px solid var(--gc-border-default);
+
+    .gc-card-header {
+      padding: var(--space-5, 24px);
+      gap: var(--space-2, 8px);
+      border-bottom: 1px solid var(--gc-border-subtle);
+
+      .gc-card-title-group {
+        gap: 8px;
+      }
+
+      .gc-card-title {
+        font-family: var(--gc-font-display);
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      .gc-card-subtitle {
+        font-size: 0.85rem;
+        color: var(--gc-text-muted);
+      }
+    }
+
+    .gc-card-body {
+      padding: var(--space-5, 24px);
+    }
+
+    .gc-card-footer {
+      padding: var(--space-4, 16px) var(--space-5, 24px);
+    }
+  }
+}

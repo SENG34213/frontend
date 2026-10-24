@@ -88,9 +88,10 @@
             <gc-badge variant="available" [showDot]="false">Today</gc-badge>
             <span class="kpi-subtext">Month: LKR {{ (paymentStats()?.monthRevenue || 0) | number:'1.0-0' }}</span>
           </div>
+          <div class="kpi-divider"></div>
           <div class="kpi-meta">
-            <span class="text-muted">Successful payments: <strong>{{ paymentStats()?.totalPaymentsSuccess || 0 }}</strong></span>
-            <span class="text-muted">Failed: <strong>{{ paymentStats()?.totalPaymentsFailed || 0 }}</strong></span>
+            <span class="stat-item">Successful: <strong>{{ paymentStats()?.totalPaymentsSuccess || 0 }}</strong></span>
+            <span class="stat-item">Failed: <strong>{{ paymentStats()?.totalPaymentsFailed || 0 }}</strong></span>
           </div>
         </div>
       </gc-card>
@@ -109,9 +110,10 @@
             <gc-badge variant="primary" [showDot]="false">{{ bookingStats()?.todayConfirmedBookings || 0 }} Confirmed</gc-badge>
             <span class="kpi-subtext">Total Today: {{ bookingStats()?.todayTotalBookings || 0 }}</span>
           </div>
+          <div class="kpi-divider"></div>
           <div class="kpi-meta">
-            <span class="text-muted">Cancelled today: <strong>{{ bookingStats()?.todayCancelledBookings || 0 }}</strong></span>
-            <span class="text-muted">Month total: <strong>{{ bookingStats()?.monthTotalBookings || 0 }}</strong></span>
+            <span class="stat-item">Cancelled: <strong>{{ bookingStats()?.todayCancelledBookings || 0 }}</strong></span>
+            <span class="stat-item">Month total: <strong>{{ bookingStats()?.monthTotalBookings || 0 }}</strong></span>
           </div>
         </div>
       </gc-card>
@@ -128,11 +130,12 @@
           </div>
           <div class="kpi-status-row">
             <gc-badge variant="accent" [showDot]="false">{{ userStats()?.activeUsers || 0 }} Active</gc-badge>
-            <span class="kpi-subtext">+{{ userStats()?.newUsersToday || 0 }} Joined Today</span>
+            <span class="kpi-subtext">+{{ userStats()?.newUsersToday || 0 }} Today</span>
           </div>
+          <div class="kpi-divider"></div>
           <div class="kpi-meta">
-            <span class="text-muted">Customers: <strong>{{ userStats()?.customerCount || 0 }}</strong></span>
-            <span class="text-muted">This Month: <strong>+{{ userStats()?.newUsersThisMonth || 0 }}</strong></span>
+            <span class="stat-item">Customers: <strong>{{ userStats()?.customerCount || 0 }}</strong></span>
+            <span class="stat-item">Month: <strong>+{{ userStats()?.newUsersThisMonth || 0 }}</strong></span>
           </div>
         </div>
       </gc-card>
@@ -151,9 +154,10 @@
             <gc-badge variant="warning" [showDot]="false">{{ tournamentStats()?.ongoingTournaments || 0 }} Ongoing</gc-badge>
             <span class="kpi-subtext">{{ tournamentStats()?.totalParticipants || 0 }} Competitors</span>
           </div>
+          <div class="kpi-divider"></div>
           <div class="kpi-meta">
-            <span class="text-muted">Completed: <strong>{{ tournamentStats()?.completedTournaments || 0 }}</strong></span>
-            <span class="text-muted">Total hosted: <strong>{{ tournamentStats()?.totalTournaments || 0 }}</strong></span>
+            <span class="stat-item">Completed: <strong>{{ tournamentStats()?.completedTournaments || 0 }}</strong></span>
+            <span class="stat-item">Total hosted: <strong>{{ tournamentStats()?.totalTournaments || 0 }}</strong></span>
           </div>
         </div>
       </gc-card>
@@ -164,7 +168,7 @@
       <!-- Interactive Revenue Trend Chart -->
       <div class="chart-container">
         <gc-card title="Revenue Cashflow Trend" subtitle="LKR Daily Income Trajectory" [interactive]="false">
-          <div class="chart-header-controls">
+          <div card-header-actions class="chart-header-controls">
             <div class="trend-tabs" role="group" aria-label="Select trend window">
               <button
                 type="button"
