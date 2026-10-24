@@ -198,7 +198,7 @@ describe('CustomerLayoutComponent', () => {
 
       expect(component.showLogoutModal()).toBeFalse();
       expect(authServiceSpy.logout).toHaveBeenCalled();
-      expect(router.navigate).toHaveBeenCalledWith(['/login']);
+      expect(router.navigate).toHaveBeenCalledWith(['/']);
     }));
 
     it('should dismiss sign out modal when cancelLogout is called', fakeAsync(() => {

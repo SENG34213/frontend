@@ -6,15 +6,19 @@
   min-height: 100vh;
   background: var(--gc-bg-base);
   color: var(--gc-text-primary);
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .container {
+  width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 var(--gc-spacing-xl);
+  padding: 0 32px;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
-    padding: 0 var(--gc-spacing-md);
+    padding: 0 16px;
   }
 }
 
@@ -51,7 +55,8 @@
 
 .hero {
   position: relative;
-  min-height: 520px;
+  min-height: auto;
+  padding: 80px 0;
   overflow: hidden;
   background-image:
     linear-gradient(180deg, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.85) 100%),
@@ -64,7 +69,7 @@
 
   @media (max-width: 768px) {
     min-height: auto;
-    padding: var(--gc-spacing-2xl) 0;
+    padding: 48px 0;
     background-position: center top;
   }
 }
@@ -337,10 +342,13 @@
 // ─── FEATURED GAMES ───────────────────────────────────────────────────────────
 
 .featured-section {
-  padding: var(--gc-spacing-2xl) var(--gc-spacing-xl);
+  position: relative;
+  padding: 80px 0;
+  width: 100%;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
-    padding: var(--gc-spacing-xl) var(--gc-spacing-md);
+    padding: 48px 0;
   }
 }
 
@@ -480,10 +488,14 @@
 // ─── UPCOMING TOURNAMENTS SECTION ─────────────────────────────────────────
 
 .tournaments-section {
-  margin: 0 auto var(--gc-spacing-3xl);
+  position: relative;
+  padding: 80px 0;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
 
   @media (max-width: 768px) {
-    margin-bottom: var(--gc-spacing-2xl);
+    padding: 48px 0;
   }
 }
 
@@ -510,12 +522,21 @@
 
 .tournaments-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: var(--gc-spacing-lg);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  align-items: stretch;
 
-  @media (max-width: 640px) {
+  @media (min-width: 1280px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (min-width: 768px) and (max-width: 1279px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 767px) {
     grid-template-columns: 1fr;
-    gap: var(--gc-spacing-md);
+    gap: 16px;
   }
 }
 
@@ -523,13 +544,14 @@
   position: relative;
   background: linear-gradient(135deg, rgba(20, 24, 38, 0.88) 0%, rgba(13, 16, 26, 0.96) 100%);
   border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: var(--gc-radius-md);
+  border-radius: 16px;
   padding: var(--gc-spacing-lg);
   backdrop-filter: blur(12px);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  height: 100%;
   transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   overflow: hidden;
 
@@ -683,21 +705,22 @@
 // ─── BROWSE SECTION ───────────────────────────────────────────────────────────
 
 .browse-section {
-  padding: var(--gc-spacing-2xl) var(--gc-spacing-xl);
+  position: relative;
+  padding: 80px 0;
   background: var(--gc-bg-surface);
-  border-radius: var(--gc-radius-lg);
-  margin: 0 auto var(--gc-spacing-2xl);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin: 0;
   width: 100%;
-  max-width: 1280px;
   box-sizing: border-box;
 
-  .section-header {
+  .browse-header {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     justify-content: center;
-    margin-bottom: var(--gc-spacing-xl);
+    margin-bottom: 40px;
     width: 100%;
 
     > div {
@@ -709,6 +732,7 @@
 
     .section-title-lg {
       text-align: center;
+      margin-bottom: 8px;
     }
 
     .section-desc {
@@ -719,19 +743,21 @@
   }
 
   @media (max-width: 768px) {
-    margin: 0 auto var(--gc-spacing-xl);
-    padding: var(--gc-spacing-xl) var(--gc-spacing-md);
-    border-radius: 0;
+    padding: 48px 0;
   }
 }
 
 // ─── WHY SECTION ──────────────────────────────────────────────────────────────
 
 .why-section {
-  padding: var(--gc-spacing-2xl) var(--gc-spacing-xl);
+  position: relative;
+  padding: 80px 0;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
 
   @media (max-width: 768px) {
-    padding: var(--gc-spacing-xl) var(--gc-spacing-md);
+    padding: 48px 0;
   }
 }
 
@@ -843,9 +869,16 @@
 // ─── CTA SECTION ──────────────────────────────────────────────────────────────
 
 .cta-section {
+  position: relative;
   background: var(--gc-bg-surface);
   border-top: 1px solid var(--gc-border-subtle);
-  padding: var(--gc-spacing-2xl) 0;
+  padding: 80px 0;
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: 48px 0;
+  }
 }
 
 .cta-inner {

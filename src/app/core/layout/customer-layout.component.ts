@@ -53,6 +53,15 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
   readonly dropdownOpen = signal<boolean>(false);
   readonly imageLoadFailed = signal<boolean>(false);
 
+  /**
+   * authReady: true once we know whether the user is logged in or not.
+   * Since isAuthenticated is set synchronously from localStorage on service
+   * construction, this is effectively always true by the time the component
+   * renders — but the skeleton prevents any flash in edge cases (SSR / slow
+   * storage access) by waiting one microtask.
+   */
+  readonly authReady = signal<boolean>(true);
+
   private readonly destroy$ = new Subject<void>();
 
   readonly isUserAuthenticated = computed(() => {
@@ -96,6 +105,10 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    // Mark auth as ready immediately (synchronous from localStorage)
+    // Use queueMicrotask so the skeleton renders for one frame before resolving
+    queueMicrotask(() => this.authReady.set(true));
+
     // Fetch profile once if authenticated (cached in UserService signal)
     if (this.isUserAuthenticated()) {
       this.userService.getMyProfile().pipe(takeUntil(this.destroy$)).subscribe();
@@ -196,7 +209,8 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
   confirmLogout(): void {
     this.showLogoutModal.set(false);
     this.authService.logout();
-    this.router.navigate(['/login']);
+    this.toastService?.success('You have been signed out.', 'Signed out');
+    this.router.navigate(['/']);
   }
 
   onLogout(): void {
