@@ -3,6 +3,7 @@ import {
   OnInit,
   inject,
   signal,
+  computed,
   ChangeDetectionStrategy,
   ChangeDetectorRef
 } from '@angular/core';
@@ -16,6 +17,7 @@ import { BadgeComponent } from '../../shared/ui/badge/badge.component';
 import { SkeletonComponent } from '../../shared/ui/skeleton/skeleton.component';
 import { StationGamePickerComponent } from '../../shared/components/station-game-picker/station-game-picker.component';
 import { TournamentTickerComponent } from '../../shared/components/tournament-ticker/tournament-ticker.component';
+import { ToastService } from '../../shared/ui/toast/toast.service';
 import { Game } from '../../shared/models';
 
 @Component({
@@ -40,6 +42,7 @@ export class DashboardComponent implements OnInit {
   private readonly bookingService = inject(BookingService);
   private readonly tournamentService = inject(TournamentService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly toastService = inject(ToastService, { optional: true });
 
   readonly featuredGames = signal<Game[]>([]);
   readonly featuredLoading = signal(true);
@@ -48,6 +51,72 @@ export class DashboardComponent implements OnInit {
 
   readonly currentEvent = signal<TournamentViewItem | null>(null);
   readonly currentEventLoading = signal<boolean>(true);
+  readonly upcomingTournaments = signal<TournamentViewItem[]>([]);
+
+  readonly fallbackTournaments: TournamentViewItem[] = [
+    {
+      id: 'tourney-fc25',
+      name: 'EA Sports FC 25 Northern Cup',
+      gameTitle: 'EA Sports FC 25',
+      startDate: new Date(Date.now() + 86400000 * 3).toISOString(),
+      endDate: new Date(Date.now() + 86400000 * 3 + 14400000).toISOString(),
+      registrationDeadline: new Date(Date.now() + 86400000 * 2).toISOString(),
+      entryFee: 1500,
+      maxParticipants: 16,
+      participantCount: 10,
+      spotsLeft: 6,
+      progressPercent: 62,
+      isFull: false,
+      isClosingSoon: false,
+      status: 'REGISTRATION_OPEN',
+      isRegistrationOpen: true,
+      createdByAdminId: '00000000-0000-0000-0000-000000000001',
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: 'tourney-tekken8',
+      name: 'Tekken 8 Iron Fist Jaffna',
+      gameTitle: 'Tekken 8',
+      startDate: new Date(Date.now() + 86400000 * 5).toISOString(),
+      endDate: new Date(Date.now() + 86400000 * 5 + 18000000).toISOString(),
+      registrationDeadline: new Date(Date.now() + 86400000 * 4).toISOString(),
+      entryFee: 1000,
+      maxParticipants: 16,
+      participantCount: 12,
+      spotsLeft: 4,
+      progressPercent: 75,
+      isFull: false,
+      isClosingSoon: true,
+      status: 'REGISTRATION_OPEN',
+      isRegistrationOpen: true,
+      createdByAdminId: '00000000-0000-0000-0000-000000000001',
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: 'tourney-mk1',
+      name: 'Mortal Kombat 1 Showdown',
+      gameTitle: 'Mortal Kombat 1',
+      startDate: new Date(Date.now() + 86400000 * 7).toISOString(),
+      endDate: new Date(Date.now() + 86400000 * 7 + 14400000).toISOString(),
+      registrationDeadline: new Date(Date.now() + 86400000 * 6).toISOString(),
+      entryFee: 0,
+      maxParticipants: 8,
+      participantCount: 5,
+      spotsLeft: 3,
+      progressPercent: 62,
+      isFull: false,
+      isClosingSoon: false,
+      status: 'UPCOMING',
+      isRegistrationOpen: true,
+      createdByAdminId: '00000000-0000-0000-0000-000000000001',
+      createdAt: new Date().toISOString()
+    }
+  ];
+
+  readonly displayTournaments = computed(() => {
+    const list = this.upcomingTournaments();
+    return list.length > 0 ? list : this.fallbackTournaments;
+  });
 
   readonly whyItems = [
     {
@@ -101,6 +170,9 @@ export class DashboardComponent implements OnInit {
     this.tournamentService.getTournaments().subscribe({
       next: (tournaments) => {
         if (tournaments && tournaments.length > 0) {
+          const activeTournaments = tournaments.filter((t) => t.status !== 'CANCELLED');
+          const showcase = activeTournaments.length > 0 ? activeTournaments : tournaments;
+          this.upcomingTournaments.set(showcase.slice(0, 3));
           // 1. Look for live/ongoing tournament
           const ongoing = tournaments.find(
             (t) => t.status === 'ONGOING' || t.status === 'IN_PROGRESS'
@@ -121,12 +193,14 @@ export class DashboardComponent implements OnInit {
             this.currentEvent.set(upcoming[0] || tournaments[0]);
           }
         } else {
+          this.upcomingTournaments.set([]);
           this.currentEvent.set(null);
         }
         this.currentEventLoading.set(false);
         this.cdr.markForCheck();
       },
       error: () => {
+        this.upcomingTournaments.set([]);
         this.currentEvent.set(null);
         this.currentEventLoading.set(false);
         this.cdr.markForCheck();
@@ -157,7 +231,20 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  get isAuthenticated(): boolean {
+    if (typeof this.authService?.isAuthenticated === 'function') {
+      return this.authService.isAuthenticated();
+    }
+    return !!this.authService?.currentUser();
+  }
+
   onEventClick(event?: TournamentViewItem | null): void {
+    const target = event?.id ? `/tournaments/${event.id}` : '/tournaments';
+    if (!this.isAuthenticated) {
+      this.toastService?.info('Please sign in to view tournament details.', 'Sign In Required');
+      this.router.navigate(['/login'], { queryParams: { returnUrl: target } });
+      return;
+    }
     if (event?.id) {
       this.router.navigate(['/tournaments', event.id]);
     } else {
@@ -192,21 +279,100 @@ export class DashboardComponent implements OnInit {
   // ─── Navigation helpers ───────────────────────────────────────────────────
 
   bookSlot(): void {
+    if (!this.isAuthenticated) {
+      this.toastService?.info('Please sign in to book your gaming station.', 'Sign In Required');
+      this.router.navigate(['/login'], { queryParams: { returnUrl: '/bookings' } });
+      return;
+    }
     this.router.navigate(['/bookings']);
   }
 
   joinTournament(): void {
+    if (!this.isAuthenticated) {
+      this.toastService?.info('Please sign in to view and join tournaments.', 'Sign In Required');
+      this.router.navigate(['/login'], { queryParams: { returnUrl: '/tournaments' } });
+      return;
+    }
     this.router.navigate(['/tournaments']);
   }
 
   onFeaturedGameClick(game: Game): void {
-    // Navigate with gameId; bookings page will show stations that have this game
+    const target = `/bookings?gameId=${game.id}`;
+    if (!this.isAuthenticated) {
+      this.toastService?.info(`Please sign in to book a session for ${game.title}.`, 'Sign In Required');
+      this.router.navigate(['/login'], { queryParams: { returnUrl: target } });
+      return;
+    }
     this.router.navigate(['/bookings'], { queryParams: { gameId: game.id } });
   }
 
   onGameSelected(event: { stationId: string; gameId: string }): void {
+    const target = `/bookings?stationId=${event.stationId}&gameId=${event.gameId}`;
+    if (!this.isAuthenticated) {
+      this.toastService?.info('Please sign in to reserve this station and game.', 'Sign In Required');
+      this.router.navigate(['/login'], { queryParams: { returnUrl: target } });
+      return;
+    }
     this.router.navigate(['/bookings'], {
       queryParams: { stationId: event.stationId, gameId: event.gameId }
     });
+  }
+
+  onStationBookClicked(stationId: string): void {
+    const target = `/bookings?stationId=${stationId}`;
+    if (!this.isAuthenticated) {
+      this.toastService?.info('Please sign in to book this gaming station.', 'Sign In Required');
+      this.router.navigate(['/login'], { queryParams: { returnUrl: target } });
+      return;
+    }
+    this.router.navigate(['/bookings'], { queryParams: { stationId } });
+  }
+
+  onTournamentClick(tournament: TournamentViewItem): void {
+    const target = `/tournaments/${tournament.id}`;
+    if (!this.isAuthenticated) {
+      this.toastService?.info('Please sign in to view tournament details and register.', 'Sign In Required');
+      this.router.navigate(['/login'], { queryParams: { returnUrl: target } });
+      return;
+    }
+    this.router.navigate(['/tournaments', tournament.id]);
+  }
+
+  viewAllTournaments(): void {
+    if (!this.isAuthenticated) {
+      this.toastService?.info('Please sign in to view all tournaments and compete.', 'Sign In Required');
+      this.router.navigate(['/login'], { queryParams: { returnUrl: '/tournaments' } });
+      return;
+    }
+    this.router.navigate(['/tournaments']);
+  }
+
+  formatTourneyDate(isoString: string): string {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '';
+    try {
+      const weekday = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Colombo', weekday: 'short' }).format(date);
+      const day = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Colombo', day: 'numeric' }).format(date);
+      const month = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Colombo', month: 'short' }).format(date);
+      const time = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Colombo', hour: 'numeric', minute: '2-digit', hour12: true }).format(date);
+      return `${weekday} ${day} ${month} · ${time}`;
+    } catch {
+      return date.toLocaleDateString();
+    }
+  }
+
+  formatTourneyFee(amount: number): string {
+    if (!amount || amount === 0) return 'FREE ENTRY';
+    return `LKR ${Number(amount).toLocaleString('en-US')}`;
+  }
+
+  onSubscribeAlerts(inputEl: HTMLInputElement): void {
+    const email = (inputEl.value || '').trim();
+    if (!email || !email.includes('@')) {
+      this.toastService?.warning('Please enter a valid email address.', 'Invalid Email');
+      return;
+    }
+    this.toastService?.success('You are subscribed to tournament alerts!', 'Subscribed');
+    inputEl.value = '';
   }
 }

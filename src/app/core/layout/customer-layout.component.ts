@@ -20,6 +20,7 @@ import { NotificationCenterComponent } from '../../shared/components/notificatio
 import { ProfileModalComponent } from '../../shared/components/profile-modal/profile-modal.component';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { ModalComponent } from '../../shared/ui/modal/modal.component';
+import { ToastService } from '../../shared/ui/toast/toast.service';
 
 @Component({
   selector: 'gc-customer-layout',
@@ -41,6 +42,7 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
   readonly authService = inject(AuthService);
   readonly userService = inject(UserService);
   private readonly router = inject(Router);
+  private readonly toastService = inject(ToastService, { optional: true });
 
   readonly profileModalOpen = signal(false);
   readonly showLogoutModal = signal(false);
@@ -52,6 +54,13 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
   readonly imageLoadFailed = signal<boolean>(false);
 
   private readonly destroy$ = new Subject<void>();
+
+  readonly isUserAuthenticated = computed(() => {
+    if (typeof this.authService.isAuthenticated === 'function') {
+      return this.authService.isAuthenticated();
+    }
+    return !!this.authService.currentUser();
+  });
 
   // Profile data
   readonly userInitial = computed(() => {
@@ -87,8 +96,10 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    // Fetch profile once (cached in UserService signal)
-    this.userService.getMyProfile().pipe(takeUntil(this.destroy$)).subscribe();
+    // Fetch profile once if authenticated (cached in UserService signal)
+    if (this.isUserAuthenticated()) {
+      this.userService.getMyProfile().pipe(takeUntil(this.destroy$)).subscribe();
+    }
 
     // Close menus on route change
     this.router.events
@@ -109,6 +120,36 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
 
   closeMobileMenu(): void {
     this.mobileMenuOpen.set(false);
+  }
+
+  goToLogin(): void {
+    this.closeMobileMenu();
+    this.router.navigate(['/login']);
+  }
+
+  goToRegister(): void {
+    this.closeMobileMenu();
+    this.router.navigate(['/register']);
+  }
+
+  onNavClick(path: string, event: Event): void {
+    this.closeMobileMenu();
+    if (!this.isUserAuthenticated()) {
+      event.preventDefault();
+      const label = path.includes('tournament') ? 'tournaments' : 'bookings';
+      this.toastService?.info(`Please sign in to view ${label}.`, 'Sign In Required');
+      this.router.navigate(['/login'], { queryParams: { returnUrl: path } });
+    }
+  }
+
+  handleProfileClick(): void {
+    this.closeMobileMenu();
+    if (!this.isUserAuthenticated()) {
+      this.toastService?.info('Please sign in to view your profile.', 'Sign In Required');
+      this.router.navigate(['/login'], { queryParams: { returnUrl: '/profile' } });
+      return;
+    }
+    this.openProfileModal();
   }
 
   openProfileModal(): void {

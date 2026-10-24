@@ -61,9 +61,13 @@
               <p class="sgp-station-specs">{{ station.specifications }}</p>
               <div class="sgp-station-footer">
                 <span class="sgp-rate">LKR {{ station.hourlyRate | number }}<span class="sgp-rate-unit">/hr</span></span>
-                <span class="sgp-active-dot" [class.sgp-inactive]="!station.active">
-                  {{ station.active ? 'ACTIVE' : 'OFFLINE' }}
-                </span>
+                <button
+                  type="button"
+                  class="sgp-station-book-btn"
+                  (click)="onBookStationClick(station.id, $event)"
+                  aria-label="Book this station">
+                  BOOK NOW
+                </button>
               </div>
             </div>
           </div>

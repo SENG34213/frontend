@@ -20,11 +20,17 @@
           <span>LIVE IN JAFFNA</span>
         </div>
 
-        <!-- Welcome chip for authenticated user -->
+        <!-- Welcome chip for authenticated user / guest -->
         <div class="hero-user-chip">
-          <gc-badge [variant]="authService.isAdmin() ? 'accent' : 'available'" [showDot]="true">
-            {{ authService.currentUser()?.fullName || authService.currentUser()?.email || 'Player' }} · {{ authService.role() }}
-          </gc-badge>
+          @if (isAuthenticated) {
+            <gc-badge [variant]="authService.isAdmin() ? 'accent' : 'available'" [showDot]="true">
+              {{ authService.currentUser()?.fullName || authService.currentUser()?.email || 'Player' }} · {{ authService.role() }}
+            </gc-badge>
+          } @else {
+            <gc-badge variant="accent" [showDot]="true">
+              JAFFNA'S PREMIER PS5 GAMING SANCTUARY
+            </gc-badge>
+          }
         </div>
 
         <h1 id="hero-title" class="hero-headline">
@@ -211,6 +217,104 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!--  UPCOMING TOURNAMENTS SECTION                                    -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section class="tournaments-section container" aria-labelledby="tournaments-title">
+    <div class="section-header">
+      <div>
+        <div class="section-badge-wrapper">
+          <span class="live-pulse-dot" aria-hidden="true"></span>
+          <span class="section-tag-text">COMPETITIVE ARENA</span>
+        </div>
+        <h2 id="tournaments-title" class="section-title-lg">UPCOMING TOURNAMENTS</h2>
+        <p class="section-desc">Compete with the top players in Jaffna. High-stakes brackets, leaderboards, and prize pools.</p>
+      </div>
+      <div class="section-action">
+        <gc-button
+          id="view-all-tournaments-btn"
+          variant="outline"
+          size="sm"
+          (btnClick)="viewAllTournaments()">
+          VIEW ALL TOURNAMENTS →
+        </gc-button>
+      </div>
+    </div>
+
+    <div class="tournaments-grid" aria-label="Upcoming tournaments list">
+      @for (item of displayTournaments(); track item.id) {
+        <article
+          class="tourney-card interactive"
+          role="button"
+          tabindex="0"
+          [attr.aria-label]="item.name + ' - Click to view tournament details and register'"
+          (click)="onTournamentClick(item)"
+          (keydown.enter)="onTournamentClick(item)"
+          (keydown.space)="onTournamentClick(item); $event.preventDefault()">
+
+          <div class="tourney-card-header">
+            <div class="tourney-game-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <rect x="2" y="6" width="20" height="12" rx="2"/>
+                <path d="M6 12h4m-2-2v4m9-3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+              </svg>
+              <span>{{ item.gameTitle || 'Tournament' }}</span>
+            </div>
+            <gc-badge
+              [variant]="item.status === 'ONGOING' || item.status === 'IN_PROGRESS' ? 'accent' : 'available'"
+              [showDot]="item.status === 'ONGOING' || item.status === 'IN_PROGRESS'">
+              {{ item.status === 'ONGOING' || item.status === 'IN_PROGRESS' ? 'LIVE NOW' : (item.isFull ? 'FULL' : 'OPEN') }}
+            </gc-badge>
+          </div>
+
+          <div class="tourney-card-body">
+            <h3 class="tourney-card-title">{{ item.name }}</h3>
+
+            <div class="tourney-meta-list">
+              <div class="tourney-meta-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span>{{ formatTourneyDate(item.startDate) }}</span>
+              </div>
+
+              <div class="tourney-meta-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                  <path d="M4 22h16"/>
+                  <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                  <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                </svg>
+                <span class="tourney-fee-highlight">{{ formatTourneyFee(item.entryFee) }}</span>
+              </div>
+            </div>
+
+            <div class="tourney-spots-wrap">
+              <div class="tourney-spots-label">
+                <span>{{ item.spotsLeft }} spots remaining</span>
+                <span>{{ item.participantCount }}/{{ item.maxParticipants }}</span>
+              </div>
+              <div class="tourney-spots-bar" role="progressbar" [attr.aria-valuenow]="item.progressPercent" aria-valuemin="0" aria-valuemax="100">
+                <div class="tourney-spots-fill" [style.width.%]="item.progressPercent"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tourney-card-footer">
+            <span class="tourney-cta-link">
+              {{ item.isFull ? 'VIEW BRACKET' : 'REGISTER TO COMPETE' }}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M5 12h14m-7-7 7 7-7 7"/>
+              </svg>
+            </span>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
   <!--  STATION + GAME BROWSER                                          -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <section class="browse-section container" aria-labelledby="browse-title">
@@ -222,7 +326,8 @@
     </div>
 
     <gc-station-game-picker
-      (gameSelected)="onGameSelected($event)">
+      (gameSelected)="onGameSelected($event)"
+      (stationBookClicked)="onStationBookClicked($event)">
     </gc-station-game-picker>
   </section>
 
@@ -258,12 +363,13 @@
 
       <div class="cta-form" role="search">
         <input
+          #alertEmailInput
           id="cta-email-input"
           type="email"
           class="cta-input"
           placeholder="Enter your email for tournament alerts"
           aria-label="Email for tournament alerts" />
-        <gc-button id="cta-alert-btn" variant="primary" (btnClick)="joinTournament()">GET ALERTS</gc-button>
+        <gc-button id="cta-alert-btn" variant="primary" (btnClick)="onSubscribeAlerts(alertEmailInput)">GET ALERTS</gc-button>
       </div>
     </div>
   </section>

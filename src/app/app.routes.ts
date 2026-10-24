@@ -5,11 +5,11 @@ import { guestGuard } from './core/guards/guest.guard';
 
 export const routes: Routes = [
   // Developer Styleguide Showcase (FE-01)
-  {
-    path: 'styleguide',
-    loadComponent: () =>
-      import('./features/styleguide/styleguide.component').then((m) => m.StyleguideComponent)
-  },
+  // {
+  //   path: 'styleguide',
+  //   loadComponent: () =>
+  //     import('./features/styleguide/styleguide.component').then((m) => m.StyleguideComponent)
+  // },
 
   // Guest Authentication Routes (guarded by guestGuard)
   {
@@ -37,13 +37,18 @@ export const routes: Routes = [
       import('./features/auth/reset-password/reset-password.component').then((m) => m.ResetPasswordComponent)
   },
 
-  // Customer Routes (wrapped in CustomerLayoutComponent)
+  // Customer & Landing Page Routes (wrapped in CustomerLayoutComponent)
   {
     path: '',
-    canActivate: [authGuard],
     loadComponent: () =>
       import('./core/layout/customer-layout.component').then((m) => m.CustomerLayoutComponent),
     children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent)
+      },
       {
         path: 'dashboard',
         loadComponent: () =>
@@ -51,6 +56,7 @@ export const routes: Routes = [
       },
       {
         path: 'bookings',
+        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/bookings/bookings.component').then((m) => m.BookingsComponent)
       },
@@ -61,6 +67,7 @@ export const routes: Routes = [
       },
       {
         path: 'tournaments',
+        canActivate: [authGuard],
         children: [
           {
             path: '',
@@ -87,21 +94,25 @@ export const routes: Routes = [
       },
       {
         path: 'profile',
+        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/profile/profile.component').then((m) => m.ProfileComponent)
       },
       {
         path: 'my-bookings',
+        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/my-bookings/my-bookings.component').then((m) => m.MyBookingsComponent)
       },
       {
         path: 'my-tournaments',
+        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/my-tournaments/my-tournaments.component').then((m) => m.MyTournamentsComponent)
       },
       {
         path: 'loyalty',
+        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/loyalty/loyalty.component').then((m) => m.LoyaltyComponent)
       },
@@ -124,11 +135,6 @@ export const routes: Routes = [
         path: 'support',
         loadComponent: () =>
           import('./features/info/support/support.component').then((m) => m.SupportComponent)
-      },
-      {
-        path: '',
-        redirectTo: 'dashboard',
-        pathMatch: 'full'
       }
     ]
   },

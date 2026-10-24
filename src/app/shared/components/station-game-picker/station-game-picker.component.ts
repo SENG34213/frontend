@@ -40,6 +40,8 @@ export class StationGamePickerComponent implements OnInit, OnChanges {
   @Output() readonly gameSelected = new EventEmitter<{ stationId: string; gameId: string }>();
   /** Emitted when the user selects a station */
   @Output() readonly stationSelected = new EventEmitter<string>();
+  /** Emitted when the user clicks 'Book' on a specific station */
+  @Output() readonly stationBookClicked = new EventEmitter<string>();
 
   readonly stations = signal<Station[]>([]);
   readonly stationGames = signal<Game[]>([]);
@@ -126,6 +128,11 @@ export class StationGamePickerComponent implements OnInit, OnChanges {
     this.selectedGameId.set(null);
     this.stationSelected.emit(stationId);
     this.loadStationGames(stationId);
+  }
+
+  onBookStationClick(stationId: string, event: Event): void {
+    event.stopPropagation();
+    this.stationBookClicked.emit(stationId);
   }
 
   selectGame(gameId: string): void {

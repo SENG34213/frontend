@@ -30,6 +30,20 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
             const token = authService.getToken();
             const tokenExpired = authService.isTokenExpired();
 
+            // Allow guest browsing: public GET requests should not kick visitors off public pages
+            const isPublicRead =
+              req.method === 'GET' &&
+              (req.url.endsWith('/api/tournaments') ||
+                req.url.endsWith('/tournaments') ||
+                req.url.includes('/api/stations') ||
+                req.url.includes('/api/games')) &&
+              !req.url.includes('/my-') &&
+              !req.url.includes('/admin');
+
+            if (!token && isPublicRead) {
+              return throwError(() => mappedError);
+            }
+
             if (!token || tokenExpired) {
               authService.logout(currentUrl);
               toastService.warning(mappedError.message || 'Your session has expired. Please log in again.', 'Session Expired');

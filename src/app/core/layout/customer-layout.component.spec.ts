@@ -41,7 +41,8 @@ describe('CustomerLayoutComponent', () => {
       role: signal('CUSTOMER'),
       isAdmin: signal(false),
       isCustomer: signal(true),
-      isSessionExpiring: signal(false)
+      isSessionExpiring: signal(false),
+      isAuthenticated: signal(true)
     });
 
     userServiceSpy = jasmine.createSpyObj('UserService', ['getMyProfile', 'clearCachedProfile'], {
@@ -285,6 +286,43 @@ describe('CustomerLayoutComponent', () => {
       expect(footerLinks[1].getAttribute('href') || footerLinks[1].getAttribute('ng-reflect-router-link')).toContain('privacy');
       expect(footerLinks[2].getAttribute('href') || footerLinks[2].getAttribute('ng-reflect-router-link')).toContain('terms');
       expect(footerLinks[3].getAttribute('href') || footerLinks[3].getAttribute('ng-reflect-router-link')).toContain('support');
+    });
+  });
+
+  describe('Guest / Landing Page Mode (Unauthenticated)', () => {
+    beforeEach(() => {
+      authServiceSpy.currentUser.set(null);
+      (authServiceSpy.isAuthenticated as any).set(false);
+      fixture.detectChanges();
+    });
+
+    it('should render LOG IN and REGISTER buttons in header for guests', () => {
+      const loginBtn = fixture.nativeElement.querySelector('#header-login-btn');
+      const registerBtn = fixture.nativeElement.querySelector('#header-register-btn');
+      expect(loginBtn).toBeTruthy();
+      expect(registerBtn).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('#customer-avatar-btn')).toBeNull();
+    });
+
+    it('should navigate to /login when goToLogin is called', () => {
+      component.goToLogin();
+      expect(router.navigate).toHaveBeenCalledWith(['/login']);
+    });
+
+    it('should navigate to /register when goToRegister is called', () => {
+      component.goToRegister();
+      expect(router.navigate).toHaveBeenCalledWith(['/register']);
+    });
+
+    it('should intercept protected nav clicks and redirect to /login with returnUrl', () => {
+      const dummyEvent = new MouseEvent('click');
+      spyOn(dummyEvent, 'preventDefault');
+
+      component.onNavClick('/tournaments', dummyEvent);
+      expect(dummyEvent.preventDefault).toHaveBeenCalled();
+      expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+        queryParams: { returnUrl: '/tournaments' }
+      });
     });
   });
 });

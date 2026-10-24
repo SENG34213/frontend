@@ -94,4 +94,19 @@ describe('errorInterceptor', () => {
     const req = httpMock.expectOne('/api/auth/login');
     req.flush({ error: 'INVALID_CREDENTIALS', message: 'Bad credentials' }, { status: 401, statusText: 'Unauthorized' });
   });
+
+  it('should not redirect or show session expired toast on 401 for guest public GET /api/tournaments', () => {
+    httpClient.get('/api/tournaments').subscribe({
+      next: () => fail('Should have failed with 401'),
+      error: (err) => {
+        expect(err.status).toBe(401);
+        expect(authServiceSpy.logout).not.toHaveBeenCalled();
+        expect(toastServiceSpy.warning).not.toHaveBeenCalled();
+        expect(routerSpy.navigate).not.toHaveBeenCalled();
+      }
+    });
+
+    const req = httpMock.expectOne('/api/tournaments');
+    req.flush({ message: 'Authentication required' }, { status: 401, statusText: 'Unauthorized' });
+  });
 });

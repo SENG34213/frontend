@@ -7,12 +7,16 @@ import { BookingService } from '../../core/services/booking.service';
 import { TournamentService } from '../../core/services/tournament.service';
 import { Game } from '../../shared/models';
 
+import { signal } from '@angular/core';
+import { AuthService } from '../../core/services/auth.service';
+
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
   let fixture: ComponentFixture<DashboardComponent>;
   let router: Router;
   let mockBookingService: jasmine.SpyObj<BookingService>;
   let mockTournamentService: jasmine.SpyObj<TournamentService>;
+  let mockAuthService: jasmine.SpyObj<AuthService>;
 
   const mockGames: Game[] = [
     { id: 'g-1', title: 'Spider-Man 2', featured: true, coverImage: 'spiderman.jpg' },
@@ -37,13 +41,31 @@ describe('DashboardComponent', () => {
     ]);
     mockTournamentService.getTournaments.and.returnValue(of([]));
 
+    mockAuthService = jasmine.createSpyObj<AuthService>('AuthService', ['logout'], {
+      currentUser: signal({
+        email: 'test@example.com',
+        role: 'CUSTOMER',
+        fullName: 'Player One',
+        userId: 'usr-1',
+        sub: 'usr-1',
+        iat: 0,
+        exp: 9999999999
+      }),
+      role: signal('CUSTOMER'),
+      isAdmin: signal(false),
+      isCustomer: signal(true),
+      isAuthenticated: signal(true),
+      isSessionExpiring: signal(false)
+    });
+
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
       providers: [
         provideHttpClient(),
         provideRouter([]),
         { provide: BookingService, useValue: mockBookingService },
-        { provide: TournamentService, useValue: mockTournamentService }
+        { provide: TournamentService, useValue: mockTournamentService },
+        { provide: AuthService, useValue: mockAuthService }
       ]
     }).compileComponents();
 
@@ -236,6 +258,86 @@ describe('DashboardComponent', () => {
 
       // Assert
       expect(router.navigate).toHaveBeenCalledWith(['/tournaments']);
+    });
+
+    it('should navigate to /bookings with stationId when onStationBookClicked is called', () => {
+      component.onStationBookClicked('st-01');
+      expect(router.navigate).toHaveBeenCalledWith(['/bookings'], {
+        queryParams: { stationId: 'st-01' }
+      });
+    });
+
+    it('should navigate to tournament detail on onTournamentClick when authenticated', () => {
+      component.onTournamentClick({ id: 'trn-1' } as any);
+      expect(router.navigate).toHaveBeenCalledWith(['/tournaments', 'trn-1']);
+    });
+
+    it('should navigate to tournaments list on viewAllTournaments when authenticated', () => {
+      component.viewAllTournaments();
+      expect(router.navigate).toHaveBeenCalledWith(['/tournaments']);
+    });
+
+    describe('Guest / Unauthenticated Landing Mode', () => {
+      beforeEach(() => {
+        (mockAuthService.isAuthenticated as any).set(false);
+        (mockAuthService.currentUser as any).set(null);
+      });
+
+      it('should redirect to /login with returnUrl when bookSlot is called by guest', () => {
+        component.bookSlot();
+        expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+          queryParams: { returnUrl: '/bookings' }
+        });
+      });
+
+      it('should redirect to /login with returnUrl when joinTournament is called by guest', () => {
+        component.joinTournament();
+        expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+          queryParams: { returnUrl: '/tournaments' }
+        });
+      });
+
+      it('should redirect to /login with returnUrl when onFeaturedGameClick is called by guest', () => {
+        component.onFeaturedGameClick(mockGames[0]);
+        expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+          queryParams: { returnUrl: '/bookings?gameId=g-1' }
+        });
+      });
+
+      it('should redirect to /login with returnUrl when onGameSelected is called by guest', () => {
+        component.onGameSelected({ stationId: 'st-01', gameId: 'g-2' });
+        expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+          queryParams: { returnUrl: '/bookings?stationId=st-01&gameId=g-2' }
+        });
+      });
+
+      it('should redirect to /login with returnUrl when onStationBookClicked is called by guest', () => {
+        component.onStationBookClicked('st-01');
+        expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+          queryParams: { returnUrl: '/bookings?stationId=st-01' }
+        });
+      });
+
+      it('should redirect to /login with returnUrl when onEventClick is called by guest', () => {
+        component.onEventClick({ id: 'trn-1' } as any);
+        expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+          queryParams: { returnUrl: '/tournaments/trn-1' }
+        });
+      });
+
+      it('should redirect to /login with returnUrl when onTournamentClick is called by guest', () => {
+        component.onTournamentClick({ id: 'trn-1' } as any);
+        expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+          queryParams: { returnUrl: '/tournaments/trn-1' }
+        });
+      });
+
+      it('should redirect to /login with returnUrl when viewAllTournaments is called by guest', () => {
+        component.viewAllTournaments();
+        expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+          queryParams: { returnUrl: '/tournaments' }
+        });
+      });
     });
   });
 });

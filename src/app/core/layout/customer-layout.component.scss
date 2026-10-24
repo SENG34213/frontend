@@ -82,6 +82,25 @@
   justify-content: flex-end;
 }
 
+.guest-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  #header-login-btn {
+    box-shadow: 0 0 12px var(--gc-primary-glow);
+  }
+}
+
+.mobile-guest-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--gc-border-default);
+}
+
 /* Avatar Button & Dropdown Menu */
 .avatar-menu-wrapper {
   position: relative;
