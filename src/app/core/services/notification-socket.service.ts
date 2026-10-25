@@ -13,7 +13,7 @@ export class NotificationSocketService {
   private readonly toast = inject(ToastService);
   private readonly authService = inject(AuthService);
 
-  private readonly socketUrl = 'http://localhost:5001';
+  private readonly socketUrl = '/realtime';
   private socket: Socket | null = null;
   private audioCtx: AudioContext | null = null;
 
@@ -94,7 +94,8 @@ export class NotificationSocketService {
       const role = this.getRoleSafely();
       const email = this.getEmailSafely();
 
-      this.socket = io(this.socketUrl, {
+      this.socket = io(window.location.origin, {
+        path: '/realtime/socket.io',
         transports: ['websocket', 'polling'],
         reconnection: true,
         reconnectionAttempts: 10,

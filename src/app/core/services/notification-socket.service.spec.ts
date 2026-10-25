@@ -143,7 +143,7 @@ describe('NotificationSocketService', () => {
     service.removeNotification('n-2');
     expect(service.notifications().length).toBe(initialCount - 1);
 
-    const delReq = httpMock.expectOne('http://localhost:5001/api/notifications/n-2');
+    const delReq = httpMock.expectOne('/realtime/api/notifications/n-2');
     expect(delReq.request.method).toBe('DELETE');
     delReq.flush({ success: true, unreadCount: 1 });
   });
@@ -153,7 +153,7 @@ describe('NotificationSocketService', () => {
     expect(service.notifications().length).toBe(0);
     expect(service.unreadCount()).toBe(0);
 
-    const delReq = httpMock.expectOne('http://localhost:5001/api/notifications');
+    const delReq = httpMock.expectOne('/realtime/api/notifications');
     expect(delReq.request.method).toBe('DELETE');
     delReq.flush({ success: true });
   });
@@ -169,7 +169,7 @@ describe('NotificationSocketService', () => {
 
     service.sendNotification(payload);
 
-    const postReq = httpMock.expectOne('http://localhost:5001/api/notify');
+    const postReq = httpMock.expectOne('/realtime/api/notify');
     expect(postReq.request.method).toBe('POST');
     expect(postReq.request.body.targetUserId).toBe('cust-001');
 
@@ -195,7 +195,7 @@ describe('NotificationSocketService', () => {
     service.sendTestAlert(true);
     expect(service.sendCustomerTestAlert).toHaveBeenCalled();
 
-    const postReq = httpMock.expectOne('http://localhost:5001/api/notify');
+    const postReq = httpMock.expectOne('/realtime/api/notify');
     expect(postReq.request.method).toBe('POST');
     expect(postReq.request.body.targetUserId).toBe('cust-001');
     postReq.flush({
