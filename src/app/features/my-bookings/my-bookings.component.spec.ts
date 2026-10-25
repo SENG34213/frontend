@@ -157,8 +157,15 @@ describe('MyBookingsComponent', () => {
       ]
     }).compileComponents();
 
+    jasmine.clock().install();
+    jasmine.clock().mockDate(new Date('2026-10-25T12:00:00+05:30'));
+
     fixture = TestBed.createComponent(MyBookingsComponent);
     component = fixture.componentInstance;
+  });
+
+  afterEach(() => {
+    jasmine.clock().uninstall();
   });
 
   it('should create the component', () => {
