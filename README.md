@@ -9,6 +9,19 @@ Client-side Single Page Application (SPA) for the **Gaming Castle** online loung
 
 ---
 
+## 🚀 Live Deployment & Test Credentials
+
+- **Live Application URL**: [http://54.234.186.115:4200](http://54.234.186.115:4200)
+
+### Test Credentials
+
+| Role | Email / Username | Password |
+| :--- | :--- | :--- |
+| **User (Customer)** | `thivyamahe001@gmail.com` | `thivyamahe001` |
+| **Admin** | `gamingcastle_admin@gmail.com` | `Admin@12345` |
+
+---
+
 ## 1. Architectural Highlights (Phase F0 Foundation)
 
 - **Standalone Components & Signal State (FE-01 / ADR-F01)**: No NgRx boilerplate. Reactive Angular signals (`computed`, `signal`) manage auth state, role extraction, and UI feedback.
