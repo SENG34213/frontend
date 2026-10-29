@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
@@ -8,11 +9,21 @@ import { BookingService } from '../../core/services/booking.service';
 import { NotificationSocketService } from '../../core/services/notification-socket.service';
 import { Station, Game, SlotAvailability } from '../../shared/models';
 
+interface MockNotificationSocket {
+  sendNotification: jasmine.Spy;
+  isSlotHeldByOther: jasmine.Spy;
+  lockSlot: jasmine.Spy;
+  unlockSlot: jasmine.Spy;
+  confirmSlotBooked: jasmine.Spy;
+  lastSlotEvent: ReturnType<typeof signal<{ type: 'LOCKED' | 'UNLOCKED' | 'BOOKED'; key: string; stationId?: string; date?: string; timeSlot?: string } | null>>;
+  activeSlotLocks: ReturnType<typeof signal<{ key: string; stationId: string; date: string; timeSlot: string; userId: string; clientSessionId?: string; expiresAt: number }[]>>;
+}
+
 describe('BookingsComponent', () => {
   let component: BookingsComponent;
   let fixture: ComponentFixture<BookingsComponent>;
   let mockBookingService: jasmine.SpyObj<BookingService>;
-  let mockNotificationSocketService: jasmine.SpyObj<NotificationSocketService>;
+  let mockNotificationSocketService: MockNotificationSocket;
 
   const testStations: Station[] = [
     {
@@ -67,14 +78,15 @@ describe('BookingsComponent', () => {
       'getLoyaltyBalance',
       'createBooking'
     ]);
-    mockNotificationSocketService = jasmine.createSpyObj<NotificationSocketService>('NotificationSocketService', [
-      'sendNotification',
-      'isSlotHeldByOther',
-      'lockSlot',
-      'unlockSlot',
-      'confirmSlotBooked'
-    ]);
-    mockNotificationSocketService.isSlotHeldByOther.and.returnValue(false);
+    mockNotificationSocketService = {
+      sendNotification: jasmine.createSpy('sendNotification'),
+      isSlotHeldByOther: jasmine.createSpy('isSlotHeldByOther').and.returnValue(false),
+      lockSlot: jasmine.createSpy('lockSlot'),
+      unlockSlot: jasmine.createSpy('unlockSlot'),
+      confirmSlotBooked: jasmine.createSpy('confirmSlotBooked'),
+      lastSlotEvent: signal(null),
+      activeSlotLocks: signal([])
+    };
 
     mockBookingService.getStations.and.returnValue(of(testStations));
     mockBookingService.getStationGames.and.callFake((id: string) => {

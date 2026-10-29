@@ -233,11 +233,11 @@ describe('NotificationSocketService', () => {
 
     it('should emit lock_slot when socket is connected', () => {
       service.lockSlot('st-01', '2026-11-04', '10:00');
-      expect(mockSocket.emit).toHaveBeenCalledWith('lock_slot', {
+      expect(mockSocket.emit).toHaveBeenCalledWith('lock_slot', jasmine.objectContaining({
         stationId: 'st-01',
         date: '2026-11-04',
         timeSlot: '10:00'
-      });
+      }));
     });
 
     it('should not emit lock_slot when socket is disconnected', () => {
@@ -299,8 +299,13 @@ describe('NotificationSocketService', () => {
       expect(service.isSlotHeldByOther('st-01', '2026-11-04', '11:00')).toBeFalse();
       // Expired lock -> false
       expect(service.isSlotHeldByOther('st-01', '2026-11-04', '12:00')).toBeFalse();
-      // Non-existent slot -> false
+      // Other unbooked 1-hour slot on same station -> false (available!)
       expect(service.isSlotHeldByOther('st-01', '2026-11-04', '13:00')).toBeFalse();
+      expect(service.isSlotHeldByOther('st-01', '2026-11-04', '14:00')).toBeFalse();
+      // Normalized 12h format of the locked slot matches
+      expect(service.isSlotHeldByOther('st-01', '2026-11-04', '10:00 AM')).toBeTrue();
+      // Same time slot on a different station -> false (available!)
+      expect(service.isSlotHeldByOther('st-02', '2026-11-04', '10:00')).toBeFalse();
     });
   });
 });

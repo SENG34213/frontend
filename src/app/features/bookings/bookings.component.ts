@@ -1,6 +1,8 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
+  effect,
   inject,
   signal,
   computed,
@@ -24,7 +26,8 @@ import {
   DisplaySlot,
   formatDateToYMD,
   formatTimeString,
-  getCleanTimeId
+  getCleanTimeId,
+  normalizeSlotHourMinute
 } from '../../core/utils/slot.utils';
 
 export interface CalendarDay {
@@ -56,7 +59,7 @@ export type { DisplaySlot };
   templateUrl: './bookings.component.html',
   styleUrl: './bookings.component.scss'
 })
-export class BookingsComponent implements OnInit {
+export class BookingsComponent implements OnInit, OnDestroy {
   private readonly bookingService = inject(BookingService);
   private readonly notifSocketService = inject(NotificationSocketService);
   private readonly route = inject(ActivatedRoute);
@@ -104,12 +107,36 @@ export class BookingsComponent implements OnInit {
 
   readonly loyaltyDiscountAmount = computed(() => this.effectivePointsToRedeem() * 0.5);
 
-  // ── Modal / Receipt ──────────────────────────────────────────────────────────
   readonly paymentModalOpen = signal<boolean>(false);
   readonly paymentMethod = signal<'CARD'>('CARD');
   readonly isProcessingPayment = signal<boolean>(false);
   readonly bookingSuccessReceipt = signal<BookingResponse | null>(null);
   readonly bookingErrorMessage = signal<string | null>(null);
+
+  // ── Hold Timer state (2-minute temporary lock) ──────────────────────────────
+  readonly holdSecondsRemaining = signal<number>(120);
+  private holdTimerInterval: ReturnType<typeof setInterval> | null = null;
+
+  constructor() {
+    // Real-time synchronization of slot locks, bookings, and releases across all customers
+    effect(() => {
+      const getEvent = typeof this.notifSocketService.lastSlotEvent === 'function'
+        ? this.notifSocketService.lastSlotEvent()
+        : null;
+      if (getEvent) {
+        if (getEvent.type === 'BOOKED' && (!getEvent.stationId || getEvent.stationId === this.selectedStationId())) {
+          this.loadSlotsForDate();
+        } else {
+          this.cdr.markForCheck();
+        }
+      }
+      // Re-evaluate template whenever activeSlotLocks signal changes
+      if (typeof this.notifSocketService.activeSlotLocks === 'function') {
+        this.notifSocketService.activeSlotLocks();
+      }
+      this.cdr.markForCheck();
+    });
+  }
 
   // Card form fields with dynamic formatting
   readonly cardNumberSignal = signal<string>('4242 4242 4242 4242');
@@ -175,10 +202,12 @@ export class BookingsComponent implements OnInit {
   }
 
   isSlotHeld(slot: DisplaySlot): boolean {
+    if (!slot) return false;
+    const timeSlot = normalizeSlotHourMinute(slot.rawStart || slot.startTime || slot.id);
     return this.notifSocketService.isSlotHeldByOther(
       this.selectedStationId(),
       this.selectedDateStr(),
-      slot.rawStart || slot.id
+      timeSlot
     );
   }
 
@@ -505,7 +534,7 @@ export class BookingsComponent implements OnInit {
   }
 
   selectSlot(slot: DisplaySlot): void {
-    if (!slot.isAvailable) return;
+    if (!slot.isAvailable || this.isSlotHeld(slot)) return;
     this.selectedSlotId.set(slot.id);
   }
 
@@ -531,34 +560,100 @@ export class BookingsComponent implements OnInit {
     this.redeemLoyalty.update((val) => !val);
   }
 
-  // ── Payment flow ─────────────────────────────────────────────────────────────
+  // ── Payment flow & Slot Hold Timer ──────────────────────────────────────────
+
+  startHoldTimer(): void {
+    this.stopHoldTimer();
+    this.holdSecondsRemaining.set(120); // 2 minutes (120 seconds) hold
+    this.holdTimerInterval = setInterval(() => {
+      const current = this.holdSecondsRemaining();
+      if (current <= 1) {
+        this.stopHoldTimer();
+        this.holdSecondsRemaining.set(0);
+        this.handleHoldExpired();
+      } else {
+        this.holdSecondsRemaining.set(current - 1);
+        this.cdr.markForCheck();
+      }
+    }, 1000);
+  }
+
+  stopHoldTimer(): void {
+    if (this.holdTimerInterval) {
+      clearInterval(this.holdTimerInterval);
+      this.holdTimerInterval = null;
+    }
+  }
+
+  private handleHoldExpired(): void {
+    const slot = this.selectedSlot();
+    if (slot && !this.bookingSuccessReceipt()) {
+      const timeToUnlock = normalizeSlotHourMinute(slot.rawStart || slot.startTime || slot.id);
+      this.notifSocketService.unlockSlot(
+        this.selectedStationId(),
+        this.selectedDateStr(),
+        timeToUnlock
+      );
+    }
+    this.paymentModalOpen.set(false);
+    this.bookingErrorMessage.set('Your 2-minute booking hold expired. The slot has been released back to Available.');
+    this.cdr.markForCheck();
+  }
+
+  formatHoldTime(seconds: number): string {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
 
   onProceedToPayment(): void {
     if (!this.canProceedToPayment()) return;
     const slot = this.selectedSlot();
-    if (slot) {
-      this.notifSocketService.lockSlot(
-        this.selectedStationId(),
-        this.selectedDateStr(),
-        slot.rawStart || slot.id
-      );
+    if (!slot || this.isSlotHeld(slot)) {
+      this.bookingErrorMessage.set('This time slot is currently being booked by another customer. Please choose a different slot.');
+      return;
     }
+    const timeToLock = normalizeSlotHourMinute(slot.rawStart || slot.startTime || slot.id);
+    this.notifSocketService.lockSlot(
+      this.selectedStationId(),
+      this.selectedDateStr(),
+      timeToLock
+    );
+    this.startHoldTimer();
     this.bookingErrorMessage.set(null);
     this.paymentModalOpen.set(true);
   }
 
   closePaymentModal(): void {
+    this.stopHoldTimer();
     const slot = this.selectedSlot();
     if (slot && !this.bookingSuccessReceipt()) {
+      const timeToUnlock = normalizeSlotHourMinute(slot.rawStart || slot.startTime || slot.id);
       this.notifSocketService.unlockSlot(
         this.selectedStationId(),
         this.selectedDateStr(),
-        slot.rawStart || slot.id
+        timeToUnlock
       );
     }
     this.paymentModalOpen.set(false);
     this.bookingSuccessReceipt.set(null);
     this.bookingErrorMessage.set(null);
+  }
+
+  ngOnDestroy(): void {
+    this.stopHoldTimer();
+    // If user navigates away with an active unconfirmed booking hold, roll back immediately
+    if (this.paymentModalOpen() && !this.bookingSuccessReceipt()) {
+      const slot = this.selectedSlot();
+      if (slot) {
+        const timeToUnlock = normalizeSlotHourMinute(slot.rawStart || slot.startTime || slot.id);
+        this.notifSocketService.unlockSlot(
+          this.selectedStationId(),
+          this.selectedDateStr(),
+          timeToUnlock
+        );
+      }
+    }
   }
 
   confirmPayment(): void {
@@ -586,11 +681,13 @@ export class BookingsComponent implements OnInit {
       pointsToRedeem: this.effectivePointsToRedeem()
     }).subscribe({
       next: (response) => {
+        this.stopHoldTimer();
         // Broadcast slot booked live across real-time socket
+        const timeToConfirm = normalizeSlotHourMinute(slot.rawStart || slot.startTime || slot.id);
         this.notifSocketService.confirmSlotBooked(
           this.selectedStationId(),
           this.selectedDateStr(),
-          slot.rawStart || slot.id
+          timeToConfirm
         );
 
         // Enrich response with game title from local state

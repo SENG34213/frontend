@@ -47,6 +47,69 @@ export function formatTimeString(time: string): string {
   return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
 }
 
+/**
+ * Normalizes any slot time representation (ISO UTC instant, ISO local datetime,
+ * HH:mm:ss, HH:mm, or 12h "hh:mm A") into a standardized 24h "HH:mm" slot key
+ * respecting Sri Lanka timezone (+05:30).
+ */
+export function normalizeSlotHourMinute(time: string): string {
+  if (!time) return '';
+  const trimmed = time.trim();
+
+  // 1. ISO string with Z or offset (UTC instant)
+  if (trimmed.includes('T') && (trimmed.endsWith('Z') || trimmed.includes('+') || trimmed.includes('-'))) {
+    const d = new Date(trimmed);
+    if (!isNaN(d.getTime())) {
+      const parts = new Intl.DateTimeFormat('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: SRI_LANKA_TIMEZONE
+      }).formatToParts(d);
+      const hour = parts.find(p => p.type === 'hour')?.value || '00';
+      const minute = parts.find(p => p.type === 'minute')?.value || '00';
+      return `${hour}:${minute}`;
+    }
+  }
+
+  // 2. ISO string without offset (e.g. "2026-10-29T10:00:00")
+  if (trimmed.includes('T')) {
+    const timePart = trimmed.split('T')[1];
+    if (timePart) {
+      const [hStr, mStr] = timePart.split(':');
+      if (hStr !== undefined && mStr !== undefined) {
+        return `${hStr.padStart(2, '0')}:${mStr.substring(0, 2)}`;
+      }
+    }
+  }
+
+  // 3. 12-hour AM/PM format (e.g. "10:00 AM", "02:00 PM")
+  if (trimmed.toUpperCase().includes('AM') || trimmed.toUpperCase().includes('PM')) {
+    const isPm = trimmed.toUpperCase().includes('PM');
+    const cleaned = trimmed.replace(/AM|PM/gi, '').trim();
+    const [hStr, mStr] = cleaned.split(':');
+    let h = parseInt(hStr, 10);
+    if (!isNaN(h)) {
+      if (isPm && h < 12) h += 12;
+      if (!isPm && h === 12) h = 0;
+      const m = mStr ? mStr.substring(0, 2) : '00';
+      return `${String(h).padStart(2, '0')}:${m}`;
+    }
+  }
+
+  // 4. Standard 24h format HH:mm or HH:mm:ss (e.g. "10:00", "14:30:00")
+  const [hStr, mStr] = trimmed.split(':');
+  if (hStr !== undefined && mStr !== undefined) {
+    const h = parseInt(hStr, 10);
+    if (!isNaN(h)) {
+      const m = mStr.substring(0, 2);
+      return `${String(h).padStart(2, '0')}:${m}`;
+    }
+  }
+
+  return trimmed;
+}
+
 /** Removes non-alphanumeric chars for use in HTML element IDs */
 export function getCleanTimeId(time: string): string {
   return time.replace(/[^a-zA-Z0-9]/g, '');

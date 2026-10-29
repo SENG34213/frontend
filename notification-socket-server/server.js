@@ -323,8 +323,58 @@ app.delete('/api/notifications', (req, res) => {
 
 // ── Slot Locks Store for Real-Time Soft-Locking ──────────────────────────────
 const activeSlotLocks = new Map();
+const HOLD_DURATION_MS = 2 * 60 * 1000; // 2-minute hold limit (User requirement: reduce too-long lock time)
 
-// Periodic cleanup of expired locks (5-minute hold limit)
+function normalizeTimeSlot(time) {
+  if (!time) return '';
+  const str = String(time).trim();
+  if (str.includes('T') && (str.endsWith('Z') || str.includes('+') || str.includes('-'))) {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const parts = new Intl.DateTimeFormat('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Asia/Colombo'
+      }).formatToParts(d);
+      const hour = parts.find(p => p.type === 'hour')?.value || '00';
+      const minute = parts.find(p => p.type === 'minute')?.value || '00';
+      return `${hour}:${minute}`;
+    }
+  }
+  if (str.includes('T')) {
+    const timePart = str.split('T')[1];
+    if (timePart) {
+      const [hStr, mStr] = timePart.split(':');
+      if (hStr !== undefined && mStr !== undefined) {
+        return `${hStr.padStart(2, '0')}:${mStr.substring(0, 2)}`;
+      }
+    }
+  }
+  if (str.toUpperCase().includes('AM') || str.toUpperCase().includes('PM')) {
+    const isPm = str.toUpperCase().includes('PM');
+    const cleaned = str.replace(/AM|PM/gi, '').trim();
+    const [hStr, mStr] = cleaned.split(':');
+    let h = parseInt(hStr, 10);
+    if (!isNaN(h)) {
+      if (isPm && h < 12) h += 12;
+      if (!isPm && h === 12) h = 0;
+      const m = mStr ? mStr.substring(0, 2) : '00';
+      return `${String(h).padStart(2, '0')}:${m}`;
+    }
+  }
+  const [hStr, mStr] = str.split(':');
+  if (hStr !== undefined && mStr !== undefined) {
+    const h = parseInt(hStr, 10);
+    if (!isNaN(h)) {
+      const m = mStr.substring(0, 2);
+      return `${String(h).padStart(2, '0')}:${m}`;
+    }
+  }
+  return str;
+}
+
+// Periodic cleanup of expired locks (every 1 second for instant release)
 setInterval(() => {
   const now = Date.now();
   for (const [key, lock] of activeSlotLocks.entries()) {
@@ -334,7 +384,7 @@ setInterval(() => {
       console.log(`[SlotLock] Auto-released expired hold on: ${key}`);
     }
   }
-}, 5000);
+}, 1000);
 
 // GET /api/slots/locks
 app.get('/api/slots/locks', (req, res) => {
@@ -347,14 +397,15 @@ app.post('/api/slots/event', (req, res) => {
   if (!stationId || !date || !timeSlot) {
     return res.status(400).json({ error: 'Missing slot details (stationId, date, timeSlot)' });
   }
-  const key = `${stationId}_${date}_${timeSlot}`;
+  const cleanSlot = normalizeTimeSlot(timeSlot);
+  const key = `${stationId}_${date}_${cleanSlot}`;
   if (event === 'BOOKED') {
     activeSlotLocks.delete(key);
-    io.emit('slot_booked_live', { key, stationId, date, timeSlot });
+    io.emit('slot_booked_live', { key, stationId, date, timeSlot: cleanSlot });
     console.log(`[SlotLock HTTP] Slot booked live via backend Spring Boot event: ${key}`);
   } else if (event === 'RELEASED') {
     activeSlotLocks.delete(key);
-    io.emit('slot_unlocked', { key, stationId, date, timeSlot });
+    io.emit('slot_unlocked', { key, stationId, date, timeSlot: cleanSlot });
     console.log(`[SlotLock HTTP] Slot released/unlocked live via backend Spring Boot event: ${key}`);
   }
   res.json({ success: true, key, event });
@@ -395,40 +446,45 @@ io.on('connection', (socket) => {
   setupClient(handshakeUserId, handshakeRole, handshakeEmail);
 
   // ── Slot Hold and Release Events ───────────────────────────────────────────
-  socket.on('lock_slot', ({ stationId, date, timeSlot }) => {
+  socket.on('lock_slot', ({ stationId, date, timeSlot, clientSessionId }) => {
     if (!stationId || !date || !timeSlot) return;
-    const key = `${stationId}_${date}_${timeSlot}`;
-    const expiresAt = Date.now() + 5 * 60 * 1000;
+    const cleanSlot = normalizeTimeSlot(timeSlot);
+    const key = `${stationId}_${date}_${cleanSlot}`;
+    const expiresAt = Date.now() + HOLD_DURATION_MS;
     const lockInfo = {
       key,
       stationId,
       date,
-      timeSlot,
+      timeSlot: cleanSlot,
       userId: socket.data.userId || 'anonymous',
       userEmail: socket.data.email,
+      socketId: socket.id,
+      clientSessionId: clientSessionId || null,
       expiresAt
     };
     activeSlotLocks.set(key, lockInfo);
     io.emit('slot_locked', lockInfo);
-    console.log(`[SlotLock] Slot held: ${key} by ${socket.data.email || socket.data.userId}`);
+    console.log(`[SlotLock] Slot held for 2 mins: ${key} by ${socket.data.email || socket.data.userId || socket.id}`);
   });
 
   socket.on('unlock_slot', ({ stationId, date, timeSlot }) => {
     if (!stationId || !date || !timeSlot) return;
-    const key = `${stationId}_${date}_${timeSlot}`;
+    const cleanSlot = normalizeTimeSlot(timeSlot);
+    const key = `${stationId}_${date}_${cleanSlot}`;
     if (activeSlotLocks.has(key)) {
       activeSlotLocks.delete(key);
-      io.emit('slot_unlocked', { key, stationId, date, timeSlot });
-      console.log(`[SlotLock] Slot released: ${key}`);
+      io.emit('slot_unlocked', { key, stationId, date, timeSlot: cleanSlot });
+      console.log(`[SlotLock] Slot released/rolled back: ${key}`);
     }
   });
 
   socket.on('booking_confirmed_slot', ({ stationId, date, timeSlot }) => {
     if (!stationId || !date || !timeSlot) return;
-    const key = `${stationId}_${date}_${timeSlot}`;
+    const cleanSlot = normalizeTimeSlot(timeSlot);
+    const key = `${stationId}_${date}_${cleanSlot}`;
     activeSlotLocks.delete(key);
-    io.emit('slot_booked_live', { key, stationId, date, timeSlot });
-    console.log(`[SlotLock] Slot booked live: ${key}`);
+    io.emit('slot_booked_live', { key, stationId, date, timeSlot: cleanSlot });
+    console.log(`[SlotLock] Slot confirmed booked live: ${key}`);
   });
 
   socket.on('identify', (payload) => {
@@ -480,6 +536,14 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log(`[Socket.IO] Client disconnected: ${socket.id}`);
+    // Auto-release any active slot locks held by this disconnected client so slots return to Available
+    for (const [key, lock] of activeSlotLocks.entries()) {
+      if (lock.socketId === socket.id) {
+        activeSlotLocks.delete(key);
+        io.emit('slot_unlocked', { key, stationId: lock.stationId, date: lock.date, timeSlot: lock.timeSlot });
+        console.log(`[SlotLock] Auto-released hold on client disconnect: ${key}`);
+      }
+    }
   });
 });
 

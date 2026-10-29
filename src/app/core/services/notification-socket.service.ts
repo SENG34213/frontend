@@ -4,6 +4,7 @@ import { io, Socket } from 'socket.io-client';
 import { AdminNotification, NotificationPayload, NotificationCategory } from '../../shared/models/notification.model';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 import { AuthService } from './auth.service';
+import { normalizeSlotHourMinute } from '../utils/slot.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -23,7 +24,23 @@ export class NotificationSocketService {
   readonly isConnected = signal<boolean>(false);
   readonly isDrawerOpen = signal<boolean>(false);
   readonly activeFilter = signal<'ALL' | 'UNREAD' | 'BOOKING' | 'TOURNAMENT'>('ALL');
-  readonly activeSlotLocks = signal<{ key: string; stationId: string; date: string; timeSlot: string; userId: string; expiresAt: number }[]>([]);
+  readonly activeSlotLocks = signal<{ key: string; stationId: string; date: string; timeSlot: string; userId: string; clientSessionId?: string; expiresAt: number }[]>([]);
+  readonly lastSlotEvent = signal<{ type: 'LOCKED' | 'UNLOCKED' | 'BOOKED'; key: string; stationId?: string; date?: string; timeSlot?: string } | null>(null);
+
+  private readonly clientSessionId: string = this.initClientSessionId();
+
+  private initClientSessionId(): string {
+    try {
+      let id = sessionStorage.getItem('gc_client_session_id');
+      if (!id) {
+        id = 'sess_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
+        sessionStorage.setItem('gc_client_session_id', id);
+      }
+      return id;
+    } catch {
+      return 'sess_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
+    }
+  }
 
   // Computed filtered list
   readonly filteredNotifications = computed(() => {
@@ -162,20 +179,23 @@ export class NotificationSocketService {
       });
 
       // ── Real-Time Slot Soft-Locking Listeners ──────────────────────────────
-      this.socket.on('slot_locks', (locks: { key: string; stationId: string; date: string; timeSlot: string; userId: string; expiresAt: number }[]) => {
+      this.socket.on('slot_locks', (locks: { key: string; stationId: string; date: string; timeSlot: string; userId: string; clientSessionId?: string; expiresAt: number }[]) => {
         this.activeSlotLocks.set(locks || []);
       });
 
-      this.socket.on('slot_locked', (lock: { key: string; stationId: string; date: string; timeSlot: string; userId: string; expiresAt: number }) => {
+      this.socket.on('slot_locked', (lock: { key: string; stationId: string; date: string; timeSlot: string; userId: string; clientSessionId?: string; expiresAt: number }) => {
         this.activeSlotLocks.update(prev => [...prev.filter(l => l.key !== lock.key), lock]);
+        this.lastSlotEvent.set({ type: 'LOCKED', ...lock });
       });
 
-      this.socket.on('slot_unlocked', (data: { key: string }) => {
+      this.socket.on('slot_unlocked', (data: { key: string; stationId?: string; date?: string; timeSlot?: string }) => {
         this.activeSlotLocks.update(prev => prev.filter(l => l.key !== data.key));
+        this.lastSlotEvent.set({ type: 'UNLOCKED', ...data });
       });
 
-      this.socket.on('slot_booked_live', (data: { key: string }) => {
+      this.socket.on('slot_booked_live', (data: { key: string; stationId?: string; date?: string; timeSlot?: string }) => {
         this.activeSlotLocks.update(prev => prev.filter(l => l.key !== data.key));
+        this.lastSlotEvent.set({ type: 'BOOKED', ...data });
       });
 
     } catch (err) {
@@ -233,29 +253,56 @@ export class NotificationSocketService {
   // ── Slot Soft-Locking Methods ──────────────────────────────────────────────
   lockSlot(stationId: string, date: string, timeSlot: string): void {
     if (this.socket && this.socket.connected) {
-      this.socket.emit('lock_slot', { stationId, date, timeSlot });
+      const cleanSlot = normalizeSlotHourMinute(timeSlot) || timeSlot;
+      this.socket.emit('lock_slot', {
+        stationId,
+        date,
+        timeSlot: cleanSlot,
+        clientSessionId: this.clientSessionId
+      });
     }
   }
 
   unlockSlot(stationId: string, date: string, timeSlot: string): void {
     if (this.socket && this.socket.connected) {
-      this.socket.emit('unlock_slot', { stationId, date, timeSlot });
+      const cleanSlot = normalizeSlotHourMinute(timeSlot) || timeSlot;
+      this.socket.emit('unlock_slot', { stationId, date, timeSlot: cleanSlot });
     }
   }
 
   confirmSlotBooked(stationId: string, date: string, timeSlot: string): void {
     if (this.socket && this.socket.connected) {
-      this.socket.emit('booking_confirmed_slot', { stationId, date, timeSlot });
+      const cleanSlot = normalizeSlotHourMinute(timeSlot) || timeSlot;
+      this.socket.emit('booking_confirmed_slot', { stationId, date, timeSlot: cleanSlot });
     }
   }
 
   isSlotHeldByOther(stationId: string, date: string, timeSlot: string): boolean {
-    const key = `${stationId}_${date}_${timeSlot}`;
+    if (!stationId || !date || !timeSlot) return false;
+    const cleanTime = normalizeSlotHourMinute(timeSlot);
+    if (!cleanTime) return false;
     const now = Date.now();
     const currentUid = this.getUserIdSafely();
-    return this.activeSlotLocks().some(
-      l => l.key === key && l.expiresAt > now && l.userId !== currentUid
-    );
+
+    return this.activeSlotLocks().some(l => {
+      // Must match the exact station and date
+      if (l.stationId !== stationId || l.date !== date) return false;
+      // Expired locks do not block
+      if (l.expiresAt <= now) return false;
+
+      const lockCleanTime = normalizeSlotHourMinute(l.timeSlot);
+      // ONLY the exact 1-hour time slot matches
+      const isMatchingSlot = lockCleanTime === cleanTime;
+
+      if (!isMatchingSlot) return false;
+
+      const lockWithSession = l as { clientSessionId?: string };
+      const isHeldByMe =
+        (lockWithSession.clientSessionId && lockWithSession.clientSessionId === this.clientSessionId) ||
+        (currentUid && l.userId === currentUid);
+
+      return !isHeldByMe;
+    });
   }
 
   markAsRead(id: string): void {

@@ -394,16 +394,28 @@
 
   &.avail .legend-dot {
     background: #10b981;
-    box-shadow: 0 0 4px rgba(16, 185, 129, 0.5);
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
   }
 
   &.selected .legend-dot {
     background: #3b82f6;
-    box-shadow: 0 0 4px rgba(59, 130, 246, 0.6);
+    box-shadow: 0 0 6px rgba(59, 130, 246, 0.7);
+  }
+
+  &.in-progress {
+    color: #fbbf24;
+    font-weight: 600;
+
+    .legend-dot {
+      background: #f59e0b;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.85);
+      animation: pulse-hold 1.8s infinite ease-in-out;
+    }
   }
 
   &.booked .legend-dot {
-    background: #64748b;
+    background: #ef4444;
+    box-shadow: 0 0 4px rgba(239, 68, 68, 0.5);
   }
 }
 
@@ -516,13 +528,13 @@
     }
   }
 
-  &:disabled,
-  &.booked {
-    opacity: 0.4;
+  &:disabled:not(.holding):not(.in-progress),
+  &.booked:not(.holding):not(.in-progress) {
+    opacity: 0.45;
     cursor: not-allowed;
     pointer-events: none;
-    background: rgba(8, 11, 17, 0.6);
-    border-color: rgba(255, 255, 255, 0.04);
+    background: rgba(8, 11, 17, 0.65);
+    border-color: rgba(239, 68, 68, 0.25);
 
     .slot-start,
     .slot-divider,
@@ -532,7 +544,7 @@
     }
   }
 
-  .booked-badge {
+  .slot-badge {
     position: absolute;
     top: -6px;
     right: 4px;
@@ -540,41 +552,86 @@
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+    padding: 0.5px 5px;
+    border-radius: 3px;
+    z-index: 2;
+  }
+
+  .booked-badge {
     color: #f87171;
     background: rgba(239, 68, 68, 0.25);
     backdrop-filter: blur(4px);
-    padding: 0.5px 5px;
-    border-radius: 3px;
     border: 1px solid rgba(239, 68, 68, 0.4);
   }
 
-  &.holding {
-    opacity: 0.75;
-    cursor: not-allowed;
-    background: rgba(245, 158, 11, 0.12);
-    border-color: rgba(245, 158, 11, 0.35);
-
-    .slot-start,
-    .slot-divider,
-    .slot-end {
-      color: #fbbf24;
-    }
+  .avail-badge {
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.18);
+    border: 1px solid rgba(16, 185, 129, 0.35);
   }
 
-  .holding-badge {
-    position: absolute;
-    top: -6px;
-    right: 4px;
-    font-size: 0.58rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: #fbbf24;
-    background: rgba(245, 158, 11, 0.25);
-    backdrop-filter: blur(4px);
-    padding: 0.5px 5px;
-    border-radius: 3px;
-    border: 1px solid rgba(245, 158, 11, 0.45);
+  .selected-badge {
+    color: #ffffff;
+    background: #2563eb;
+    border: 1px solid #60a5fa;
+    box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);
+  }
+
+  // Real-Time In-Progress / Held Slot (Distinct glowing Amber/Gold)
+  &.holding,
+  &.in-progress {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(180, 83, 9, 0.4) 100%) !important;
+    border: 2px solid #f59e0b !important;
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.45) !important;
+    opacity: 1 !important;
+    cursor: not-allowed !important;
+    pointer-events: auto !important;
+
+    .slot-start {
+      color: #fffbeb !important;
+      font-weight: 800 !important;
+      text-decoration: none !important;
+    }
+
+    .slot-divider {
+      color: #fbbf24 !important;
+      font-weight: 800 !important;
+      text-decoration: none !important;
+    }
+
+    .slot-end {
+      color: #fde68a !important;
+      font-weight: 800 !important;
+      text-decoration: none !important;
+    }
+
+    .holding-badge {
+      color: #000000;
+      background: #f59e0b;
+      font-weight: 800;
+      font-size: 0.62rem;
+      padding: 1.5px 6px;
+      border-radius: 4px;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.75);
+      border: 1px solid #fbbf24;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      animation: pulse-hold 1.8s infinite ease-in-out;
+    }
+  }
+}
+
+@keyframes pulse-hold {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(0.96);
+    box-shadow: 0 0 4px rgba(245, 158, 11, 0.3);
   }
 }
 
@@ -1424,6 +1481,77 @@
   &:focus {
     border-color: var(--gc-primary);
     box-shadow: 0 0 0 2px var(--gc-border-glow);
+  }
+}
+
+.hold-timer-banner {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(180, 83, 9, 0.26) 100%);
+  border: 1.5px solid rgba(245, 158, 11, 0.55);
+  border-radius: var(--gc-radius-md, 8px);
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.2);
+  transition: all var(--gc-transition-fast);
+
+  &.expiring {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.22) 0%, rgba(185, 28, 28, 0.35) 100%);
+    border-color: #ef4444;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+
+    .timer-dot {
+      background: #ef4444 !important;
+      box-shadow: 0 0 8px #ef4444 !important;
+    }
+
+    .timer-clock {
+      color: #f87171 !important;
+      border-color: rgba(239, 68, 68, 0.6) !important;
+    }
+  }
+
+  .timer-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    .timer-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #f59e0b;
+      box-shadow: 0 0 8px #f59e0b;
+      animation: pulse-hold 1.5s infinite ease-in-out;
+    }
+
+    .timer-label {
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #fbbf24;
+    }
+
+    .timer-clock {
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: 0.08em;
+      margin-left: auto;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 0.15rem 0.6rem;
+      border-radius: var(--gc-radius-sm, 4px);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+  }
+
+  .timer-desc {
+    font-size: 0.78rem;
+    color: var(--gc-text-secondary, #cbd5e1);
+    margin: 0;
+    line-height: 1.4;
   }
 }
 
