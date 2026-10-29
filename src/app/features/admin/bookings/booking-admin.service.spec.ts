@@ -104,6 +104,7 @@ describe('BookingAdminService', () => {
     const walkInReq = {
       targetUserId: 'usr-guest',
       stationId: 'st-1',
+      gameId: 'game-1',
       startTime: '2026-10-19T10:00:00Z',
       endTime: '2026-10-19T11:00:00Z'
     };

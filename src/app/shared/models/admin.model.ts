@@ -49,6 +49,8 @@ export interface AdminBookingRow {
   stationId: string;
   stationCode?: string;
   stationType?: string;
+  gameId?: string;
+  gameTitle?: string;
   hourlyRate?: number;
   startTime: string;
   endTime: string;
