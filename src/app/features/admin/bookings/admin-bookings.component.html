@@ -140,7 +140,7 @@
                   <td>
                     <div class="station-cell">
                       <span class="station-code">{{ booking.stationCode || '—' }}</span>
-                      <span class="station-type text-muted">{{ booking.stationType || 'Console' }}</span>
+                      <span class="station-type text-muted">{{ booking.gameTitle || booking.stationType || 'Console' }}</span>
                     </div>
                   </td>
                   <td>
@@ -240,6 +240,11 @@
             <dt>Station</dt>
             <dd>{{ bk.stationCode || '—' }} &mdash; {{ bk.stationType || 'Console' }}</dd>
 
+            @if (bk.gameTitle) {
+              <dt>Game</dt>
+              <dd>🎮 {{ bk.gameTitle }}</dd>
+            }
+
             <dt>Start</dt>
             <dd>{{ formatDateTime(bk.startTime) }}</dd>
 
@@ -334,6 +339,7 @@
             id="walkin-station-id"
             class="gc-select-native"
             formControlName="stationId"
+            (change)="onStationChange($any($event.target).value)"
             [attr.aria-invalid]="walkInForm.get('stationId')?.invalid && walkInForm.get('stationId')?.touched">
             <option value="" disabled selected>-- Select Station --</option>
             @for (st of stations(); track st.id) {
@@ -344,6 +350,37 @@
           </select>
           @if (walkInForm.get('stationId')?.invalid && walkInForm.get('stationId')?.touched) {
             <span class="field-error" role="alert">Station is required</span>
+          }
+        </div>
+
+        <div class="form-field game-select-field">
+          <label class="form-label" for="walkin-game-id">Game Title <span class="required" aria-hidden="true">*</span></label>
+          <select
+            id="walkin-game-id"
+            class="gc-select-native"
+            formControlName="gameId"
+            (change)="onGameChange($any($event.target).value)"
+            [attr.aria-invalid]="walkInForm.get('gameId')?.invalid && walkInForm.get('gameId')?.touched">
+            @if (gamesLoading()) {
+              <option value="" disabled selected>⏳ Loading games for station…</option>
+            } @else if (availableGames().length === 0 && walkInForm.get('stationId')?.value) {
+              <option value="" disabled selected>⚠️ No games installed on this station</option>
+            } @else {
+              <option value="" disabled selected>-- Select Game --</option>
+              @for (g of availableGames(); track g.id) {
+                <option [value]="g.id">
+                  🎮 {{ g.title }} ({{ g.genre }})
+                </option>
+              }
+            }
+          </select>
+          @if (walkInForm.get('gameId')?.invalid && walkInForm.get('gameId')?.touched) {
+            <span class="field-error" role="alert">Please select a game</span>
+          }
+          @if (!gamesLoading() && walkInForm.get('stationId')?.value && availableGames().length === 0) {
+            <span class="field-hint text-warning" role="alert">
+              No games are installed on this station. Please assign games in Station Management.
+            </span>
           }
         </div>
 

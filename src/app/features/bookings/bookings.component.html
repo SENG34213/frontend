@@ -96,6 +96,7 @@
               <div class="slots-legend">
                 <span class="legend-pill avail"><span class="legend-dot"></span>Available</span>
                 <span class="legend-pill selected"><span class="legend-dot"></span>Selected</span>
+                <span class="legend-pill in-progress"><span class="legend-dot"></span>In Progress (Locked)</span>
                 <span class="legend-pill booked"><span class="legend-dot"></span>Booked</span>
               </div>
             </div>
@@ -117,19 +118,25 @@
                     [class.occupied]="!slot.isAvailable"
                     [class.booked]="!slot.isAvailable"
                     [class.holding]="isSlotHeld(slot)"
+                    [class.in-progress]="isSlotHeld(slot)"
                     [class.deactive]="!slot.isAvailable || isSlotHeld(slot)"
                     [disabled]="!slot.isAvailable || isSlotHeld(slot)"
                     [attr.aria-disabled]="!slot.isAvailable || isSlotHeld(slot)"
                     (click)="selectSlot(slot)"
                     [attr.aria-pressed]="slot.id === selectedSlotId() && slot.isAvailable && !isSlotHeld(slot)"
-                    [attr.aria-label]="slot.startTime + ' to ' + slot.endTime + (!slot.isAvailable ? ' (Booked)' : (isSlotHeld(slot) ? ' (Currently being reserved)' : ''))">
+                    [attr.aria-label]="slot.startTime + ' to ' + slot.endTime + (!slot.isAvailable ? ' (Booked)' : (isSlotHeld(slot) ? ' (Locked: Currently being reserved by another customer)' : ' (Available)'))"
+                    [attr.title]="isSlotHeld(slot) ? 'This slot is currently being booked by another customer. If they cancel or do not complete in 2 minutes, it will return to Available.' : (!slot.isAvailable ? 'This slot is already booked.' : 'Available for reservation')">
                     <span class="slot-start">{{ slot.startTime }}</span>
                     <span class="slot-divider">→</span>
                     <span class="slot-end">{{ slot.endTime }}</span>
                     @if (!slot.isAvailable) {
                       <span class="slot-badge booked-badge">Booked</span>
                     } @else if (isSlotHeld(slot)) {
-                      <span class="slot-badge holding-badge">⏳ Holding</span>
+                      <span class="slot-badge holding-badge">🔒 In Progress</span>
+                    } @else if (slot.id === selectedSlotId()) {
+                      <span class="slot-badge selected-badge">✓ Selected</span>
+                    } @else {
+                      <span class="slot-badge avail-badge">Available</span>
                     }
                   </button>
                 }
@@ -492,6 +499,18 @@
 
   @if (!bookingSuccessReceipt()) {
     <div class="payment-modal-body">
+      <!-- Real-Time Slot Hold Countdown Banner -->
+      <div class="hold-timer-banner" [class.expiring]="holdSecondsRemaining() <= 30">
+        <div class="timer-badge">
+          <span class="timer-dot"></span>
+          <span class="timer-label">SLOT RESERVATION HOLD:</span>
+          <span class="timer-clock font-mono font-bold">{{ formatHoldTime(holdSecondsRemaining()) }}</span>
+        </div>
+        <p class="timer-desc">
+          This slot is held for you. Complete payment before the timer reaches 00:00 or the slot will unlock and become available for other customers.
+        </p>
+      </div>
+
       <!-- Order Quick Summary -->
       <div class="modal-order-summary">
         <div class="flex justify-between items-center mb-sm">

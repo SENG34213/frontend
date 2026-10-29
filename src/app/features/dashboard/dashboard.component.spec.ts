@@ -158,9 +158,12 @@ describe('DashboardComponent', () => {
     });
 
     it('should select nearest upcoming tournament when no tournament is live', () => {
+      const now = Date.now();
+      const inTwoDays = new Date(now + 2 * 24 * 60 * 60 * 1000).toISOString();
+      const inTenDays = new Date(now + 10 * 24 * 60 * 60 * 1000).toISOString();
       const upcomingTournaments = [
-        { ...mockTournaments[0], startDate: '2026-11-10T14:00:00Z' },
-        { ...mockTournaments[0], id: 'trn-earlier', name: 'Earlier Cup', startDate: '2026-10-28T14:00:00Z' }
+        { ...mockTournaments[0], startDate: inTenDays },
+        { ...mockTournaments[0], id: 'trn-earlier', name: 'Earlier Cup', startDate: inTwoDays }
       ];
       mockTournamentService.getTournaments.and.returnValue(of(upcomingTournaments));
 

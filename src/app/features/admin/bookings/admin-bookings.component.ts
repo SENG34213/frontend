@@ -12,9 +12,10 @@ import {
   RescheduleRequest
 } from './booking-admin.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { AdminBookingRow, Station, UserSummaryResponse } from '../../../shared/models';
+import { AdminBookingRow, Station, UserSummaryResponse, GameTitle } from '../../../shared/models';
 import { StationAdminService } from '../stations/station-admin.service';
 import { UserAdminService } from '../users/user-admin.service';
+import { GameAdminService } from '../games/game-admin.service';
 import { NotificationSocketService } from '../../../core/services/notification-socket.service';
 import {
   ButtonComponent,
@@ -50,6 +51,7 @@ export class AdminBookingsComponent implements OnInit {
   private readonly svc = inject(BookingAdminService);
   private readonly stationSvc = inject(StationAdminService);
   private readonly userSvc = inject(UserAdminService);
+  private readonly gameAdminSvc = inject(GameAdminService);
   private readonly notifSocketService = inject(NotificationSocketService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
@@ -93,6 +95,17 @@ export class AdminBookingsComponent implements OnInit {
   readonly stations = signal<Station[]>([]);
   readonly customers = signal<UserSummaryResponse[]>([]);
   readonly customerSearch = signal<string>('');
+  readonly games = signal<GameTitle[]>([]);
+  readonly stationGames = signal<GameTitle[]>([]);
+  readonly gamesLoading = signal(false);
+  readonly selectedWalkInStationId = signal<string>('');
+  readonly availableGames = computed(() => {
+    const sid = this.selectedWalkInStationId();
+    if (sid) {
+      return this.stationGames();
+    }
+    return this.games();
+  });
   readonly filteredCustomers = computed(() => {
     const q = this.customerSearch().trim().toLowerCase();
     const list = this.customers();
@@ -166,6 +179,13 @@ export class AdminBookingsComponent implements OnInit {
       },
       error: () => {}
     });
+
+    this.gameAdminSvc.getGames({ active: true }).subscribe({
+      next: (games) => {
+        this.games.set((games || []).filter(g => g.active !== false));
+      },
+      error: () => {}
+    });
   }
 
   private initForms(): void {
@@ -175,8 +195,21 @@ export class AdminBookingsComponent implements OnInit {
     this.walkInForm = this.fb.group({
       targetUserId: ['', Validators.required],
       stationId: ['', Validators.required],
+      gameId: ['', Validators.required],
       startTime: [this.toLocalDatetimeStr(oneHourLater), Validators.required],
       endTime: [this.toLocalDatetimeStr(new Date(oneHourLater.getTime() + 60 * 60_000)), Validators.required]
+    });
+
+    this.walkInForm.get('stationId')?.valueChanges.subscribe((sid) => {
+      const stationId = sid || '';
+      if (stationId !== this.selectedWalkInStationId()) {
+        this.selectedWalkInStationId.set(stationId);
+        if (stationId) {
+          this.loadStationGames(stationId);
+        } else {
+          this.stationGames.set([]);
+        }
+      }
     });
 
     this.rescheduleForm = this.fb.group({
@@ -282,13 +315,74 @@ export class AdminBookingsComponent implements OnInit {
 
   // ── Walk-In ──────────────────────────────────────────────────────────────
   openWalkIn(): void {
+    this.selectedWalkInStationId.set('');
+    this.stationGames.set([]);
     this.walkInForm.reset({
       targetUserId: '',
       stationId: '',
+      gameId: '',
       startTime: this.toLocalDatetimeStr(new Date(Date.now() + 60 * 60_000)),
       endTime: this.toLocalDatetimeStr(new Date(Date.now() + 2 * 60 * 60_000))
     });
     this.walkInModalOpen.set(true);
+  }
+
+  loadStationGames(stationId: string): void {
+    if (!stationId) {
+      this.stationGames.set([]);
+      return;
+    }
+    this.gamesLoading.set(true);
+    this.gameAdminSvc.getGamesForStation(stationId).subscribe({
+      next: (games) => {
+        const active = (games || []).filter(g => g.active !== false);
+        this.stationGames.set(active);
+        this.gamesLoading.set(false);
+
+        const currentGid = this.walkInForm.get('gameId')?.value;
+        if (currentGid && !active.some(g => g.id === currentGid)) {
+          this.walkInForm.patchValue({ gameId: '' });
+        }
+      },
+      error: () => {
+        this.gamesLoading.set(false);
+        const fallback = this.games().filter(g =>
+          g.stations?.some(s => s.id === stationId) ||
+          g.stationIds?.includes(stationId)
+        );
+        this.stationGames.set(fallback.length > 0 ? fallback : this.games());
+        const currentGid = this.walkInForm.get('gameId')?.value;
+        if (currentGid && !this.stationGames().some(g => g.id === currentGid)) {
+          this.walkInForm.patchValue({ gameId: '' });
+        }
+      }
+    });
+  }
+
+  onStationChange(stationId: string): void {
+    this.selectedWalkInStationId.set(stationId || '');
+    if (stationId) {
+      this.loadStationGames(stationId);
+    } else {
+      this.stationGames.set([]);
+      this.walkInForm.patchValue({ gameId: '' });
+    }
+  }
+
+  onGameChange(gameId: string): void {
+    if (!gameId) return;
+    const currentStId = this.walkInForm.get('stationId')?.value;
+    if (!currentStId) {
+      const game = this.games().find(g => g.id === gameId);
+      const compatible = this.stations().find(st =>
+        game?.stations?.some(s => s.id === st.id) ||
+        game?.stationIds?.includes(st.id)
+      );
+      if (compatible) {
+        this.walkInForm.patchValue({ stationId: compatible.id });
+        this.onStationChange(compatible.id);
+      }
+    }
   }
 
   submitWalkIn(): void {
@@ -298,10 +392,11 @@ export class AdminBookingsComponent implements OnInit {
     }
 
     this.actionInFlight.set(true);
-    const { targetUserId, stationId, startTime, endTime } = this.walkInForm.value;
+    const { targetUserId, stationId, gameId, startTime, endTime } = this.walkInForm.value;
     const body: WalkInRequest = {
       targetUserId,
       stationId,
+      gameId,
       startTime: new Date(startTime).toISOString(),
       endTime: new Date(endTime).toISOString()
     };
@@ -314,13 +409,18 @@ export class AdminBookingsComponent implements OnInit {
 
         // Real-time notification broadcast
         const stName = this.stations().find(s => s.id === stationId)?.name || createdBooking?.stationCode || 'station';
+        const gTitle = this.stationGames().find(g => g.id === gameId)?.title ||
+                       this.games().find(g => g.id === gameId)?.title ||
+                       createdBooking?.gameTitle;
+        const gameSub = gTitle ? ` (${gTitle})` : '';
+
         this.notifSocketService.sendNotification({
           type: 'BOOKING_CREATED',
           title: 'Walk-In Slot Reserved (Pending Payment)',
-          message: `Walk-in booking created for ${stName}. Complete payment to confirm slot.`,
+          message: `Walk-in booking created for ${stName}${gameSub}. Complete payment to confirm slot.`,
           link: '/admin/bookings',
           targetUserId: targetUserId,
-          data: { stationId, targetUserId, bookingId: createdBooking?.id }
+          data: { stationId, targetUserId, gameId, bookingId: createdBooking?.id }
         });
 
         this.loadBookings();

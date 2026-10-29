@@ -6,9 +6,10 @@ import { AdminBookingsComponent } from './admin-bookings.component';
 import { BookingAdminService, PagedAdminBookings } from './booking-admin.service';
 import { StationAdminService } from '../stations/station-admin.service';
 import { UserAdminService } from '../users/user-admin.service';
+import { GameAdminService } from '../games/game-admin.service';
 import { NotificationSocketService } from '../../../core/services/notification-socket.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { AdminBookingRow } from '../../../shared/models';
+import { AdminBookingRow, GameTitle } from '../../../shared/models';
 
 const mockRows: AdminBookingRow[] = [
   {
@@ -75,6 +76,7 @@ describe('AdminBookingsComponent', () => {
   let svcSpy: jasmine.SpyObj<BookingAdminService>;
   let stationAdminServiceSpy: jasmine.SpyObj<StationAdminService>;
   let userAdminServiceSpy: jasmine.SpyObj<UserAdminService>;
+  let gameAdminServiceSpy: jasmine.SpyObj<GameAdminService>;
   let notificationSocketServiceSpy: jasmine.SpyObj<NotificationSocketService>;
   let toastSpy: jasmine.SpyObj<ToastService>;
 
@@ -103,6 +105,41 @@ describe('AdminBookingsComponent', () => {
       number: 0
     }));
 
+    gameAdminServiceSpy = jasmine.createSpyObj('GameAdminService', ['getGames', 'getGamesForStation']);
+    gameAdminServiceSpy.getGames.and.returnValue(of([
+      {
+        id: 'gm-001',
+        title: 'Tekken 8',
+        genre: 'FIGHTING',
+        platforms: ['PS5'],
+        releaseYear: 2024,
+        ageRating: 'PEGI_16',
+        description: 'Fighting game',
+        maxPlayers: 2,
+        featured: true,
+        active: true,
+        installedStationCount: 1,
+        stationIds: ['223e4567-e89b-12d3-a456-426614174000'],
+        createdAt: '2026-01-01T00:00:00Z'
+      } as GameTitle
+    ]));
+    gameAdminServiceSpy.getGamesForStation.and.returnValue(of([
+      {
+        id: 'gm-001',
+        title: 'Tekken 8',
+        genre: 'FIGHTING',
+        platforms: ['PS5'],
+        releaseYear: 2024,
+        ageRating: 'PEGI_16',
+        description: 'Fighting game',
+        maxPlayers: 2,
+        featured: true,
+        active: true,
+        installedStationCount: 1,
+        createdAt: '2026-01-01T00:00:00Z'
+      } as GameTitle
+    ]));
+
     notificationSocketServiceSpy = jasmine.createSpyObj('NotificationSocketService', ['sendNotification']);
 
     await TestBed.configureTestingModule({
@@ -112,6 +149,7 @@ describe('AdminBookingsComponent', () => {
         { provide: BookingAdminService, useValue: svcSpy },
         { provide: StationAdminService, useValue: stationAdminServiceSpy },
         { provide: UserAdminService, useValue: userAdminServiceSpy },
+        { provide: GameAdminService, useValue: gameAdminServiceSpy },
         { provide: NotificationSocketService, useValue: notificationSocketServiceSpy },
         { provide: ToastService, useValue: toastSpy },
         {
@@ -182,10 +220,12 @@ describe('AdminBookingsComponent', () => {
     component.openWalkIn();
     expect(component.walkInModalOpen()).toBeTrue();
     expect(component.walkInForm.get('targetUserId')?.value).toBe('');
+    expect(component.walkInForm.get('stationId')?.value).toBe('');
+    expect(component.walkInForm.get('gameId')?.value).toBe('');
   });
 
   it('TC-FE-BKM-06: should not submit walk-in form when invalid', () => {
-    component.walkInForm.patchValue({ targetUserId: '', stationId: '', startTime: '', endTime: '' });
+    component.walkInForm.patchValue({ targetUserId: '', stationId: '', gameId: '', startTime: '', endTime: '' });
     component.submitWalkIn();
     expect(svcSpy.createWalkIn).not.toHaveBeenCalled();
     expect(component.walkInForm.touched).toBeTrue();
@@ -196,16 +236,39 @@ describe('AdminBookingsComponent', () => {
     component.walkInForm.patchValue({
       targetUserId: '123e4567-e89b-12d3-a456-426614174000',
       stationId: '223e4567-e89b-12d3-a456-426614174000',
+      gameId: '323e4567-e89b-12d3-a456-426614174000',
       startTime: '2026-10-20T14:00',
       endTime: '2026-10-20T16:00'
     });
 
     component.submitWalkIn();
 
-    expect(svcSpy.createWalkIn).toHaveBeenCalled();
+    expect(svcSpy.createWalkIn).toHaveBeenCalledWith(jasmine.objectContaining({
+      targetUserId: '123e4567-e89b-12d3-a456-426614174000',
+      stationId: '223e4567-e89b-12d3-a456-426614174000',
+      gameId: '323e4567-e89b-12d3-a456-426614174000'
+    }));
     expect(toastSpy.success).toHaveBeenCalled();
     expect(component.walkInModalOpen()).toBeFalse();
     expect(component.paymentModalOpen()).toBeTrue();
+  });
+
+  it('TC-FE-BKM-07c: should load station games when station is selected in walk-in form', () => {
+    component.openWalkIn();
+    component.onStationChange('223e4567-e89b-12d3-a456-426614174000');
+    expect(gameAdminServiceSpy.getGamesForStation).toHaveBeenCalledWith('223e4567-e89b-12d3-a456-426614174000');
+    expect(component.stationGames().length).toBe(1);
+    expect(component.stationGames()[0].id).toBe('gm-001');
+  });
+
+  it('TC-FE-BKM-07d: should reset game selection if selected game is not available on newly selected station', () => {
+    component.openWalkIn();
+    component.walkInForm.patchValue({ gameId: 'old-game' });
+    gameAdminServiceSpy.getGamesForStation.and.returnValue(of([
+      { id: 'new-game', title: 'New Game', active: true } as GameTitle
+    ]));
+    component.onStationChange('st-new');
+    expect(component.walkInForm.get('gameId')?.value).toBe('');
   });
 
   it('TC-FE-BKM-07b: should finish walk-in payment and confirm slot successfully', () => {
