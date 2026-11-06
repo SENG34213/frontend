@@ -257,6 +257,14 @@
 
               @if (t.status !== 'CANCELLED' && t.status !== 'COMPLETED') {
                 <gc-button
+                  variant="success"
+                  size="sm"
+                  class="btn-complete"
+                  (btnClick)="openCompleteModal(t, $event)"
+                  aria-label="Mark tournament as completed">
+                  ✓ Complete
+                </gc-button>
+                <gc-button
                   variant="outline"
                   size="sm"
                   (btnClick)="openEditModal(t, $event)"
@@ -741,6 +749,42 @@
         [disabled]="actionInFlight()"
         (btnClick)="confirmCancel()">
         {{ actionInFlight() ? 'Cancelling…' : '✕ Yes, Cancel Tournament' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Complete Tournament Confirm Modal ────────────────────────────── -->
+  <gc-modal
+    [isOpen]="completeModalOpen()"
+    [(isOpen)]="completeModalOpen"
+    title="Mark Tournament as Completed"
+    modalId="modal-complete-tourn-admin">
+    @if (selectedTournamentForComplete(); as t) {
+      <div class="complete-admin-content">
+        <p class="complete-confirm-text">
+          Are you sure you want to mark tournament <strong>{{ t.name || t.title }}</strong> as <strong>COMPLETED</strong>?
+        </p>
+
+        <div class="complete-admin-summary">
+          <div><span class="text-muted">Game:</span> 🎮 <strong>{{ t.gameTitle || 'PS5 Competition' }}</strong></div>
+          <div><span class="text-muted">Participants:</span> <strong>{{ t.participantCount || t.currentParticipants || 0 }} / {{ t.maxParticipants }}</strong></div>
+          <div><span class="text-muted">Entry Fee:</span> <span class="font-mono text-primary font-bold">{{ t.entryFee === 0 ? 'FREE' : 'LKR ' + (t.entryFee | number) }}</span></div>
+        </div>
+
+        <p class="complete-admin-hint text-muted">
+          This finalizes the tournament lifecycle. It will be moved to the Completed tournaments section, and all participant records will be archived into player history.
+        </p>
+      </div>
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="completeModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="primary"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="confirmCompleteTournament()">
+        {{ actionInFlight() ? 'Completing…' : '✓ Confirm Completed' }}
       </gc-button>
     </div>
   </gc-modal>

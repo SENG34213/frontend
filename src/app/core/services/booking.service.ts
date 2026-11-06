@@ -518,6 +518,20 @@ export class BookingService {
     );
   }
 
+  /**
+   * Completes a booking session (caller can be Customer for own booking or Admin).
+   * Maps to PATCH /api/bookings/{id}/complete
+   */
+  completeBooking(bookingId: string): Observable<BookingResponse> {
+    return this.api.patch<BackendBookingResponse>(`/bookings/${bookingId}/complete`).pipe(
+      map((res: BackendBookingResponse) => this.mapBookingItem(res, 'COMPLETED')),
+      catchError((error: unknown) => {
+        const mappedError = ErrorMapper.map(error);
+        return throwError(() => mappedError);
+      })
+    );
+  }
+
   // ─── Reviews (SDS Table C.3 / C.5 & Section 2.4) ─────────────────────────────
 
   submitReview(bookingId: string, rating: number, comment?: string): Observable<BookingReview> {

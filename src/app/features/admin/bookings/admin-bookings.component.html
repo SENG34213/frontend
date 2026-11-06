@@ -175,6 +175,16 @@
                           💵 Pay & Confirm
                         </gc-button>
                       }
+                      @if (canComplete(booking)) {
+                        <gc-button
+                          size="sm"
+                          variant="success"
+                          class="complete-btn"
+                          (btnClick)="openCompleteModal(booking, $event)"
+                          aria-label="Mark booking as completed">
+                          ✓ Complete
+                        </gc-button>
+                      }
                       @if (canReschedule(booking)) {
                         <gc-button
                           size="sm" variant="outline"
@@ -286,6 +296,14 @@
                 💵 Finish Payment & Confirm Slot
               </gc-button>
             }
+            @if (canComplete(bk)) {
+              <gc-button
+                variant="success"
+                class="complete-btn"
+                (btnClick)="openCompleteModal(bk, $event); closeDetail()">
+                ✓ Mark as Completed
+              </gc-button>
+            }
             @if (canReschedule(bk)) {
               <gc-button variant="secondary" (btnClick)="openReschedule(bk, $event); closeDetail()">
                 🔄 Reschedule
@@ -307,6 +325,7 @@
     [isOpen]="walkInModalOpen()"
     [(isOpen)]="walkInModalOpen"
     [title]="walkInStep() === 'prompt' ? 'New Walk-In Booking — Customer Type' : (walkInStep() === 'create-user' ? 'Register New Customer for Walk-In' : 'New Walk-In Booking')"
+    size="lg"
     modalId="modal-walkin">
 
     <!-- Step 1: Customer Type Prompt -->
@@ -818,6 +837,47 @@
         [disabled]="actionInFlight()"
         (btnClick)="confirmCancel()">
         {{ actionInFlight() ? 'Cancelling…' : '✕ Yes, Cancel Booking' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Complete Booking Confirm Modal ─────────────────────────────────── -->
+  <gc-modal
+    [isOpen]="completeModalOpen()"
+    [(isOpen)]="completeModalOpen"
+    title="Mark Booking as Completed"
+    modalId="modal-complete-admin">
+    @if (selectedBookingForComplete(); as bk) {
+      <div class="complete-admin-content">
+        <p class="complete-confirm-text">
+          Are you sure you want to mark booking
+          <strong class="font-mono">#{{ bk.id.slice(0, 8) }}…</strong> as <strong>COMPLETED</strong>?
+        </p>
+
+        <div class="complete-admin-summary">
+          <div><span class="text-muted">Customer:</span> <strong>{{ getCustomerName(bk.userId) }}</strong></div>
+          <div><span class="text-muted">Station:</span> <strong>{{ bk.stationCode || bk.stationId }}</strong></div>
+          @if (bk.gameTitle) {
+            <div><span class="text-muted">Game:</span> 🎮 <strong>{{ bk.gameTitle }}</strong></div>
+          }
+          <div><span class="text-muted">Time:</span> {{ formatDateTime(bk.startTime) }} &mdash; {{ formatDateTime(bk.endTime) }}</div>
+          <div><span class="text-muted">Amount:</span> <span class="font-mono text-primary font-bold">LKR {{ getAmount(bk) | number:'1.2-2' }}</span></div>
+        </div>
+
+        <p class="complete-admin-hint text-muted">
+          This confirms the customer has completed their play session at the center. The booking status will update to COMPLETED and enable post-session customer reviews.
+        </p>
+      </div>
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="completeModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="primary"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="confirmCompleteBooking()">
+        {{ actionInFlight() ? 'Completing…' : '✓ Confirm Completed' }}
       </gc-button>
     </div>
   </gc-modal>

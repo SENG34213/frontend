@@ -91,6 +91,10 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
   readonly cancelModalOpen = signal(false);
   readonly selectedTournamentForCancel = signal<TournamentResponse | null>(null);
 
+  // Complete Modal
+  readonly completeModalOpen = signal(false);
+  readonly selectedTournamentForComplete = signal<TournamentResponse | null>(null);
+
   // ── Reactive Forms ─────────────────────────────────────────────────────────
   readonly createForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
@@ -397,6 +401,35 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.actionInFlight.set(false);
           this.toast.error(err?.message || 'Failed to update tournament status');
+        }
+      });
+  }
+
+  // ── Complete Tournament ───────────────────────────────────────────────────
+  openCompleteModal(t: TournamentResponse, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.selectedTournamentForComplete.set(t);
+    this.completeModalOpen.set(true);
+  }
+
+  confirmCompleteTournament(): void {
+    const t = this.selectedTournamentForComplete();
+    if (!t) return;
+
+    this.actionInFlight.set(true);
+    this.tournamentAdminService.completeTournament(t.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.actionInFlight.set(false);
+          this.completeModalOpen.set(false);
+          this.selectedTournamentForComplete.set(null);
+          this.toast.success(`Tournament "${t.name || t.title}" marked as COMPLETED.`);
+          this.loadTournaments();
+        },
+        error: (err) => {
+          this.actionInFlight.set(false);
+          this.toast.error(err?.message || 'Failed to complete tournament');
         }
       });
   }

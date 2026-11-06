@@ -63,6 +63,10 @@ export class BookingAdminService {
     return this.api.patch<AdminBookingRow>(`/bookings/${bookingId}/cancel`, {});
   }
 
+  completeBooking(bookingId: string): Observable<AdminBookingRow> {
+    return this.api.patch<AdminBookingRow>(`/bookings/${bookingId}/complete`, {});
+  }
+
   rescheduleBooking(bookingId: string, body: RescheduleRequest): Observable<AdminBookingRow> {
     return this.api.patch<AdminBookingRow>(`/bookings/${bookingId}/reschedule`, body);
   }

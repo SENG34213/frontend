@@ -25,6 +25,7 @@ export class ModalComponent {
   @Input() title = '';
   @Input() closeOnBackdrop = true;
   @Input() modalId = `gc-modal-${++ModalComponent.idCounter}`;
+  @Input() size: 'sm' | 'md' | 'lg' | 'xl' = 'md';
 
   @Output() isOpenChange = new EventEmitter<boolean>();
   @Output() closed = new EventEmitter<void>();

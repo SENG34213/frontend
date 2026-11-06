@@ -7,6 +7,10 @@
 
   <div
     class="gc-modal-dialog"
+    [class.size-sm]="size === 'sm'"
+    [class.size-md]="size === 'md'"
+    [class.size-lg]="size === 'lg'"
+    [class.size-xl]="size === 'xl'"
     role="dialog"
     aria-modal="true"
     [attr.aria-labelledby]="modalId + '-title'"

@@ -50,6 +50,8 @@ export interface BookingDisplayItem extends BookingResponse {
   canReschedule: boolean;
   canCancel: boolean;
   canShowCancel: boolean;
+  canComplete: boolean;
+  isPastEndTime: boolean;
   isWithin2Hours: boolean;
   durationHours: number;
 }
@@ -117,6 +119,12 @@ export class MyBookingsComponent implements OnInit {
   readonly selectedBookingForCancel = signal<BookingDisplayItem | null>(null);
   readonly isCancelling = signal<boolean>(false);
   readonly cancelError = signal<string | null>(null);
+
+  // ── Complete Session State ──────────────────────────────────────────────────
+  readonly isCompleteModalOpen = signal<boolean>(false);
+  readonly selectedBookingForComplete = signal<BookingDisplayItem | null>(null);
+  readonly isCompletingBooking = signal<boolean>(false);
+  readonly completeError = signal<string | null>(null);
 
   // ── Computed Lists ──────────────────────────────────────────────────────────
   readonly upcomingBookings = computed(() => {
@@ -661,6 +669,48 @@ export class MyBookingsComponent implements OnInit {
     });
   }
 
+  // ── Complete Session State ──────────────────────────────────────────────────
+  openCompleteModal(item: BookingDisplayItem): void {
+    this.selectedBookingForComplete.set(item);
+    this.completeError.set(null);
+    this.isCompleteModalOpen.set(true);
+  }
+
+  closeCompleteModal(): void {
+    if (this.isCompletingBooking()) return;
+    this.isCompleteModalOpen.set(false);
+    this.selectedBookingForComplete.set(null);
+    this.completeError.set(null);
+  }
+
+  confirmCompleteBooking(): void {
+    const item = this.selectedBookingForComplete();
+    if (!item) return;
+
+    this.isCompletingBooking.set(true);
+    this.completeError.set(null);
+
+    this.bookingService.completeBooking(item.id).subscribe({
+      next: () => {
+        this.isCompletingBooking.set(false);
+        this.isCompleteModalOpen.set(false);
+        this.selectedBookingForComplete.set(null);
+        this.toastService.success(
+          'Session Completed',
+          'Your session has been marked as completed! You can now rate your experience in the Played tab.'
+        );
+        this.loadBookings();
+        this.activeTab.set('played');
+      },
+      error: (err) => {
+        this.isCompletingBooking.set(false);
+        this.completeError.set(
+          err?.message || 'Failed to complete booking. Please try again.'
+        );
+      }
+    });
+  }
+
   // ── Mapping Helper ──────────────────────────────────────────────────────────
 
   private mapDisplayItem(raw: BookingResponse): BookingDisplayItem {
@@ -700,8 +750,11 @@ export class MyBookingsComponent implements OnInit {
     const isCancelled = raw.status === 'CANCELLED';
     const isCompleted = raw.status === 'COMPLETED';
     const isUpcomingStatus = raw.status === 'CONFIRMED' || raw.status === 'PENDING';
-    const isFuture = endTimeMs >= now;
-    const isUpcoming = isUpcomingStatus && isFuture && !isCancelled && !isCompleted;
+    const isPastEndTime = endTimeMs < now;
+    // CRITICAL: A booking stays in Upcoming until it is explicitly cancelled or completed!
+    // Passing the end time does not automatically throw it into played:
+    const isUpcoming = isUpcomingStatus && !isCancelled && !isCompleted;
+    const canComplete = isUpcoming && raw.status === 'CONFIRMED' && isPastEndTime;
 
     // Rescheduling and Cancellation rules
     const isWithin2Hours = isWithinCutoffHours(startTimeMs, BOOKING_CHANGE_CUTOFF_HOURS);
@@ -753,6 +806,8 @@ export class MyBookingsComponent implements OnInit {
       canReschedule,
       canCancel: isCancelEligible,
       canShowCancel,
+      canComplete,
+      isPastEndTime,
       isWithin2Hours,
       durationHours
     };

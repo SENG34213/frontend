@@ -84,6 +84,16 @@ export class TournamentService {
   }
 
   /**
+   * Completes a tournament (callable by registered participant or admin).
+   * Maps to PATCH /api/tournaments/{id}/complete
+   */
+  completeTournament(tournamentId: string): Observable<TournamentViewItem> {
+    return this.api.patch<TournamentResponse>(`${this.endpoint}/${tournamentId}/complete`, {}).pipe(
+      map((t) => this.enrichTournament(t))
+    );
+  }
+
+  /**
    * Enriches a raw TournamentResponse with calculated view properties.
    */
   enrichTournament(raw: TournamentResponse): TournamentViewItem {
