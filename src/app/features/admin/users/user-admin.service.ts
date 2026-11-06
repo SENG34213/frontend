@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 import {
   UserSummaryResponse,
+  AdminCreateUserRequest,
   AdminUpdateUserRequest,
   AdminUserStatsResponse,
   PagedUsers,
@@ -41,6 +42,14 @@ export class UserAdminService {
    */
   getUserById(userId: string): Observable<UserSummaryResponse> {
     return this.api.get<UserSummaryResponse>(`${this.usersEndpoint}/${userId}`);
+  }
+
+  /**
+   * Admin creates a new user account.
+   * Maps to POST /api/users
+   */
+  createUser(request: AdminCreateUserRequest): Observable<UserSummaryResponse> {
+    return this.api.post<UserSummaryResponse>(this.usersEndpoint, request);
   }
 
   /**

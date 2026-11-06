@@ -306,127 +306,340 @@
   <gc-modal
     [isOpen]="walkInModalOpen()"
     [(isOpen)]="walkInModalOpen"
-    title="New Walk-In Booking"
+    [title]="walkInStep() === 'prompt' ? 'New Walk-In Booking — Customer Type' : (walkInStep() === 'create-user' ? 'Register New Customer for Walk-In' : 'New Walk-In Booking')"
     modalId="modal-walkin">
-    <form [formGroup]="walkInForm" (ngSubmit)="submitWalkIn()" id="form-walkin" novalidate>
-      <div class="modal-form-grid">
-        <div class="form-field customer-select-field">
-          <label class="form-label" for="walkin-user-id">Customer <span class="required" aria-hidden="true">*</span></label>
-          <input
-            type="search"
-            class="gc-input-native mb-xs"
-            placeholder="🔍 Search customer by name or email..."
-            [value]="customerSearch()"
-            (input)="customerSearch.set($any($event.target).value)" />
-          <select
-            id="walkin-user-id"
-            class="gc-select-native"
-            formControlName="targetUserId"
-            [attr.aria-invalid]="walkInForm.get('targetUserId')?.invalid && walkInForm.get('targetUserId')?.touched">
-            <option value="" disabled selected>-- Select Customer --</option>
-            @for (c of filteredCustomers(); track c.id) {
-              <option [value]="c.id">{{ c.fullName }} ({{ c.email }})</option>
-            }
-          </select>
-          @if (walkInForm.get('targetUserId')?.invalid && walkInForm.get('targetUserId')?.touched) {
-            <span class="field-error" role="alert">Please select a customer</span>
-          }
-        </div>
 
-        <div class="form-field">
-          <label class="form-label" for="walkin-station-id">Gaming Station <span class="required" aria-hidden="true">*</span></label>
-          <select
-            id="walkin-station-id"
-            class="gc-select-native"
-            formControlName="stationId"
-            (change)="onStationChange($any($event.target).value)"
-            [attr.aria-invalid]="walkInForm.get('stationId')?.invalid && walkInForm.get('stationId')?.touched">
-            <option value="" disabled selected>-- Select Station --</option>
-            @for (st of stations(); track st.id) {
-              <option [value]="st.id">
-                {{ st.stationCode || st.name }} ({{ st.type }}) — LKR {{ (st.hourlyRate || 0) | number:'1.2-2' }}/hr
-              </option>
-            }
-          </select>
-          @if (walkInForm.get('stationId')?.invalid && walkInForm.get('stationId')?.touched) {
-            <span class="field-error" role="alert">Station is required</span>
-          }
-        </div>
+    <!-- Step 1: Customer Type Prompt -->
+    @if (walkInStep() === 'prompt') {
+      <div class="walkin-prompt-container">
+        <p class="walkin-prompt-desc">
+          Please select whether this walk-in booking is for an existing registered player or a new customer at the counter:
+        </p>
 
-        <div class="form-field game-select-field">
-          <label class="form-label" for="walkin-game-id">Game Title <span class="required" aria-hidden="true">*</span></label>
-          <select
-            id="walkin-game-id"
-            class="gc-select-native"
-            formControlName="gameId"
-            (change)="onGameChange($any($event.target).value)"
-            [attr.aria-invalid]="walkInForm.get('gameId')?.invalid && walkInForm.get('gameId')?.touched">
-            @if (gamesLoading()) {
-              <option value="" disabled selected>⏳ Loading games for station…</option>
-            } @else if (availableGames().length === 0 && walkInForm.get('stationId')?.value) {
-              <option value="" disabled selected>⚠️ No games installed on this station</option>
-            } @else {
-              <option value="" disabled selected>-- Select Game --</option>
-              @for (g of availableGames(); track g.id) {
-                <option [value]="g.id">
-                  🎮 {{ g.title }} ({{ g.genre }})
-                </option>
-              }
-            }
-          </select>
-          @if (walkInForm.get('gameId')?.invalid && walkInForm.get('gameId')?.touched) {
-            <span class="field-error" role="alert">Please select a game</span>
-          }
-          @if (!gamesLoading() && walkInForm.get('stationId')?.value && availableGames().length === 0) {
-            <span class="field-hint text-warning" role="alert">
-              No games are installed on this station. Please assign games in Station Management.
-            </span>
-          }
-        </div>
+        <div class="type-choices-grid">
+          <button type="button" class="type-choice-card" (click)="chooseCustomerType('existing')">
+            <div class="choice-icon-bubble">👤</div>
+            <div class="choice-text">
+              <h4 class="choice-title">Existing Customer</h4>
+              <p class="choice-detail">Search and select an already registered Gaming Castle account.</p>
+            </div>
+            <span class="choice-chevron" aria-hidden="true">→</span>
+          </button>
 
-        <div class="form-field">
-          <label class="form-label" for="walkin-start">Start Date & Time <span class="required" aria-hidden="true">*</span></label>
-          <input
-            id="walkin-start"
-            type="datetime-local"
-            class="gc-input-native"
-            formControlName="startTime"
-            [attr.aria-invalid]="walkInForm.get('startTime')?.invalid && walkInForm.get('startTime')?.touched" />
-          @if (walkInForm.get('startTime')?.invalid && walkInForm.get('startTime')?.touched) {
-            <span class="field-error" role="alert">Start time is required</span>
-          }
-        </div>
-
-        <div class="form-field">
-          <label class="form-label" for="walkin-end">End Date & Time <span class="required" aria-hidden="true">*</span></label>
-          <input
-            id="walkin-end"
-            type="datetime-local"
-            class="gc-input-native"
-            formControlName="endTime"
-            [attr.aria-invalid]="walkInForm.get('endTime')?.invalid && walkInForm.get('endTime')?.touched" />
-          @if (walkInForm.get('endTime')?.invalid && walkInForm.get('endTime')?.touched) {
-            <span class="field-error" role="alert">End time is required</span>
-          }
+          <button type="button" class="type-choice-card" (click)="chooseCustomerType('new')">
+            <div class="choice-icon-bubble">➕</div>
+            <div class="choice-text">
+              <h4 class="choice-title">New Customer</h4>
+              <p class="choice-detail">Quickly register a new player profile on the spot and proceed directly to booking.</p>
+            </div>
+            <span class="choice-chevron" aria-hidden="true">→</span>
+          </button>
         </div>
       </div>
 
-      <p class="modal-info-text">
-        ℹ️ Walk-in bookings are initially reserved with <strong>PENDING</strong> status. You will be prompted to record payment and confirm the slot immediately after creating.
-      </p>
-    </form>
+      <div modal-footer class="modal-footer-actions">
+        <gc-button variant="outline" (btnClick)="walkInModalOpen.set(false)">Cancel</gc-button>
+      </div>
+    }
 
-    <div modal-footer class="modal-footer-actions">
-      <gc-button variant="outline" (btnClick)="walkInModalOpen.set(false)">Cancel</gc-button>
-      <gc-button
-        variant="primary"
-        form="form-walkin"
-        [attr.aria-busy]="actionInFlight()"
-        [disabled]="actionInFlight()"
-        (btnClick)="submitWalkIn()">
-        {{ actionInFlight() ? 'Creating…' : '🎮 Create Walk-In' }}
-      </gc-button>
-    </div>
+    <!-- Step 2: Create New Customer Form -->
+    @else if (walkInStep() === 'create-user') {
+      <div class="walkin-new-user-container">
+        <p class="walkin-prompt-desc">
+          Enter customer details to register their account:
+        </p>
+
+        <form [formGroup]="newCustomerForm" (ngSubmit)="submitWalkInNewUser()" id="form-walkin-new-user" novalidate>
+          <div class="modal-form-grid">
+            <div class="form-field full-width">
+              <label class="form-label" for="walkin-new-name">Full Name <span class="required" aria-hidden="true">*</span></label>
+              <input
+                id="walkin-new-name"
+                type="text"
+                class="gc-input-native"
+                placeholder="e.g. Kasun Perera"
+                formControlName="fullName"
+                [attr.aria-invalid]="newCustomerForm.get('fullName')?.invalid && newCustomerForm.get('fullName')?.touched" />
+              @if (newCustomerForm.get('fullName')?.invalid && newCustomerForm.get('fullName')?.touched) {
+                <span class="field-error" role="alert">Full name is required (min 2 characters)</span>
+              }
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="walkin-new-email">Email Address <span class="required" aria-hidden="true">*</span></label>
+              <input
+                id="walkin-new-email"
+                type="email"
+                class="gc-input-native"
+                placeholder="player@example.com"
+                formControlName="email"
+                [attr.aria-invalid]="newCustomerForm.get('email')?.invalid && newCustomerForm.get('email')?.touched" />
+              @if (newCustomerForm.get('email')?.invalid && newCustomerForm.get('email')?.touched) {
+                <span class="field-error" role="alert">A valid email address is required</span>
+              }
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="walkin-new-phone">Phone Number</label>
+              <input
+                id="walkin-new-phone"
+                type="tel"
+                class="gc-input-native font-mono"
+                placeholder="+947XXXXXXXX or 07XXXXXXXX"
+                formControlName="phoneNumber"
+                [attr.aria-invalid]="newCustomerForm.get('phoneNumber')?.invalid && newCustomerForm.get('phoneNumber')?.touched" />
+              @if (newCustomerForm.get('phoneNumber')?.invalid && newCustomerForm.get('phoneNumber')?.touched) {
+                <span class="field-error" role="alert">Valid Sri Lankan phone number (+94... or 07...)</span>
+              }
+            </div>
+
+            <div class="form-field full-width">
+              <label class="form-label" for="walkin-new-password">Initial Password <span class="required" aria-hidden="true">*</span></label>
+              <input
+                id="walkin-new-password"
+                type="text"
+                class="gc-input-native font-mono"
+                formControlName="password" />
+              <span class="field-hint text-muted">Default temporary password for customer login.</span>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div modal-footer class="modal-footer-actions">
+        <gc-button variant="outline" (btnClick)="walkInStep.set('prompt')">← Back</gc-button>
+        <gc-button
+          variant="primary"
+          form="form-walkin-new-user"
+          [attr.aria-busy]="actionInFlight()"
+          [disabled]="actionInFlight() || newCustomerForm.invalid"
+          (btnClick)="submitWalkInNewUser()">
+          {{ actionInFlight() ? 'Registering…' : '➕ Register & Continue to Booking' }}
+        </gc-button>
+      </div>
+    }
+
+    <!-- Step 3: Booking Form with Slots View -->
+    @else {
+      <form [formGroup]="walkInForm" (ngSubmit)="submitWalkIn()" id="form-walkin" novalidate>
+        <div class="modal-form-grid">
+          <!-- Customer Selection / Display -->
+          <div class="form-field customer-select-field full-width">
+            <div class="customer-field-header">
+              <label class="form-label" for="walkin-user-id">Customer <span class="required" aria-hidden="true">*</span></label>
+              <button type="button" class="btn-text-link" (click)="walkInStep.set('prompt')">
+                🔄 Change Customer Type
+              </button>
+            </div>
+
+            <input
+              type="search"
+              class="gc-input-native mb-xs"
+              placeholder="🔍 Search customer by name or email..."
+              [value]="customerSearch()"
+              (input)="customerSearch.set($any($event.target).value)" />
+            <select
+              id="walkin-user-id"
+              class="gc-select-native"
+              formControlName="targetUserId"
+              [attr.aria-invalid]="walkInForm.get('targetUserId')?.invalid && walkInForm.get('targetUserId')?.touched">
+              <option value="" disabled selected>-- Select Customer --</option>
+              @for (c of filteredCustomers(); track c.id) {
+                <option [value]="c.id">{{ c.fullName }} ({{ c.email }})</option>
+              }
+            </select>
+            @if (walkInForm.get('targetUserId')?.invalid && walkInForm.get('targetUserId')?.touched) {
+              <span class="field-error" role="alert">Please select a customer</span>
+            }
+          </div>
+
+          <!-- Gaming Station (unchanged) -->
+          <div class="form-field">
+            <label class="form-label" for="walkin-station-id">Gaming Station <span class="required" aria-hidden="true">*</span></label>
+            <select
+              id="walkin-station-id"
+              class="gc-select-native"
+              formControlName="stationId"
+              (change)="onStationChange($any($event.target).value)"
+              [attr.aria-invalid]="walkInForm.get('stationId')?.invalid && walkInForm.get('stationId')?.touched">
+              <option value="" disabled selected>-- Select Station --</option>
+              @for (st of stations(); track st.id) {
+                <option [value]="st.id">
+                  {{ st.stationCode || st.name }} ({{ st.type }}) — LKR {{ (st.hourlyRate || 0) | number:'1.2-2' }}/hr
+                </option>
+              }
+            </select>
+            @if (walkInForm.get('stationId')?.invalid && walkInForm.get('stationId')?.touched) {
+              <span class="field-error" role="alert">Station is required</span>
+            }
+          </div>
+
+          <!-- Game Title (unchanged) -->
+          <div class="form-field game-select-field">
+            <label class="form-label" for="walkin-game-id">Game Title <span class="required" aria-hidden="true">*</span></label>
+            <select
+              id="walkin-game-id"
+              class="gc-select-native"
+              formControlName="gameId"
+              (change)="onGameChange($any($event.target).value)"
+              [attr.aria-invalid]="walkInForm.get('gameId')?.invalid && walkInForm.get('gameId')?.touched">
+              @if (gamesLoading()) {
+                <option value="" disabled selected>⏳ Loading games for station…</option>
+              } @else if (availableGames().length === 0 && walkInForm.get('stationId')?.value) {
+                <option value="" disabled selected>⚠️ No games installed on this station</option>
+              } @else {
+                <option value="" disabled selected>-- Select Game --</option>
+                @for (g of availableGames(); track g.id) {
+                  <option [value]="g.id">
+                    🎮 {{ g.title }} ({{ g.genre }})
+                  </option>
+                }
+              }
+            </select>
+            @if (walkInForm.get('gameId')?.invalid && walkInForm.get('gameId')?.touched) {
+              <span class="field-error" role="alert">Please select a game</span>
+            }
+            @if (!gamesLoading() && walkInForm.get('stationId')?.value && availableGames().length === 0) {
+              <span class="field-hint text-warning" role="alert">
+                No games are installed on this station. Please assign games in Station Management.
+              </span>
+            }
+          </div>
+
+          <!-- Slots View Section (Replaces raw start & end datetime-local inputs) -->
+          <div class="form-field full-width slots-view-section">
+            <div class="slots-header-bar">
+              <div class="slots-date-wrap">
+                <label class="form-label" for="walkin-date">Booking Date <span class="required" aria-hidden="true">*</span></label>
+                <input
+                  id="walkin-date"
+                  type="date"
+                  class="gc-input-native font-mono"
+                  [value]="walkInDate()"
+                  [min]="getTodayDateStr()"
+                  (change)="onWalkInDateChange($any($event.target).value)" />
+              </div>
+
+              <div class="duration-pills-wrap">
+                <span class="form-label">Duration (Hours)</span>
+                <div class="duration-buttons" role="group" aria-label="Booking Duration">
+                  <button
+                    type="button"
+                    class="duration-btn"
+                    [class.active]="walkInDurationHours() === 1"
+                    (click)="onDurationChange(1)">
+                    1 hr
+                  </button>
+                  <button
+                    type="button"
+                    class="duration-btn"
+                    [class.active]="walkInDurationHours() === 2"
+                    (click)="onDurationChange(2)">
+                    2 hrs
+                  </button>
+                  <button
+                    type="button"
+                    class="duration-btn"
+                    [class.active]="walkInDurationHours() === 3"
+                    (click)="onDurationChange(3)">
+                    3 hrs
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slots Grid Area -->
+            <div class="slots-picker-area">
+              @if (!walkInForm.get('stationId')?.value) {
+                <div class="slots-prompt-box">
+                  <span class="prompt-icon">⚡</span>
+                  <span>Please choose a <strong>Gaming Station</strong> above to check available time slots.</span>
+                </div>
+              } @else if (slotsLoading()) {
+                <div class="slots-prompt-box">
+                  <span class="prompt-icon">⏳</span>
+                  <span>Loading live station slot availability…</span>
+                </div>
+              } @else if (walkInSlots().length === 0) {
+                <div class="slots-prompt-box text-warning">
+                  <span>No operating slots configured for this date.</span>
+                </div>
+              } @else {
+                <div class="slots-grid-label">
+                  <span>Select Starting Time Slot:</span>
+                  @if (walkInDurationHours() > 1) {
+                    <span class="text-accent font-mono text-xs">(Reserves {{ walkInDurationHours() }} consecutive hours)</span>
+                  }
+                </div>
+                <div class="slots-tiles-grid" role="listbox" aria-label="Available Time Slots">
+                  @for (slot of walkInSlots(); track slot.id; let idx = $index) {
+                    <button
+                      type="button"
+                      class="slot-tile"
+                      [class.selected]="isSlotInSelectedRange(idx)"
+                      [class.start-slot]="selectedSlotIndex() === idx"
+                      [class.disabled]="!slot.canFitDuration"
+                      [class.past]="slot.isPast"
+                      [class.booked]="!slot.isAvailable && !slot.isPast"
+                      [disabled]="!slot.canFitDuration"
+                      (click)="selectWalkInSlot(idx)"
+                      [attr.aria-selected]="selectedSlotIndex() === idx">
+                      <span class="slot-time">{{ slot.label }}</span>
+                      <span class="slot-status-pill">
+                        @if (slot.isPast) {
+                          Passed
+                        } @else if (!slot.isAvailable) {
+                          Booked
+                        } @else if (!slot.canFitDuration) {
+                          Blocked
+                        } @else if (selectedSlotIndex() === idx) {
+                          ✓ Start
+                        } @else if (isSlotInSelectedRange(idx)) {
+                          ✓ Included
+                        } @else {
+                          Available
+                        }
+                      </span>
+                    </button>
+                  }
+                </div>
+              }
+
+              <!-- Selection Summary Banner -->
+              @if (selectedSlotIndex() !== null && walkInForm.get('startTime')?.value) {
+                <div class="slot-selected-summary mt-sm" role="status">
+                  <div class="summary-icon">✅</div>
+                  <div class="summary-text">
+                    <span class="summary-title">{{ getSelectedSlotSummary() }}</span>
+                    <span class="summary-cost font-mono">
+                      Estimated Cost: LKR {{ getWalkInEstimatedTotal() | number:'1.2-2' }}
+                    </span>
+                  </div>
+                </div>
+              } @else if (walkInForm.get('stationId')?.value && !slotsLoading()) {
+                <span class="field-error mt-xs" role="alert">Please select an available starting slot above</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <p class="modal-info-text">
+          ℹ️ Walk-in bookings are initially reserved with <strong>PENDING</strong> status. You will be prompted to record payment and confirm the slot immediately after creating.
+        </p>
+      </form>
+
+      <div modal-footer class="modal-footer-actions">
+        <gc-button variant="outline" (btnClick)="walkInModalOpen.set(false)">Cancel</gc-button>
+        <gc-button
+          variant="primary"
+          form="form-walkin"
+          [attr.aria-busy]="actionInFlight()"
+          [disabled]="actionInFlight() || walkInForm.invalid"
+          (btnClick)="submitWalkIn()">
+          {{ actionInFlight() ? 'Creating…' : '🎮 Create Walk-In' }}
+        </gc-button>
+      </div>
+    }
   </gc-modal>
 
   <!-- ── Walk-In Payment & Confirmation Modal ──────────────────────────── -->

@@ -11,8 +11,20 @@ import {
   WalkInRequest,
   RescheduleRequest
 } from './booking-admin.service';
+import { BookingService } from '../../../core/services/booking.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { AdminBookingRow, Station, UserSummaryResponse, GameTitle } from '../../../shared/models';
+import { AdminBookingRow, Station, UserSummaryResponse, GameTitle, AdminCreateUserRequest } from '../../../shared/models';
+
+export interface WalkInSlotView {
+  id: string;
+  index: number;
+  label: string;
+  rawStart: string;
+  rawEnd: string;
+  isAvailable: boolean;
+  isPast: boolean;
+  canFitDuration: boolean;
+}
 import { StationAdminService } from '../stations/station-admin.service';
 import { UserAdminService } from '../users/user-admin.service';
 import { GameAdminService } from '../games/game-admin.service';
@@ -49,6 +61,7 @@ import {
 })
 export class AdminBookingsComponent implements OnInit {
   private readonly svc = inject(BookingAdminService);
+  private readonly bookingSvc = inject(BookingService);
   private readonly stationSvc = inject(StationAdminService);
   private readonly userSvc = inject(UserAdminService);
   private readonly gameAdminSvc = inject(GameAdminService);
@@ -86,8 +99,32 @@ export class AdminBookingsComponent implements OnInit {
   readonly actionInFlight = signal(false);
   readonly actionTarget = signal<AdminBookingRow | null>(null);
 
+  // ── Walk-In Flow & Slots View ───────────────────────────────────────────
+  readonly walkInStep = signal<'prompt' | 'create-user' | 'booking'>('prompt');
+  readonly walkInDate = signal<string>(this.getTodayDateStr());
+  readonly walkInDurationHours = signal<number>(1);
+  readonly walkInSlots = signal<WalkInSlotView[]>([]);
+  readonly selectedSlotIndex = signal<number | null>(null);
+  readonly slotsLoading = signal<boolean>(false);
+
+  readonly defaultOperatingSlots = [
+    { start: '10:00', end: '11:00' },
+    { start: '11:00', end: '12:00' },
+    { start: '12:00', end: '13:00' },
+    { start: '13:00', end: '14:00' },
+    { start: '14:00', end: '15:00' },
+    { start: '15:00', end: '16:00' },
+    { start: '16:00', end: '17:00' },
+    { start: '17:00', end: '18:00' },
+    { start: '18:00', end: '19:00' },
+    { start: '19:00', end: '20:00' },
+    { start: '20:00', end: '21:00' },
+    { start: '21:00', end: '22:00' }
+  ];
+
   // ── Forms ────────────────────────────────────────────────────────────────
   walkInForm!: FormGroup;
+  newCustomerForm!: FormGroup;
   paymentForm!: FormGroup;
   rescheduleForm!: FormGroup;
 
@@ -192,6 +229,13 @@ export class AdminBookingsComponent implements OnInit {
     const today = new Date();
     const oneHourLater = new Date(today.getTime() + 60 * 60_000);
 
+    this.newCustomerForm = this.fb.group({
+      fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      email: ['', [Validators.required, Validators.email]],
+      phoneNumber: ['', [Validators.pattern(/^$|^(?:\+94|0)[0-9]{9}$/)]],
+      password: ['Gaming@123', [Validators.required, Validators.minLength(6)]]
+    });
+
     this.walkInForm = this.fb.group({
       targetUserId: ['', Validators.required],
       stationId: ['', Validators.required],
@@ -204,10 +248,13 @@ export class AdminBookingsComponent implements OnInit {
       const stationId = sid || '';
       if (stationId !== this.selectedWalkInStationId()) {
         this.selectedWalkInStationId.set(stationId);
+        this.selectedSlotIndex.set(null);
         if (stationId) {
           this.loadStationGames(stationId);
+          this.loadWalkInSlots(stationId, this.walkInDate());
         } else {
           this.stationGames.set([]);
+          this.walkInSlots.set([]);
         }
       }
     });
@@ -315,16 +362,276 @@ export class AdminBookingsComponent implements OnInit {
 
   // ── Walk-In ──────────────────────────────────────────────────────────────
   openWalkIn(): void {
+    this.walkInStep.set('prompt');
     this.selectedWalkInStationId.set('');
     this.stationGames.set([]);
+    this.selectedSlotIndex.set(null);
+    this.walkInDate.set(this.getTodayDateStr());
+    this.walkInDurationHours.set(1);
+    this.walkInSlots.set([]);
+    this.newCustomerForm.reset({
+      fullName: '',
+      email: '',
+      phoneNumber: '',
+      password: 'Gaming@123'
+    });
     this.walkInForm.reset({
       targetUserId: '',
       stationId: '',
       gameId: '',
-      startTime: this.toLocalDatetimeStr(new Date(Date.now() + 60 * 60_000)),
-      endTime: this.toLocalDatetimeStr(new Date(Date.now() + 2 * 60 * 60_000))
+      startTime: '',
+      endTime: ''
     });
     this.walkInModalOpen.set(true);
+  }
+
+  chooseCustomerType(type: 'existing' | 'new'): void {
+    if (type === 'new') {
+      this.walkInStep.set('create-user');
+    } else {
+      this.walkInStep.set('booking');
+    }
+  }
+
+  submitWalkInNewUser(): void {
+    if (this.newCustomerForm.invalid) {
+      this.newCustomerForm.markAllAsTouched();
+      return;
+    }
+    const val = this.newCustomerForm.value;
+    const req: AdminCreateUserRequest = {
+      fullName: (val.fullName || '').trim(),
+      email: (val.email || '').trim(),
+      phoneNumber: (val.phoneNumber || '').trim() || undefined,
+      role: 'CUSTOMER',
+      password: val.password || 'Gaming@123',
+      enabled: true
+    };
+    this.actionInFlight.set(true);
+    this.userSvc.createUser(req).subscribe({
+      next: (created) => {
+        this.actionInFlight.set(false);
+        this.customers.update(list => [created, ...list]);
+        this.walkInForm.patchValue({ targetUserId: created.id });
+        this.walkInStep.set('booking');
+        this.toast.success(`Customer "${created.fullName}" registered successfully.`);
+      },
+      error: (err) => {
+        this.actionInFlight.set(false);
+        this.toast.error(err?.message || 'Failed to register customer');
+      }
+    });
+  }
+
+  loadWalkInSlots(stationId: string, date: string): void {
+    if (!stationId) {
+      this.walkInSlots.set([]);
+      return;
+    }
+    this.slotsLoading.set(true);
+
+    this.bookingSvc.getStationAvailability(stationId, date).subscribe({
+      next: (slots) => {
+        let rawList: { start: string; end: string; isAvailable: boolean }[] = [];
+        if (slots && slots.length > 0) {
+          rawList = slots.map(s => ({
+            start: s.startTime,
+            end: s.endTime,
+            isAvailable: s.isAvailable ?? true
+          }));
+        } else {
+          rawList = this.defaultOperatingSlots.map(s => ({
+            start: s.start,
+            end: s.end,
+            isAvailable: true
+          }));
+        }
+        this.processWalkInSlots(rawList, date);
+        this.slotsLoading.set(false);
+      },
+      error: () => {
+        const rawList = this.defaultOperatingSlots.map(s => ({
+          start: s.start,
+          end: s.end,
+          isAvailable: true
+        }));
+        this.processWalkInSlots(rawList, date);
+        this.slotsLoading.set(false);
+      }
+    });
+  }
+
+  private processWalkInSlots(
+    rawList: { start: string; end: string; isAvailable: boolean }[],
+    date: string
+  ): void {
+    const now = new Date();
+    const todayStr = this.getTodayDateStr();
+    const isToday = date === todayStr;
+    const isPastDate = date < todayStr;
+
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    const processed: WalkInSlotView[] = rawList.map((slot, idx) => {
+      const cleanStart = this.extractHourMinute(slot.start);
+      const cleanEnd = this.extractHourMinute(slot.end);
+      const [sHour, sMin] = cleanStart.split(':').map(Number);
+
+      let isPast = false;
+      if (isPastDate) {
+        isPast = true;
+      } else if (isToday) {
+        if (sHour < currentHour || (sHour === currentHour && sMin <= currentMinute)) {
+          isPast = true;
+        }
+      }
+
+      const isAvailable = !isPast && slot.isAvailable;
+      const label = `${this.formatTime12h(cleanStart)} - ${this.formatTime12h(cleanEnd)}`;
+
+      return {
+        id: `slot-${idx}-${cleanStart}`,
+        index: idx,
+        label,
+        rawStart: cleanStart,
+        rawEnd: cleanEnd,
+        isAvailable,
+        isPast,
+        canFitDuration: false
+      };
+    });
+
+    this.walkInSlots.set(processed);
+    this.recalculateSlotFitness();
+  }
+
+  canSlotFitDuration(startIndex: number, duration: number): boolean {
+    const slots = this.walkInSlots();
+    if (startIndex + duration > slots.length) return false;
+    for (let k = 0; k < duration; k++) {
+      const s = slots[startIndex + k];
+      if (!s || !s.isAvailable || s.isPast) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  recalculateSlotFitness(): void {
+    const duration = this.walkInDurationHours();
+    const slots = this.walkInSlots();
+    const updated = slots.map((s, idx) => ({
+      ...s,
+      canFitDuration: this.canSlotFitDuration(idx, duration)
+    }));
+    this.walkInSlots.set(updated);
+  }
+
+  onWalkInDateChange(newDate: string): void {
+    if (!newDate) return;
+    this.walkInDate.set(newDate);
+    this.selectedSlotIndex.set(null);
+    this.walkInForm.patchValue({ startTime: '', endTime: '' });
+    const stationId = this.walkInForm.get('stationId')?.value;
+    if (stationId) {
+      this.loadWalkInSlots(stationId, newDate);
+    }
+  }
+
+  onDurationChange(hours: number): void {
+    this.walkInDurationHours.set(hours);
+    this.recalculateSlotFitness();
+    const selIdx = this.selectedSlotIndex();
+    if (selIdx !== null) {
+      if (this.canSlotFitDuration(selIdx, hours)) {
+        this.updateWalkInTimesFromSelection();
+      } else {
+        this.selectedSlotIndex.set(null);
+        this.walkInForm.patchValue({ startTime: '', endTime: '' });
+      }
+    }
+  }
+
+  selectWalkInSlot(slotIndex: number): void {
+    const slot = this.walkInSlots()[slotIndex];
+    if (!slot || !slot.canFitDuration) return;
+
+    this.selectedSlotIndex.set(slotIndex);
+    this.updateWalkInTimesFromSelection();
+  }
+
+  updateWalkInTimesFromSelection(): void {
+    const idx = this.selectedSlotIndex();
+    if (idx === null) return;
+    const slots = this.walkInSlots();
+    const duration = this.walkInDurationHours();
+    const date = this.walkInDate();
+
+    const startSlot = slots[idx];
+    const endSlot = slots[idx + duration - 1];
+    if (!startSlot || !endSlot) return;
+
+    const startIso = new Date(`${date}T${startSlot.rawStart}:00`).toISOString();
+    const endIso = new Date(`${date}T${endSlot.rawEnd}:00`).toISOString();
+
+    this.walkInForm.patchValue({
+      startTime: startIso,
+      endTime: endIso
+    });
+  }
+
+  isSlotInSelectedRange(idx: number): boolean {
+    const selIdx = this.selectedSlotIndex();
+    if (selIdx === null) return false;
+    const duration = this.walkInDurationHours();
+    return idx >= selIdx && idx < selIdx + duration;
+  }
+
+  getSelectedSlotSummary(): string {
+    const idx = this.selectedSlotIndex();
+    if (idx === null) return '';
+    const slots = this.walkInSlots();
+    const duration = this.walkInDurationHours();
+    const startSlot = slots[idx];
+    const endSlot = slots[idx + duration - 1];
+    if (!startSlot || !endSlot) return '';
+    const date = this.walkInDate();
+    return `${date} • ${this.formatTime12h(startSlot.rawStart)} - ${this.formatTime12h(endSlot.rawEnd)} (${duration} hr${duration > 1 ? 's' : ''})`;
+  }
+
+  getWalkInEstimatedTotal(): number {
+    const sid = this.walkInForm.get('stationId')?.value;
+    const st = this.stations().find(s => s.id === sid);
+    const rate = st?.hourlyRate || 0;
+    return rate * this.walkInDurationHours();
+  }
+
+  getTodayDateStr(): string {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  private formatTime12h(hhmm: string): string {
+    if (!hhmm) return '';
+    const [hStr, mStr] = hhmm.split(':');
+    let h = parseInt(hStr, 10);
+    const m = mStr || '00';
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+  }
+
+  private extractHourMinute(timeStr: string): string {
+    if (!timeStr) return '00:00';
+    if (timeStr.includes('T')) {
+      const timePart = timeStr.split('T')[1];
+      return timePart.substring(0, 5);
+    }
+    return timeStr.substring(0, 5);
   }
 
   loadStationGames(stationId: string): void {
@@ -361,10 +668,14 @@ export class AdminBookingsComponent implements OnInit {
 
   onStationChange(stationId: string): void {
     this.selectedWalkInStationId.set(stationId || '');
+    this.selectedSlotIndex.set(null);
+    this.walkInForm.patchValue({ startTime: '', endTime: '' });
     if (stationId) {
       this.loadStationGames(stationId);
+      this.loadWalkInSlots(stationId, this.walkInDate());
     } else {
       this.stationGames.set([]);
+      this.walkInSlots.set([]);
       this.walkInForm.patchValue({ gameId: '' });
     }
   }

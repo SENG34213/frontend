@@ -73,6 +73,7 @@ describe('AdminUsersComponent', () => {
     userAdminServiceSpy = jasmine.createSpyObj('UserAdminService', [
       'getUsers',
       'getUserById',
+      'createUser',
       'updateUser',
       'deactivateUser',
       'activateUser',
@@ -81,6 +82,16 @@ describe('AdminUsersComponent', () => {
 
     userAdminServiceSpy.getUsers.and.returnValue(of(mockPagedUsers));
     userAdminServiceSpy.getUserStats.and.returnValue(of(mockStats));
+    userAdminServiceSpy.createUser.and.returnValue(
+      of({
+        id: 'usr-new-01',
+        email: 'newuser@gamingcastle.lk',
+        fullName: 'New Player',
+        phoneNumber: '+94771234567',
+        role: 'CUSTOMER',
+        enabled: true
+      })
+    );
     userAdminServiceSpy.updateUser.and.returnValue(
       of({
         id: 'usr-01',
@@ -342,5 +353,31 @@ describe('AdminUsersComponent', () => {
     spyOn(document, 'createElement').and.callThrough();
     component.exportCsv();
     expect(toastServiceSpy.success).toHaveBeenCalledWith(jasmine.stringMatching(/Exported 3 users/i));
+  });
+
+  it('TC-FE-USR-16: should open create user modal and submit new user successfully', () => {
+    component.openCreateUserModal();
+    expect(component.createModalOpen()).toBeTrue();
+
+    component.createForm.patchValue({
+      fullName: 'New Player',
+      email: 'newuser@gamingcastle.lk',
+      phoneNumber: '+94771234567',
+      role: 'CUSTOMER',
+      password: 'SecurePassword123',
+      enabled: true
+    });
+
+    component.submitCreateUser();
+
+    expect(userAdminServiceSpy.createUser).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        fullName: 'New Player',
+        email: 'newuser@gamingcastle.lk',
+        role: 'CUSTOMER'
+      })
+    );
+    expect(component.createModalOpen()).toBeFalse();
+    expect(toastServiceSpy.success).toHaveBeenCalledWith(jasmine.stringMatching(/created successfully/i));
   });
 });

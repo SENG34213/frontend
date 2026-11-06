@@ -83,6 +83,16 @@ export interface UserSummaryResponse {
   avatarUrl?: string;
 }
 
+export interface AdminCreateUserRequest {
+  fullName: string;
+  email: string;
+  phoneNumber?: string;
+  role?: UserRole;
+  password?: string;
+  avatarUrl?: string;
+  enabled?: boolean;
+}
+
 export interface AdminUpdateUserRequest {
   fullName: string;
   phoneNumber?: string;

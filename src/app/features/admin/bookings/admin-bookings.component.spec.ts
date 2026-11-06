@@ -4,6 +4,7 @@ import { provideRouter, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
 import { AdminBookingsComponent } from './admin-bookings.component';
 import { BookingAdminService, PagedAdminBookings } from './booking-admin.service';
+import { BookingService } from '../../../core/services/booking.service';
 import { StationAdminService } from '../stations/station-admin.service';
 import { UserAdminService } from '../users/user-admin.service';
 import { GameAdminService } from '../games/game-admin.service';
@@ -74,6 +75,7 @@ describe('AdminBookingsComponent', () => {
   let component: AdminBookingsComponent;
   let fixture: ComponentFixture<AdminBookingsComponent>;
   let svcSpy: jasmine.SpyObj<BookingAdminService>;
+  let bookingServiceSpy: jasmine.SpyObj<BookingService>;
   let stationAdminServiceSpy: jasmine.SpyObj<StationAdminService>;
   let userAdminServiceSpy: jasmine.SpyObj<UserAdminService>;
   let gameAdminServiceSpy: jasmine.SpyObj<GameAdminService>;
@@ -84,6 +86,9 @@ describe('AdminBookingsComponent', () => {
     svcSpy = jasmine.createSpyObj('BookingAdminService', [
       'getBookings', 'cancelBooking', 'rescheduleBooking', 'createWalkIn', 'finishBookingPayment', 'exportCsv'
     ]);
+    bookingServiceSpy = jasmine.createSpyObj('BookingService', ['getStationAvailability']);
+    bookingServiceSpy.getStationAvailability.and.returnValue(of([]));
+
     toastSpy = jasmine.createSpyObj('ToastService', ['success', 'error', 'info', 'warning', 'show']);
 
     svcSpy.getBookings.and.returnValue(of(mockPaged));
@@ -96,13 +101,21 @@ describe('AdminBookingsComponent', () => {
     stationAdminServiceSpy = jasmine.createSpyObj('StationAdminService', ['getAllStations']);
     stationAdminServiceSpy.getAllStations.and.returnValue(of([]));
 
-    userAdminServiceSpy = jasmine.createSpyObj('UserAdminService', ['getUsers']);
+    userAdminServiceSpy = jasmine.createSpyObj('UserAdminService', ['getUsers', 'createUser']);
     userAdminServiceSpy.getUsers.and.returnValue(of({
       content: [],
       totalElements: 0,
       totalPages: 0,
       size: 100,
       number: 0
+    }));
+    userAdminServiceSpy.createUser.and.returnValue(of({
+      id: 'usr-new-001',
+      email: 'newuser@example.com',
+      fullName: 'Created Customer',
+      phoneNumber: '+94771234567',
+      role: 'CUSTOMER',
+      enabled: true
     }));
 
     gameAdminServiceSpy = jasmine.createSpyObj('GameAdminService', ['getGames', 'getGamesForStation']);
@@ -147,6 +160,7 @@ describe('AdminBookingsComponent', () => {
       providers: [
         provideRouter([]),
         { provide: BookingAdminService, useValue: svcSpy },
+        { provide: BookingService, useValue: bookingServiceSpy },
         { provide: StationAdminService, useValue: stationAdminServiceSpy },
         { provide: UserAdminService, useValue: userAdminServiceSpy },
         { provide: GameAdminService, useValue: gameAdminServiceSpy },
@@ -269,6 +283,57 @@ describe('AdminBookingsComponent', () => {
     ]));
     component.onStationChange('st-new');
     expect(component.walkInForm.get('gameId')?.value).toBe('');
+  });
+
+  it('TC-FE-BKM-07e: should toggle walk-in customer types and register a new customer', () => {
+    component.openWalkIn();
+    expect(component.walkInStep()).toBe('prompt');
+
+    component.chooseCustomerType('new');
+    expect(component.walkInStep()).toBe('create-user');
+
+    component.newCustomerForm.patchValue({
+      fullName: 'WalkIn Player',
+      email: 'walkin@example.com',
+      phoneNumber: '+94771234567',
+      password: 'Gaming@123'
+    });
+
+    component.submitWalkInNewUser();
+
+    expect(userAdminServiceSpy.createUser).toHaveBeenCalledWith(jasmine.objectContaining({
+      fullName: 'WalkIn Player',
+      email: 'walkin@example.com'
+    }));
+    expect(component.walkInStep()).toBe('booking');
+    expect(component.walkInForm.get('targetUserId')?.value).toBe('usr-new-001');
+    expect(toastSpy.success).toHaveBeenCalledWith(jasmine.stringMatching(/registered successfully/i));
+  });
+
+  it('TC-FE-BKM-07f: should load slots, select slot and compute start and end times for duration', () => {
+    component.openWalkIn();
+    component.chooseCustomerType('existing');
+    expect(component.walkInStep()).toBe('booking');
+
+    // Select date and station
+    component.walkInDate.set('2026-11-20'); // future date so all slots are not past
+    component.onStationChange('st-01');
+
+    expect(component.walkInSlots().length).toBeGreaterThan(0);
+
+    // Slot 0 (10:00 - 11:00) with 1 hour
+    component.selectWalkInSlot(0);
+    expect(component.selectedSlotIndex()).toBe(0);
+    const start1 = new Date(component.walkInForm.get('startTime')?.value).getTime();
+    const end1 = new Date(component.walkInForm.get('endTime')?.value).getTime();
+    expect(end1 - start1).toBe(60 * 60 * 1000);
+
+    // Change duration to 2 hours
+    component.onDurationChange(2);
+    expect(component.walkInDurationHours()).toBe(2);
+    const start2 = new Date(component.walkInForm.get('startTime')?.value).getTime();
+    const end2 = new Date(component.walkInForm.get('endTime')?.value).getTime();
+    expect(end2 - start2).toBe(2 * 60 * 60 * 1000);
   });
 
   it('TC-FE-BKM-07b: should finish walk-in payment and confirm slot successfully', () => {

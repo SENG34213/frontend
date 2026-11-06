@@ -11,6 +11,9 @@
       </p>
     </div>
     <div class="header-actions">
+      <gc-button variant="primary" size="sm" (btnClick)="openCreateUserModal()" aria-label="Add new user">
+        ➕ Add New User
+      </gc-button>
       <gc-button variant="outline" size="sm" (btnClick)="exportCsv()" aria-label="Export users as CSV">
         📥 Export CSV
       </gc-button>
@@ -324,6 +327,148 @@
       </div>
     </div>
   }
+
+  <!-- ──── Add New User Modal ───────────────────────────────────────────────────────────────────────────────────────────── -->
+  <gc-modal
+    [isOpen]="createModalOpen()"
+    [(isOpen)]="createModalOpen"
+    title="Add New User Account"
+    modalId="modal-create-user">
+    <p class="modal-context-text">
+      Create a new customer or staff administrator account in Gaming Castle.
+    </p>
+
+    <form [formGroup]="createForm" (ngSubmit)="submitCreateUser()" id="form-create-user" novalidate>
+      <div class="modal-form-grid">
+        <!-- Full Name -->
+        <div class="form-field">
+          <label class="form-label" for="create-user-name">Full Name <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="create-user-name"
+            type="text"
+            class="gc-input-native"
+            placeholder="e.g. Kasun Perera"
+            formControlName="fullName"
+            [attr.aria-invalid]="createForm.get('fullName')?.invalid && createForm.get('fullName')?.touched" />
+          @if (createForm.get('fullName')?.invalid && createForm.get('fullName')?.touched) {
+            <span class="field-error" role="alert">Full name is required (min 2 characters)</span>
+          }
+        </div>
+
+        <!-- Email -->
+        <div class="form-field">
+          <label class="form-label" for="create-user-email">Email Address <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="create-user-email"
+            type="email"
+            class="gc-input-native"
+            placeholder="player@example.com"
+            formControlName="email"
+            [attr.aria-invalid]="createForm.get('email')?.invalid && createForm.get('email')?.touched" />
+          @if (createForm.get('email')?.invalid && createForm.get('email')?.touched) {
+            <span class="field-error" role="alert">A valid email address is required</span>
+          }
+        </div>
+
+        <!-- Phone Number -->
+        <div class="form-field">
+          <label class="form-label" for="create-user-phone">Phone Number</label>
+          <input
+            id="create-user-phone"
+            type="tel"
+            class="gc-input-native font-mono"
+            placeholder="+947XXXXXXXX or 07XXXXXXXX"
+            formControlName="phoneNumber"
+            [attr.aria-invalid]="createForm.get('phoneNumber')?.invalid && createForm.get('phoneNumber')?.touched" />
+          @if (createForm.get('phoneNumber')?.invalid && createForm.get('phoneNumber')?.touched) {
+            <span class="field-error" role="alert">Valid Sri Lankan phone number required (+94... or 07...)</span>
+          }
+        </div>
+
+        <!-- Role -->
+        <div class="form-field">
+          <label class="form-label" for="create-user-role-select">Account Role <span class="required" aria-hidden="true">*</span></label>
+          <select
+            id="create-user-role-select"
+            class="gc-select-native"
+            formControlName="role">
+            <option value="CUSTOMER">Customer / Player</option>
+            <option value="ADMIN">Administrator (Staff Access)</option>
+          </select>
+        </div>
+
+        <!-- Password -->
+        <div class="form-field full-width">
+          <label class="form-label" for="create-user-password">Initial Password <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="create-user-password"
+            type="text"
+            class="gc-input-native font-mono"
+            placeholder="Minimum 6 characters"
+            formControlName="password"
+            [attr.aria-invalid]="createForm.get('password')?.invalid && createForm.get('password')?.touched" />
+          @if (createForm.get('password')?.invalid && createForm.get('password')?.touched) {
+            <span class="field-error" role="alert">Password is required (min 6 characters)</span>
+          } @else {
+            <span class="field-hint text-muted">Customer can change this temporary password after their first sign-in.</span>
+          }
+        </div>
+
+        <!-- Avatar URL & Quick Presets -->
+        <div class="form-field full-width">
+          <label class="form-label" for="create-user-avatar">Profile Picture / Avatar URL</label>
+          <div class="avatar-edit-row">
+            <div class="avatar-edit-preview">
+              @if (createForm.get('avatarUrl')?.value) {
+                <img [src]="createForm.get('avatarUrl')?.value" alt="Avatar preview" class="preview-img" />
+              } @else {
+                <span class="preview-placeholder">👤</span>
+              }
+            </div>
+            <div class="avatar-input-wrap">
+              <input
+                id="create-user-avatar"
+                type="url"
+                class="gc-input-native"
+                placeholder="https://... image URL (optional)"
+                formControlName="avatarUrl" />
+              <div class="admin-avatar-quick-picks">
+                <span class="pick-label">Quick Avatars:</span>
+                <button type="button" class="quick-pick-btn" (click)="createForm.patchValue({ avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=NeonCyber&backgroundColor=0d1117' })">Cyber</button>
+                <button type="button" class="quick-pick-btn" (click)="createForm.patchValue({ avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=MechaPilot&backgroundColor=1f1b2e' })">Mecha</button>
+                <button type="button" class="quick-pick-btn" (click)="createForm.patchValue({ avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=ShadowGhost&backgroundColor=21262d' })">Shadow</button>
+                <button type="button" class="quick-pick-btn" (click)="createForm.patchValue({ avatarUrl: '' })">Clear</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Enabled Checkbox -->
+        <div class="form-field checkbox-field full-width">
+          <label class="checkbox-label" for="create-user-active">
+            <input
+              id="create-user-active"
+              type="checkbox"
+              class="gc-checkbox-native"
+              formControlName="enabled" />
+            <span>Account is Active Immediately (Player can login & book)</span>
+          </label>
+        </div>
+      </div>
+    </form>
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="createModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="primary"
+        form="form-create-user"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="submitCreateUser()">
+        {{ actionInFlight() ? 'Creating...' : '➕ Create User' }}
+      </gc-button>
+    </div>
+  </gc-modal>
 
   <!-- ──── Edit User Modal ────────────────────────────────────────────────────────────────────────────────────────────────── -->
   <gc-modal
