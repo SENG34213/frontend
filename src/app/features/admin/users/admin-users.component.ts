@@ -10,6 +10,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { UserAdminService } from './user-admin.service';
 import {
   UserSummaryResponse,
+  AdminCreateUserRequest,
   AdminUpdateUserRequest,
   AdminUserStatsResponse,
   UserFilter,
@@ -72,6 +73,7 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   readonly filterEnabled = signal<string>('');
 
   // Modals & Drawers
+  readonly createModalOpen = signal(false);
   readonly editModalOpen = signal(false);
   readonly editingUser = signal<UserSummaryResponse | null>(null);
 
@@ -81,7 +83,17 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   readonly toggleConfirmModalOpen = signal(false);
   readonly targetToggleUser = signal<UserSummaryResponse | null>(null);
 
-  // ──── Reactive Form ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  // ──── Reactive Forms ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  readonly createForm = this.fb.group({
+    fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+    email: ['', [Validators.required, Validators.email]],
+    phoneNumber: ['', [Validators.pattern(/^$|^(?:\+94|0)[0-9]{9}$/)]],
+    role: ['CUSTOMER' as UserRole, [Validators.required]],
+    password: ['Gaming@123', [Validators.required, Validators.minLength(6)]],
+    enabled: [true],
+    avatarUrl: ['']
+  });
+
   readonly editForm = this.fb.group({
     fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
     phoneNumber: ['', [Validators.pattern(/^$|^(?:\+94|0)[0-9]{9}$/)]],
@@ -162,6 +174,55 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
           this.errorMessage.set(err?.message || 'Failed to load users from service');
           this.isLoading.set(false);
           this.toast.error('Could not load user accounts');
+        }
+      });
+  }
+
+  // ──── Create User ──────────────────────────────────────────────────────────────────────────────────────────────────────────
+  openCreateUserModal(): void {
+    this.createForm.reset({
+      fullName: '',
+      email: '',
+      phoneNumber: '',
+      role: 'CUSTOMER',
+      password: 'Gaming@123',
+      enabled: true,
+      avatarUrl: ''
+    });
+    this.createModalOpen.set(true);
+  }
+
+  submitCreateUser(): void {
+    if (this.createForm.invalid) {
+      this.createForm.markAllAsTouched();
+      return;
+    }
+
+    const val = this.createForm.value;
+    const req: AdminCreateUserRequest = {
+      fullName: (val.fullName || '').trim(),
+      email: (val.email || '').trim(),
+      phoneNumber: (val.phoneNumber || '').trim() || undefined,
+      role: val.role as UserRole,
+      password: val.password || undefined,
+      enabled: val.enabled ?? true,
+      avatarUrl: (val.avatarUrl || '').trim() || undefined
+    };
+
+    this.actionInFlight.set(true);
+    this.userAdminService.createUser(req)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (created) => {
+          this.actionInFlight.set(false);
+          this.createModalOpen.set(false);
+          this.toast.success(`User "${created.fullName}" created successfully`);
+          this.loadUsers();
+          this.loadStats();
+        },
+        error: (err) => {
+          this.actionInFlight.set(false);
+          this.toast.error(err?.message || 'Failed to create user account');
         }
       });
   }
