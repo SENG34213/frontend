@@ -336,10 +336,6 @@
           </button>
         </div>
       </div>
-
-      <div modal-footer class="modal-footer-actions">
-        <gc-button variant="outline" (btnClick)="walkInModalOpen.set(false)">Cancel</gc-button>
-      </div>
     }
 
     <!-- Step 2: Create New Customer Form -->
@@ -404,18 +400,6 @@
             </div>
           </div>
         </form>
-      </div>
-
-      <div modal-footer class="modal-footer-actions">
-        <gc-button variant="outline" (btnClick)="walkInStep.set('prompt')">← Back</gc-button>
-        <gc-button
-          variant="primary"
-          form="form-walkin-new-user"
-          [attr.aria-busy]="actionInFlight()"
-          [disabled]="actionInFlight() || newCustomerForm.invalid"
-          (btnClick)="submitWalkInNewUser()">
-          {{ actionInFlight() ? 'Registering…' : '➕ Register & Continue to Booking' }}
-        </gc-button>
       </div>
     }
 
@@ -627,8 +611,23 @@
           ℹ️ Walk-in bookings are initially reserved with <strong>PENDING</strong> status. You will be prompted to record payment and confirm the slot immediately after creating.
         </p>
       </form>
+    }
 
-      <div modal-footer class="modal-footer-actions">
+    <!-- Modal Footer Actions (Projected to [modal-footer]) -->
+    <div modal-footer class="modal-footer-actions">
+      @if (walkInStep() === 'prompt') {
+        <gc-button variant="outline" (btnClick)="walkInModalOpen.set(false)">Cancel</gc-button>
+      } @else if (walkInStep() === 'create-user') {
+        <gc-button variant="outline" (btnClick)="walkInStep.set('prompt')">← Back</gc-button>
+        <gc-button
+          variant="primary"
+          form="form-walkin-new-user"
+          [attr.aria-busy]="actionInFlight()"
+          [disabled]="actionInFlight() || newCustomerForm.invalid"
+          (btnClick)="submitWalkInNewUser()">
+          {{ actionInFlight() ? 'Registering…' : '➕ Register & Continue to Booking' }}
+        </gc-button>
+      } @else {
         <gc-button variant="outline" (btnClick)="walkInModalOpen.set(false)">Cancel</gc-button>
         <gc-button
           variant="primary"
@@ -638,8 +637,8 @@
           (btnClick)="submitWalkIn()">
           {{ actionInFlight() ? 'Creating…' : '🎮 Create Walk-In' }}
         </gc-button>
-      </div>
-    }
+      }
+    </div>
   </gc-modal>
 
   <!-- ── Walk-In Payment & Confirmation Modal ──────────────────────────── -->

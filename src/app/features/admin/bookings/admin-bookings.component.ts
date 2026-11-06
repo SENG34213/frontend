@@ -29,6 +29,7 @@ import { StationAdminService } from '../stations/station-admin.service';
 import { UserAdminService } from '../users/user-admin.service';
 import { GameAdminService } from '../games/game-admin.service';
 import { NotificationSocketService } from '../../../core/services/notification-socket.service';
+import { normalizeSlotHourMinute, formatTimeString } from '../../../core/utils/slot.utils';
 import {
   ButtonComponent,
   CardComponent,
@@ -108,6 +109,7 @@ export class AdminBookingsComponent implements OnInit {
   readonly slotsLoading = signal<boolean>(false);
 
   readonly defaultOperatingSlots = [
+    { start: '09:00', end: '10:00' },
     { start: '10:00', end: '11:00' },
     { start: '11:00', end: '12:00' },
     { start: '12:00', end: '13:00' },
@@ -470,8 +472,15 @@ export class AdminBookingsComponent implements OnInit {
     const isToday = date === todayStr;
     const isPastDate = date < todayStr;
 
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
+    // Use Sri Lanka timezone (+05:30) for current hour and minute comparisons
+    const slParts = new Intl.DateTimeFormat('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Colombo'
+    }).formatToParts(now);
+    const currentHour = parseInt(slParts.find(p => p.type === 'hour')?.value || '0', 10);
+    const currentMinute = parseInt(slParts.find(p => p.type === 'minute')?.value || '0', 10);
 
     const processed: WalkInSlotView[] = rawList.map((slot, idx) => {
       const cleanStart = this.extractHourMinute(slot.start);
@@ -572,8 +581,9 @@ export class AdminBookingsComponent implements OnInit {
     const endSlot = slots[idx + duration - 1];
     if (!startSlot || !endSlot) return;
 
-    const startIso = new Date(`${date}T${startSlot.rawStart}:00`).toISOString();
-    const endIso = new Date(`${date}T${endSlot.rawEnd}:00`).toISOString();
+    // Use +05:30 (Sri Lanka time) so the ISO string correctly represents the intended instant
+    const startIso = new Date(`${date}T${startSlot.rawStart}:00+05:30`).toISOString();
+    const endIso = new Date(`${date}T${endSlot.rawEnd}:00+05:30`).toISOString();
 
     this.walkInForm.patchValue({
       startTime: startIso,
@@ -608,30 +618,22 @@ export class AdminBookingsComponent implements OnInit {
   }
 
   getTodayDateStr(): string {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
+    return new Intl.DateTimeFormat('en-CA', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      timeZone: 'Asia/Colombo'
+    }).format(new Date());
   }
 
   private formatTime12h(hhmm: string): string {
     if (!hhmm) return '';
-    const [hStr, mStr] = hhmm.split(':');
-    let h = parseInt(hStr, 10);
-    const m = mStr || '00';
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12 || 12;
-    return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+    return formatTimeString(hhmm);
   }
 
   private extractHourMinute(timeStr: string): string {
     if (!timeStr) return '00:00';
-    if (timeStr.includes('T')) {
-      const timePart = timeStr.split('T')[1];
-      return timePart.substring(0, 5);
-    }
-    return timeStr.substring(0, 5);
+    return normalizeSlotHourMinute(timeStr) || timeStr.substring(0, 5);
   }
 
   loadStationGames(stationId: string): void {
