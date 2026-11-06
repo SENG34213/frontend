@@ -12,6 +12,7 @@ export interface DisplaySlot {
   isAvailable: boolean;
   isSelected: boolean;
   isCurrent?: boolean;
+  isPast?: boolean;
   disabledReason?: string;
 }
 

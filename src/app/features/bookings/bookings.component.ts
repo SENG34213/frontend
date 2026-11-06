@@ -27,7 +27,8 @@ import {
   formatDateToYMD,
   formatTimeString,
   getCleanTimeId,
-  normalizeSlotHourMinute
+  normalizeSlotHourMinute,
+  getSlotStartTimestamp
 } from '../../core/utils/slot.utils';
 
 export interface CalendarDay {
@@ -237,8 +238,100 @@ export class BookingsComponent implements OnInit, OnDestroy {
     return this.stationGames().find((g) => g.id === this.selectedGameId()) ?? null;
   });
 
+  // ── Multi-slot & Time filtering ─────────────────────────────────────────────
+  currentTimeFn: () => number = () => Date.now();
+  readonly durationOptions = [1, 2, 3, 4];
+
+  isSlotInPast(rawStart: string, dateStr = this.selectedDateStr()): boolean {
+    const nowMs = this.currentTimeFn();
+    const todayStr = this.formatDate(new Date(nowMs));
+    if (dateStr < todayStr) return true;
+    if (dateStr > todayStr) return false;
+    const slotStartMs = getSlotStartTimestamp(dateStr, rawStart);
+    return slotStartMs <= nowMs;
+  }
+
+  getConsecutiveSlots(startSlotId: string, duration = this.sessionHours()): DisplaySlot[] {
+    const slots = this.availableSlots();
+    const startIdx = slots.findIndex((s) => s.id === startSlotId);
+    if (startIdx === -1) return [];
+    if (startIdx + duration > slots.length) return [];
+
+    const selected: DisplaySlot[] = [];
+    for (let i = 0; i < duration; i++) {
+      const slot = slots[startIdx + i];
+      if (!slot.isAvailable || slot.isPast || this.isSlotHeld(slot)) {
+        return [];
+      }
+      selected.push(slot);
+    }
+    return selected;
+  }
+
+  canSlotFitDuration(slot: DisplaySlot, duration = this.sessionHours()): boolean {
+    if (!slot || !slot.isAvailable || slot.isPast || this.isSlotHeld(slot)) return false;
+    return this.getConsecutiveSlots(slot.id, duration).length === duration;
+  }
+
+  getMaxConsecutiveFrom(slot: DisplaySlot): number {
+    if (!slot || !slot.isAvailable || slot.isPast || this.isSlotHeld(slot)) return 0;
+    let count = 0;
+    for (let d = 1; d <= 4; d++) {
+      if (this.getConsecutiveSlots(slot.id, d).length === d) {
+        count = d;
+      } else {
+        break;
+      }
+    }
+    return count;
+  }
+
+  setSessionDuration(hours: number): void {
+    const clamped = Math.min(4, Math.max(1, hours));
+    this.sessionHours.set(clamped);
+    const currentStart = this.selectedSlotId();
+    const currentSlot = this.availableSlots().find((s) => s.id === currentStart);
+    if (!currentSlot || !this.canSlotFitDuration(currentSlot, clamped)) {
+      const nextValid = this.availableSlots().find((s) => this.canSlotFitDuration(s, clamped));
+      if (nextValid) {
+        this.selectedSlotId.set(nextValid.id);
+      }
+    }
+    this.cdr.markForCheck();
+  }
+
+  readonly selectedSlots = computed<DisplaySlot[]>(() => {
+    const startId = this.selectedSlotId();
+    if (!startId) return [];
+    const consecutive = this.getConsecutiveSlots(startId, this.sessionHours());
+    if (consecutive.length > 0) return consecutive;
+    const single = this.availableSlots().find((s) => s.id === startId && s.isAvailable && !s.isPast && !this.isSlotHeld(s));
+    return single ? [single] : [];
+  });
+
+  isSlotSelected(slot: DisplaySlot): boolean {
+    return this.selectedSlots().some((s) => s.id === slot.id);
+  }
+
+  getSlotSelectionIndex(slot: DisplaySlot): number {
+    return this.selectedSlots().findIndex((s) => s.id === slot.id);
+  }
+
   readonly selectedSlot = computed<DisplaySlot | null>(() => {
-    return this.availableSlots().find((s) => s.id === this.selectedSlotId() && s.isAvailable) ?? null;
+    const slots = this.selectedSlots();
+    if (slots.length === 0) return null;
+    const first = slots[0];
+    const last = slots[slots.length - 1];
+    return {
+      id: first.id,
+      startTime: first.startTime,
+      endTime: last.endTime,
+      rawStart: first.rawStart,
+      rawEnd: last.rawEnd,
+      durationHours: slots.length,
+      isAvailable: true,
+      isSelected: true
+    };
   });
 
   /** Payment button enabled only when station + game + slot are all selected */
@@ -466,6 +559,8 @@ export class BookingsComponent implements OnInit, OnDestroy {
             const startFormatted = this.formatTimeString(s.startTime);
             const endFormatted = this.formatTimeString(s.endTime);
             const id = `slot-${idx}-${this.getCleanTimeId(s.startTime)}`;
+            const isPast = this.isSlotInPast(s.startTime, date);
+            const isAvailable = !isPast && (s.isAvailable ?? true);
             return {
               id,
               startTime: startFormatted,
@@ -473,22 +568,56 @@ export class BookingsComponent implements OnInit, OnDestroy {
               rawStart: s.startTime,
               rawEnd: s.endTime,
               durationHours: 1,
-              isAvailable: s.isAvailable,
-              isSelected: idx === 0
+              isAvailable,
+              isPast,
+              disabledReason: isPast ? 'Time passed' : (!s.isAvailable ? 'Booked' : undefined),
+              isSelected: false
             };
           });
           this.availableSlots.set(displaySlots);
-          const firstAvailable = displaySlots.find((s) => s.isAvailable);
-          this.selectedSlotId.set(firstAvailable?.id || '');
+          const durationFit = displaySlots.find((s) => this.canSlotFitDuration(s, this.sessionHours()));
+          const firstAvailable = durationFit || displaySlots.find((s) => s.isAvailable && !s.isPast && !this.isSlotHeld(s));
+          if (firstAvailable) {
+            this.selectedSlotId.set(firstAvailable.id);
+            if (!durationFit) {
+              const maxFit = this.getMaxConsecutiveFrom(firstAvailable);
+              if (maxFit > 0) {
+                this.sessionHours.set(maxFit);
+              }
+            }
+          } else {
+            this.selectedSlotId.set('');
+          }
         } else {
-          this.availableSlots.set(this.getDefaultSlots());
-          this.selectedSlotId.set('');
+          const defaultSlots = this.getDefaultSlots().map((s) => {
+            const isPast = this.isSlotInPast(s.rawStart, date);
+            return {
+              ...s,
+              isPast,
+              isAvailable: !isPast && s.isAvailable,
+              disabledReason: isPast ? 'Time passed' : s.disabledReason
+            };
+          });
+          this.availableSlots.set(defaultSlots);
+          const firstAvail = defaultSlots.find((s) => s.isAvailable && !s.isPast);
+          this.selectedSlotId.set(firstAvail?.id || '');
         }
         this.slotsLoading.set(false);
         this.cdr.markForCheck();
       },
       error: () => {
-        this.availableSlots.set(this.getDefaultSlots());
+        const defaultSlots = this.getDefaultSlots().map((s) => {
+          const isPast = this.isSlotInPast(s.rawStart, date);
+          return {
+            ...s,
+            isPast,
+            isAvailable: !isPast && s.isAvailable,
+            disabledReason: isPast ? 'Time passed' : s.disabledReason
+          };
+        });
+        this.availableSlots.set(defaultSlots);
+        const firstAvail = defaultSlots.find((s) => s.isAvailable && !s.isPast);
+        this.selectedSlotId.set(firstAvail?.id || '');
         this.slotsLoading.set(false);
         this.cdr.markForCheck();
       }
@@ -534,8 +663,21 @@ export class BookingsComponent implements OnInit, OnDestroy {
   }
 
   selectSlot(slot: DisplaySlot): void {
-    if (!slot.isAvailable || this.isSlotHeld(slot)) return;
-    this.selectedSlotId.set(slot.id);
+    if (!slot.isAvailable || slot.isPast || this.isSlotHeld(slot)) return;
+
+    if (this.selectedSlotId() === slot.id && this.sessionHours() === 1) return;
+
+    const desiredDuration = this.sessionHours();
+    if (this.canSlotFitDuration(slot, desiredDuration)) {
+      this.selectedSlotId.set(slot.id);
+      return;
+    }
+
+    const maxFit = this.getMaxConsecutiveFrom(slot);
+    if (maxFit > 0) {
+      this.sessionHours.set(maxFit);
+      this.selectedSlotId.set(slot.id);
+    }
   }
 
   /** Selecting a station resets the game selection and loads that station's games */
@@ -586,17 +728,19 @@ export class BookingsComponent implements OnInit, OnDestroy {
   }
 
   private handleHoldExpired(): void {
-    const slot = this.selectedSlot();
-    if (slot && !this.bookingSuccessReceipt()) {
-      const timeToUnlock = normalizeSlotHourMinute(slot.rawStart || slot.startTime || slot.id);
-      this.notifSocketService.unlockSlot(
-        this.selectedStationId(),
-        this.selectedDateStr(),
-        timeToUnlock
-      );
+    const slots = this.selectedSlots();
+    if (slots.length > 0 && !this.bookingSuccessReceipt()) {
+      slots.forEach((s) => {
+        const timeToUnlock = normalizeSlotHourMinute(s.rawStart || s.startTime || s.id);
+        this.notifSocketService.unlockSlot(
+          this.selectedStationId(),
+          this.selectedDateStr(),
+          timeToUnlock
+        );
+      });
     }
     this.paymentModalOpen.set(false);
-    this.bookingErrorMessage.set('Your 2-minute booking hold expired. The slot has been released back to Available.');
+    this.bookingErrorMessage.set('Your 2-minute booking hold expired. The slots have been released back to Available.');
     this.cdr.markForCheck();
   }
 
@@ -608,17 +752,24 @@ export class BookingsComponent implements OnInit, OnDestroy {
 
   onProceedToPayment(): void {
     if (!this.canProceedToPayment()) return;
-    const slot = this.selectedSlot();
-    if (!slot || this.isSlotHeld(slot)) {
-      this.bookingErrorMessage.set('This time slot is currently being booked by another customer. Please choose a different slot.');
+    const slots = this.selectedSlots();
+    if (slots.length === 0) {
+      this.bookingErrorMessage.set('Please select an available time slot.');
       return;
     }
-    const timeToLock = normalizeSlotHourMinute(slot.rawStart || slot.startTime || slot.id);
-    this.notifSocketService.lockSlot(
-      this.selectedStationId(),
-      this.selectedDateStr(),
-      timeToLock
-    );
+    const anyHeld = slots.some((s) => this.isSlotHeld(s));
+    if (anyHeld) {
+      this.bookingErrorMessage.set('One or more of the selected time slots are currently being booked by another customer. Please choose a different slot.');
+      return;
+    }
+    slots.forEach((s) => {
+      const timeToLock = normalizeSlotHourMinute(s.rawStart || s.startTime || s.id);
+      this.notifSocketService.lockSlot(
+        this.selectedStationId(),
+        this.selectedDateStr(),
+        timeToLock
+      );
+    });
     this.startHoldTimer();
     this.bookingErrorMessage.set(null);
     this.paymentModalOpen.set(true);
@@ -626,14 +777,16 @@ export class BookingsComponent implements OnInit, OnDestroy {
 
   closePaymentModal(): void {
     this.stopHoldTimer();
-    const slot = this.selectedSlot();
-    if (slot && !this.bookingSuccessReceipt()) {
-      const timeToUnlock = normalizeSlotHourMinute(slot.rawStart || slot.startTime || slot.id);
-      this.notifSocketService.unlockSlot(
-        this.selectedStationId(),
-        this.selectedDateStr(),
-        timeToUnlock
-      );
+    const slots = this.selectedSlots();
+    if (slots.length > 0 && !this.bookingSuccessReceipt()) {
+      slots.forEach((s) => {
+        const timeToUnlock = normalizeSlotHourMinute(s.rawStart || s.startTime || s.id);
+        this.notifSocketService.unlockSlot(
+          this.selectedStationId(),
+          this.selectedDateStr(),
+          timeToUnlock
+        );
+      });
     }
     this.paymentModalOpen.set(false);
     this.bookingSuccessReceipt.set(null);
@@ -644,20 +797,21 @@ export class BookingsComponent implements OnInit, OnDestroy {
     this.stopHoldTimer();
     // If user navigates away with an active unconfirmed booking hold, roll back immediately
     if (this.paymentModalOpen() && !this.bookingSuccessReceipt()) {
-      const slot = this.selectedSlot();
-      if (slot) {
-        const timeToUnlock = normalizeSlotHourMinute(slot.rawStart || slot.startTime || slot.id);
+      const slots = this.selectedSlots();
+      slots.forEach((s) => {
+        const timeToUnlock = normalizeSlotHourMinute(s.rawStart || s.startTime || s.id);
         this.notifSocketService.unlockSlot(
           this.selectedStationId(),
           this.selectedDateStr(),
           timeToUnlock
         );
-      }
+      });
     }
   }
 
   confirmPayment(): void {
     const slot = this.selectedSlot();
+    const slots = this.selectedSlots();
     if (!slot || !slot.isAvailable) {
       this.bookingErrorMessage.set('Please select an available time slot.');
       return;
@@ -683,12 +837,14 @@ export class BookingsComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.stopHoldTimer();
         // Broadcast slot booked live across real-time socket
-        const timeToConfirm = normalizeSlotHourMinute(slot.rawStart || slot.startTime || slot.id);
-        this.notifSocketService.confirmSlotBooked(
-          this.selectedStationId(),
-          this.selectedDateStr(),
-          timeToConfirm
-        );
+        slots.forEach((s) => {
+          const timeToConfirm = normalizeSlotHourMinute(s.rawStart || s.startTime || s.id);
+          this.notifSocketService.confirmSlotBooked(
+            this.selectedStationId(),
+            this.selectedDateStr(),
+            timeToConfirm
+          );
+        });
 
         // Enrich response with game title from local state
         const enriched: BookingResponse = {
@@ -702,7 +858,7 @@ export class BookingsComponent implements OnInit, OnDestroy {
           type: 'BOOKING_CREATED',
           category: 'BOOKING',
           title: 'Booking Confirmed! 🎮',
-          message: `${enriched.stationName || 'Station'} reserved for ${slot.startTime} - ${slot.endTime} (${enriched.gameTitle || 'Game'})`,
+          message: `${enriched.stationName || 'Station'} reserved for ${slot.startTime} - ${slot.endTime} (${this.sessionHours()} ${this.sessionHours() === 1 ? 'hour' : 'hours'}, ${enriched.gameTitle || 'Game'})`,
           referenceId: enriched.id,
           link: '/bookings',
           targetUserId: currentUserId,

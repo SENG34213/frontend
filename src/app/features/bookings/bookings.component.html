@@ -96,8 +96,30 @@
               <div class="slots-legend">
                 <span class="legend-pill avail"><span class="legend-dot"></span>Available</span>
                 <span class="legend-pill selected"><span class="legend-dot"></span>Selected</span>
-                <span class="legend-pill in-progress"><span class="legend-dot"></span>In Progress (Locked)</span>
+                <span class="legend-pill in-progress"><span class="legend-dot"></span>In Progress</span>
                 <span class="legend-pill booked"><span class="legend-dot"></span>Booked</span>
+                <span class="legend-pill past"><span class="legend-dot"></span>Past</span>
+              </div>
+            </div>
+
+            <!-- Multi-Slot Session Duration Selector -->
+            <div class="duration-selector-row">
+              <div class="duration-label-wrap">
+                <span class="duration-icon">⏱️</span>
+                <span class="duration-label">Session Duration:</span>
+              </div>
+              <div class="duration-pills-wrap" role="group" aria-label="Select session duration">
+                @for (h of durationOptions; track h) {
+                  <button
+                    type="button"
+                    class="duration-pill-btn"
+                    [class.active]="sessionHours() === h"
+                    [attr.aria-pressed]="sessionHours() === h"
+                    [attr.aria-label]="h + (h === 1 ? ' Hour duration' : ' Hours duration')"
+                    (click)="setSessionDuration(h)">
+                    {{ h }} {{ h === 1 ? 'Hour' : 'Hours' }}
+                  </button>
+                }
               </div>
             </div>
 
@@ -113,27 +135,30 @@
                   <button
                     type="button"
                     class="slot-btn"
-                    [class.available]="slot.isAvailable && !isSlotHeld(slot)"
-                    [class.selected]="slot.id === selectedSlotId() && slot.isAvailable && !isSlotHeld(slot)"
-                    [class.occupied]="!slot.isAvailable"
-                    [class.booked]="!slot.isAvailable"
+                    [class.available]="slot.isAvailable && !slot.isPast && !isSlotHeld(slot)"
+                    [class.selected]="isSlotSelected(slot)"
+                    [class.occupied]="!slot.isAvailable && !slot.isPast"
+                    [class.booked]="!slot.isAvailable && !slot.isPast"
+                    [class.past]="slot.isPast"
                     [class.holding]="isSlotHeld(slot)"
                     [class.in-progress]="isSlotHeld(slot)"
-                    [class.deactive]="!slot.isAvailable || isSlotHeld(slot)"
-                    [disabled]="!slot.isAvailable || isSlotHeld(slot)"
-                    [attr.aria-disabled]="!slot.isAvailable || isSlotHeld(slot)"
+                    [class.deactive]="!slot.isAvailable || slot.isPast || isSlotHeld(slot)"
+                    [disabled]="!slot.isAvailable || slot.isPast || isSlotHeld(slot)"
+                    [attr.aria-disabled]="!slot.isAvailable || slot.isPast || isSlotHeld(slot)"
                     (click)="selectSlot(slot)"
-                    [attr.aria-pressed]="slot.id === selectedSlotId() && slot.isAvailable && !isSlotHeld(slot)"
-                    [attr.aria-label]="slot.startTime + ' to ' + slot.endTime + (!slot.isAvailable ? ' (Booked)' : (isSlotHeld(slot) ? ' (Locked: Currently being reserved by another customer)' : ' (Available)'))"
-                    [attr.title]="isSlotHeld(slot) ? 'This slot is currently being booked by another customer. If they cancel or do not complete in 2 minutes, it will return to Available.' : (!slot.isAvailable ? 'This slot is already booked.' : 'Available for reservation')">
+                    [attr.aria-pressed]="isSlotSelected(slot)"
+                    [attr.aria-label]="slot.startTime + ' to ' + slot.endTime + (slot.isPast ? ' (Past slot - Closed)' : (!slot.isAvailable ? ' (Booked)' : (isSlotHeld(slot) ? ' (Locked: Currently being reserved by another customer)' : ' (Available)')))"
+                    [attr.title]="slot.isPast ? 'This time slot has already passed for today.' : (isSlotHeld(slot) ? 'This slot is currently being booked by another customer. If they cancel or do not complete in 2 minutes, it will return to Available.' : (!slot.isAvailable ? 'This slot is already booked.' : 'Available for reservation'))">
                     <span class="slot-start">{{ slot.startTime }}</span>
                     <span class="slot-divider">→</span>
                     <span class="slot-end">{{ slot.endTime }}</span>
-                    @if (!slot.isAvailable) {
+                    @if (slot.isPast) {
+                      <span class="slot-badge past-badge">Past</span>
+                    } @else if (!slot.isAvailable) {
                       <span class="slot-badge booked-badge">Booked</span>
                     } @else if (isSlotHeld(slot)) {
                       <span class="slot-badge holding-badge">🔒 In Progress</span>
-                    } @else if (slot.id === selectedSlotId()) {
+                    } @else if (isSlotSelected(slot)) {
                       <span class="slot-badge selected-badge">✓ Selected</span>
                     } @else {
                       <span class="slot-badge avail-badge">Available</span>
@@ -141,6 +166,12 @@
                   </button>
                 }
               </div>
+
+              @if (!slotsLoading() && availableSlots().length > 0 && selectedSlotId() === '') {
+                <div class="all-slots-past-alert" role="status">
+                  <span>ℹ️ All time slots for this date have concluded or are unavailable. Please select an upcoming date from the calendar.</span>
+                </div>
+              }
             }
           </div>
         </div>
@@ -417,7 +448,7 @@
 
           <!-- PRICING BREAKDOWN -->
           <div class="pricing-row">
-            <span class="pricing-label">Base Rate (LKR {{ baseHourlyRate() }}/hr)</span>
+            <span class="pricing-label">Base Rate (LKR {{ baseHourlyRate() }}/hr × {{ sessionHours() }} {{ sessionHours() === 1 ? 'hr' : 'hrs' }})</span>
             <span class="pricing-val">LKR {{ subtotalAmount() | number:'1.2-2' }}</span>
           </div>
 
