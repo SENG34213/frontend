@@ -543,7 +543,7 @@
   to { transform: translateX(0); }
 }
 
-/* ── Targeted Responsive Breakpoints (1024px, 768px, 425px, 375px, 320px) ── */
+/* ──── Targeted Responsive Breakpoints (1024px, 768px, 425px, 375px, 320px) ──── */
 
 @media (max-width: 1024px) {
   .filter-card .filter-grid {
@@ -620,5 +620,100 @@
     width: 2.5rem;
     height: 2.5rem;
     font-size: 1.6rem;
+  }
+}
+
+.user-avatar-img,
+.drawer-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.self-edit-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(236, 72, 153, 0.12);
+  border: 1px solid rgba(236, 72, 153, 0.3);
+  padding: 0.6rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  color: #fce7f3;
+
+  .notice-text {
+    flex: 1;
+    line-height: 1.35;
+  }
+}
+
+.modal-form-grid .form-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.avatar-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.25rem;
+
+  .avatar-edit-preview {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: rgba(15, 23, 42, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+
+    .preview-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .preview-placeholder {
+      font-size: 1.5rem;
+    }
+  }
+
+  .avatar-input-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    .admin-avatar-quick-picks {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+
+      .pick-label {
+        font-size: 0.72rem;
+        color: var(--color-text-muted, #94a3b8);
+      }
+
+      .quick-pick-btn {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #e2e8f0;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        font-size: 0.72rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: rgba(99, 102, 241, 0.25);
+          border-color: #6366f1;
+          color: #fff;
+        }
+      }
+    }
   }
 }

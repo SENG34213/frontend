@@ -70,6 +70,16 @@
               <span class="member-since">Member since {{ formatDate(user.createdAt) }}</span>
             </div>
           </div>
+
+          <div class="profile-hero-action">
+            <gc-button
+              variant="primary"
+              size="md"
+              (btnClick)="openEditModal()"
+              aria-label="Edit Profile Details">
+              ✏️ Edit Profile
+            </gc-button>
+          </div>
         </div>
 
         <div class="details-divider"></div>
@@ -135,4 +145,12 @@
     </div>
     }
   }
+
+  <!-- Edit Profile Modal -->
+  <gc-profile-modal
+    [isOpen]="editModalOpen()"
+    (isOpenChange)="editModalOpen.set($event)"
+    (closed)="editModalOpen.set(false)"
+    (profileUpdated)="onProfileUpdated($event)">
+  </gc-profile-modal>
 </div>

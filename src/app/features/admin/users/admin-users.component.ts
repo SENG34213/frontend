@@ -1,10 +1,11 @@
 import {
-  Component, OnInit, OnDestroy, signal, inject, ChangeDetectionStrategy
+  Component, OnInit, OnDestroy, signal, computed, inject, ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
 
 import { UserAdminService } from './user-admin.service';
 import {
@@ -44,13 +45,16 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.
 })
 export class AdminUsersComponent implements OnInit, OnDestroy {
   private readonly userAdminService = inject(UserAdminService);
+  private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroy$ = new Subject<void>();
 
-  // ── Signals ────────────────────────────────────────────────────────────────
+  readonly currentAdminId = computed(() => this.authService.getUserId());
+
+  // ──── Signals ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   readonly users = signal<UserSummaryResponse[]>([]);
   readonly stats = signal<AdminUserStatsResponse | null>(null);
   readonly isLoading = signal(false);
@@ -77,15 +81,16 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
   readonly toggleConfirmModalOpen = signal(false);
   readonly targetToggleUser = signal<UserSummaryResponse | null>(null);
 
-  // ── Reactive Form ──────────────────────────────────────────────────────────
+  // ──── Reactive Form ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   readonly editForm = this.fb.group({
     fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
     phoneNumber: ['', [Validators.pattern(/^$|^(?:\+94|0)[0-9]{9}$/)]],
     role: ['CUSTOMER' as UserRole, [Validators.required]],
-    enabled: [true]
+    enabled: [true],
+    avatarUrl: ['']
   });
 
-  // ── Options ────────────────────────────────────────────────────────────────
+  // ──── Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   readonly roleOptions = [
     { value: '', label: 'All Roles' },
     { value: 'CUSTOMER', label: 'Customers Only' },
@@ -98,7 +103,7 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     { value: 'DEACTIVATED', label: 'Deactivated Accounts' }
   ];
 
-  // ── Lifecycle ──────────────────────────────────────────────────────────────
+  // ──── Lifecycle ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   ngOnInit(): void {
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       if (params['search']) this.searchQuery.set(params['search']);
@@ -116,7 +121,7 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // ── API Operations ─────────────────────────────────────────────────────────
+  // ──── API Operations ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   loadStats(): void {
     this.userAdminService.getUserStats()
       .pipe(takeUntil(this.destroy$))
@@ -161,7 +166,7 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
       });
   }
 
-  // ── Edit User ──────────────────────────────────────────────────────────────
+  // ──── Edit User ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   openEditModal(user: UserSummaryResponse, event?: Event): void {
     if (event) event.stopPropagation();
     this.editingUser.set(user);
@@ -169,7 +174,8 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
       fullName: user.fullName,
       phoneNumber: user.phoneNumber || '',
       role: user.role,
-      enabled: user.enabled
+      enabled: user.enabled,
+      avatarUrl: user.avatarUrl || ''
     });
     this.editModalOpen.set(true);
   }
@@ -188,7 +194,8 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
       fullName: (val.fullName || '').trim(),
       phoneNumber: (val.phoneNumber || '').trim() || undefined,
       role: val.role as UserRole,
-      enabled: val.enabled ?? true
+      enabled: val.enabled ?? true,
+      avatarUrl: (val.avatarUrl || '').trim() || undefined
     };
 
     this.actionInFlight.set(true);
@@ -204,6 +211,26 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
           if (this.selectedUser()?.id === target.id) {
             this.selectedUser.set(updated);
           }
+          if (this.currentAdminId() === target.id) {
+            const cur = this.authService.currentUser();
+            if (cur) {
+              this.authService.currentUser.set({
+                ...cur,
+                fullName: updated.fullName,
+                avatarUrl: updated.avatarUrl || undefined,
+                role: updated.role
+              });
+            }
+            if (this.authService.userProfile()) {
+              this.authService.userProfile.set({
+                ...this.authService.userProfile()!,
+                fullName: updated.fullName,
+                phoneNumber: updated.phoneNumber,
+                avatarUrl: updated.avatarUrl,
+                role: updated.role
+              });
+            }
+          }
         },
         error: (err) => {
           this.actionInFlight.set(false);
@@ -212,9 +239,13 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
       });
   }
 
-  // ── Deactivate / Activate Toggle ──────────────────────────────────────────
+  // ──── Deactivate / Activate Toggle ────────────────────────────────────────────────────────────────────────────────────
   promptToggleActive(user: UserSummaryResponse, event?: Event): void {
     if (event) event.stopPropagation();
+    if (user.id === this.currentAdminId() && user.enabled) {
+      this.toast.warning('You cannot deactivate your own active admin account.', 'Self-Deactivation Blocked');
+      return;
+    }
     this.targetToggleUser.set(user);
     this.toggleConfirmModalOpen.set(true);
   }
@@ -248,7 +279,7 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Detail Drawer ──────────────────────────────────────────────────────────
+  // ──── Detail Drawer ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   openDetail(user: UserSummaryResponse): void {
     this.selectedUser.set(user);
     this.detailDrawerOpen.set(true);
@@ -264,7 +295,7 @@ export class AdminUsersComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ── Pagination & Filter Events ─────────────────────────────────────────────
+  // ──── Pagination & Filter Events ──────────────────────────────────────────────────────────────────────────────────────────
   onPageChange(page: number): void {
     this.currentPage.set(page);
     this.syncQueryParams();

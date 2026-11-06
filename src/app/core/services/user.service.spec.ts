@@ -25,8 +25,8 @@ describe('UserService', () => {
 
   beforeEach(() => {
     apiSpy = jasmine.createSpyObj('ApiService', ['get']);
-    mockDataSpy = jasmine.createSpyObj('MockDataService', ['getUserProfile']);
-    authSpy = jasmine.createSpyObj('AuthService', ['currentUser'], {
+    mockDataSpy = jasmine.createSpyObj('MockDataService', ['getUserProfile', 'updateUserProfile']);
+    authSpy = jasmine.createSpyObj('AuthService', ['currentUser', 'updateMyProfile'], {
       currentUser: jasmine.createSpy('currentUser').and.returnValue({
         userId: 'usr-1',
         email: 'player@gamingcastle.lk',
@@ -126,6 +126,38 @@ describe('UserService', () => {
       service.currentProfile.set(mockProfile);
       service.clearCachedProfile();
       expect(service.currentProfile()).toBeNull();
+    });
+  });
+
+  describe('updateMyProfile()', () => {
+    it('should delegate to auth.updateMyProfile when useMocks is false and update currentProfile', (done) => {
+      const orig = environment.useMocks;
+      environment.useMocks = false;
+      const updatedProfile = { ...mockProfile, fullName: 'New Name' };
+      authSpy.updateMyProfile.and.returnValue(of(updatedProfile));
+
+      service.updateMyProfile({ fullName: 'New Name' }).subscribe((res) => {
+        expect(authSpy.updateMyProfile).toHaveBeenCalledWith({ fullName: 'New Name' });
+        expect(res).toEqual(updatedProfile);
+        expect(service.currentProfile()).toEqual(updatedProfile);
+        environment.useMocks = orig;
+        done();
+      });
+    });
+
+    it('should delegate to mockData.updateUserProfile when useMocks is true', (done) => {
+      const orig = environment.useMocks;
+      environment.useMocks = true;
+      const updatedProfile = { ...mockProfile, fullName: 'Mock Name' };
+      mockDataSpy.updateUserProfile.and.returnValue(of(updatedProfile));
+
+      service.updateMyProfile({ fullName: 'Mock Name' }).subscribe((res) => {
+        expect(mockDataSpy.updateUserProfile).toHaveBeenCalledWith('usr-1', { fullName: 'Mock Name' });
+        expect(res).toEqual(updatedProfile);
+        expect(service.currentProfile()).toEqual(updatedProfile);
+        environment.useMocks = orig;
+        done();
+      });
     });
   });
 });

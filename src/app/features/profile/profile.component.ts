@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { UserService } from '../../core/services/user.service';
 import { LoyaltyService } from '../../core/services/loyalty.service';
@@ -8,18 +9,23 @@ import { UserProfile } from '../../shared/models/user.model';
 import { LoyaltyBalanceDto } from '../../shared/models/loyalty.model';
 import { CardComponent } from '../../shared/ui/card/card.component';
 import { BadgeComponent } from '../../shared/ui/badge/badge.component';
+import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { SkeletonComponent } from '../../shared/ui/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
+import { ProfileModalComponent } from '../../shared/components/profile-modal/profile-modal.component';
 
 @Component({
   selector: 'gc-profile',
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     CardComponent,
     BadgeComponent,
+    ButtonComponent,
     SkeletonComponent,
-    EmptyStateComponent
+    EmptyStateComponent,
+    ProfileModalComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './profile.component.html',
@@ -29,12 +35,14 @@ export class ProfileComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly loyaltyService = inject(LoyaltyService);
   private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly profile = signal<UserProfile | null>(null);
   readonly loyalty = signal<LoyaltyBalanceDto | null>(null);
   readonly isLoading = signal<boolean>(true);
   readonly hasError = signal<boolean>(false);
   readonly imageLoadFailed = signal<boolean>(false);
+  readonly editModalOpen = signal<boolean>(false);
 
   readonly userInitial = computed(() => {
     const p = this.profile();
@@ -49,7 +57,26 @@ export class ProfileComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe((params) => {
+      if (params['edit'] === 'true') {
+        this.openEditModal();
+      }
+    });
     this.loadProfileData();
+  }
+
+  openEditModal(): void {
+    this.editModalOpen.set(true);
+  }
+
+  onProfileUpdated(updated: UserProfile): void {
+    this.profile.set(updated);
+    this.imageLoadFailed.set(false);
+    this.userService.getMyProfile(true).subscribe({
+      next: (p) => {
+        if (p) this.profile.set(p);
+      }
+    });
   }
 
   loadProfileData(): void {

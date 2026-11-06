@@ -135,4 +135,29 @@ describe('ProfileComponent', () => {
     expect(component.hasError()).toBeFalse();
     expect(component.profile()).toEqual(mockProfile);
   });
+
+  it('should open edit modal when openEditModal is called', () => {
+    fixture.detectChanges();
+    expect(component.editModalOpen()).toBeFalse();
+
+    component.openEditModal();
+    expect(component.editModalOpen()).toBeTrue();
+  });
+
+  it('should update profile state and reload on onProfileUpdated', () => {
+    fixture.detectChanges();
+    const updatedUser: UserProfile = {
+      ...mockProfile,
+      fullName: 'Updated Kasun',
+      phoneNumber: '+94770000000',
+      avatarUrl: 'https://example.com/new-avatar.png'
+    };
+    userServiceSpy.getMyProfile.and.returnValue(of(updatedUser));
+
+    component.onProfileUpdated(updatedUser);
+
+    expect(component.profile()?.fullName).toBe('Updated Kasun');
+    expect(component.imageLoadFailed()).toBeFalse();
+    expect(userServiceSpy.getMyProfile).toHaveBeenCalledWith(true);
+  });
 });
