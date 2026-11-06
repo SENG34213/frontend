@@ -36,8 +36,13 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
               (req.url.endsWith('/api/tournaments') ||
                 req.url.endsWith('/tournaments') ||
                 req.url.includes('/api/stations') ||
-                req.url.includes('/api/games')) &&
+                req.url.includes('/api/games') ||
+                req.url.includes('/api/reviews/recent') ||
+                req.url.includes('/reviews/recent') ||
+                req.url.includes('/reviews/station') ||
+                req.url.includes('/reviews/all')) &&
               !req.url.includes('/my-') &&
+              !req.url.includes('/mine') &&
               !req.url.includes('/admin');
 
             if (!token && isPublicRead) {
