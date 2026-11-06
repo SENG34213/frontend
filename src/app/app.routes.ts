@@ -183,6 +183,11 @@ export const routes: Routes = [
           import('./features/admin/reports/admin-reports.component').then((m) => m.AdminReportsComponent)
       },
       {
+        path: 'reviews',
+        loadComponent: () =>
+          import('./features/admin/reviews/admin-reviews.component').then((m) => m.AdminReviewsComponent)
+      },
+      {
         path: 'games',
         loadComponent: () =>
           import('./features/admin/games/admin-games.component').then((m) => m.AdminGamesComponent)

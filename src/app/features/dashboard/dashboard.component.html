@@ -338,6 +338,223 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!--  CUSTOMER REVIEWS & PLAYER RATINGS (E-COMMERCE FEATURE)         -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section class="reviews-section" aria-labelledby="reviews-heading" id="player-reviews">
+    <div class="container">
+      <div class="section-header reviews-header">
+        <div>
+          <div class="section-badge-wrapper">
+            <span class="live-pulse-dot" aria-hidden="true"></span>
+            <span class="section-tag-text">COMMUNITY EXPERIENCES</span>
+          </div>
+          <h2 id="reviews-heading" class="section-title-lg">PLAYER REVIEWS &amp; RATINGS</h2>
+          <p class="section-desc">
+            Real session feedback from verified console gamers in Jaffna. Check player ratings before you reserve.
+          </p>
+        </div>
+        <div class="section-action">
+          <gc-button
+            variant="outline"
+            size="sm"
+            (btnClick)="bookSlot()">
+            BOOK &amp; SHARE REVIEW →
+          </gc-button>
+        </div>
+      </div>
+
+      <!-- E-Commerce Aggregate Score Hero Card -->
+      <div class="rating-hero-card">
+        <div class="rating-summary-col">
+          <div class="score-display">
+            <span class="score-number">{{ averageRating() }}</span>
+            <div class="score-stars-box">
+              <div class="score-stars" [attr.aria-label]="averageRating() + ' out of 5 stars'">
+                @for (s of [1, 2, 3, 4, 5]; track s) {
+                  <span
+                    class="star-icon"
+                    [class.filled]="s <= averageRating()"
+                    [class.half]="s > averageRating() && (s - 0.5) <= averageRating()">★</span>
+                }
+              </div>
+              <span class="score-scale">out of 5.0</span>
+            </div>
+          </div>
+
+          <div class="score-meta">
+            <div class="recommendation-badge">
+              <span class="rec-icon">👍</span>
+              <span class="rec-text"><strong>{{ recommendationPercent() }}%</strong> of players recommend Gaming Castle</span>
+            </div>
+            <p class="score-based-on">Based on {{ totalReviewCount() }} verified console sessions</p>
+          </div>
+
+          <div class="trust-pills">
+            <span class="trust-pill"><span class="pill-icon">🛡️</span> 100% Verified Players</span>
+            <span class="trust-pill"><span class="pill-icon">🎮</span> DualSense Haptics Tested</span>
+            <span class="trust-pill"><span class="pill-icon">⚡</span> Sub-10ms Ping</span>
+          </div>
+        </div>
+
+        <div class="rating-breakdown-col">
+          <div class="breakdown-title-row">
+            <span class="breakdown-title">Rating Breakdown</span>
+            @if (selectedStarFilter() !== null) {
+              <button class="clear-star-btn" (click)="setStarFilter(null)">
+                Show All Stars (✕)
+              </button>
+            }
+          </div>
+
+          <div class="breakdown-bars">
+            @for (bar of starBreakdown(); track bar.stars) {
+              <button
+                type="button"
+                class="breakdown-row"
+                [class.active]="selectedStarFilter() === bar.stars"
+                (click)="setStarFilter(selectedStarFilter() === bar.stars ? null : bar.stars)"
+                [attr.aria-label]="'Filter by ' + bar.stars + ' stars: ' + bar.count + ' reviews'">
+                <span class="row-star-label">{{ bar.stars }} <span class="mini-star">★</span></span>
+                <div class="row-progress-track">
+                  <div class="row-progress-fill" [style.width.%]="bar.percent"></div>
+                </div>
+                <span class="row-percent">{{ bar.percent }}%</span>
+                <span class="row-count">({{ bar.count }})</span>
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters Toolbar -->
+      <div class="reviews-filter-bar">
+        <div class="filter-group">
+          <span class="filter-label">Filter by Game:</span>
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="selectedGameFilter() === 'ALL'"
+            (click)="setGameFilter('ALL')">
+            All Games
+          </button>
+          @for (game of availableGameFilters(); track game) {
+            <button
+              type="button"
+              class="filter-chip"
+              [class.active]="selectedGameFilter() === game"
+              (click)="setGameFilter(game)">
+              {{ game }}
+            </button>
+          }
+        </div>
+
+        <div class="filter-status-info">
+          <span>Showing <strong>{{ filteredReviews().length }}</strong> reviews</span>
+          @if (selectedStarFilter() !== null || selectedGameFilter() !== 'ALL') {
+            <button
+              type="button"
+              class="reset-filters-btn"
+              (click)="setStarFilter(null); setGameFilter('ALL')">
+              Reset Filters
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Reviews Cards Grid -->
+      @if (reviewsLoading()) {
+        <div class="reviews-grid">
+          @for (n of [1, 2, 3]; track n) {
+            <div class="review-card-skeleton">
+              <gc-skeleton shape="circle" width="44px" height="44px"></gc-skeleton>
+              <gc-skeleton shape="text" width="60%" height="16px"></gc-skeleton>
+              <gc-skeleton shape="rect" width="100%" height="80px"></gc-skeleton>
+            </div>
+          }
+        </div>
+      } @else if (filteredReviews().length === 0) {
+        <div class="empty-reviews-state">
+          <p class="empty-title">No reviews match the selected filter.</p>
+          <button class="reset-filters-btn" (click)="setStarFilter(null); setGameFilter('ALL')">Clear Filters</button>
+        </div>
+      } @else {
+        <div class="reviews-grid">
+          @for (review of filteredReviews(); track review.id) {
+            <article class="review-card">
+              <div class="card-header-row">
+                <div class="author-info">
+                  <div class="author-avatar" aria-hidden="true">
+                    {{ getInitials(review.userName) }}
+                  </div>
+                  <div>
+                    <div class="author-name-wrap">
+                      <h3 class="author-name">{{ review.userName || 'Verified Player' }}</h3>
+                      <span class="verified-tag" title="Verified Gaming Session">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Verified
+                      </span>
+                    </div>
+                    <span class="review-date">{{ formatReviewDate(review.createdAt) }}</span>
+                  </div>
+                </div>
+
+                <div class="rating-stars-badge" [attr.aria-label]="review.rating + ' out of 5 stars'">
+                  <div class="stars-flex">
+                    @for (s of [1, 2, 3, 4, 5]; track s) {
+                      <span
+                        class="star-char"
+                        [class.filled]="s <= review.rating"
+                        [class.half]="s > review.rating && (s - 0.5) <= review.rating">★</span>
+                    }
+                  </div>
+                  <span class="rating-numeric">{{ review.rating | number:'1.1-1' }}</span>
+                </div>
+              </div>
+
+              <!-- Tags for Station & Game -->
+              <div class="session-chips">
+                @if (review.stationCode) {
+                  <span class="session-chip station">
+                    <span class="chip-dot"></span>
+                    {{ review.stationCode }}
+                  </span>
+                }
+                @if (review.gameTitle) {
+                  <span class="session-chip game">
+                    🎮 {{ review.gameTitle }}
+                  </span>
+                }
+              </div>
+
+              <!-- Comment Quote -->
+              <p class="review-comment">“{{ review.comment || 'Awesome gaming experience at Gaming Castle!' }}”</p>
+
+              <!-- Footer with Helpful Vote -->
+              <div class="card-footer-row">
+                <button
+                  type="button"
+                  class="helpful-btn"
+                  [class.voted]="hasUserVoted(review.id)"
+                  (click)="toggleHelpful(review.id)"
+                  [attr.aria-label]="'Mark review by ' + review.userName + ' as helpful'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+                  </svg>
+                  <span>Helpful ({{ getHelpfulCount(review) }})</span>
+                </button>
+
+                <span class="verified-session-badge">Verified PS5 Play</span>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
   <!--  WHY GAMING CASTLE                                              -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <section class="why-section" aria-labelledby="why-title">

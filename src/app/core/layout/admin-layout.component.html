@@ -57,6 +57,10 @@
         <span class="nav-icon">📈</span>
         @if (!sidebarCollapsed()) { <span>Reports</span> }
       </a>
+      <a routerLink="/admin/reviews" routerLinkActive="active" class="nav-item" (click)="closeMobileNav()">
+        <span class="nav-icon">⭐</span>
+        @if (!sidebarCollapsed()) { <span>Reviews &amp; Ratings</span> }
+      </a>
       <a routerLink="/admin/games" routerLinkActive="active" class="nav-item" (click)="closeMobileNav()">
         <span class="nav-icon">🎯</span>
         @if (!sidebarCollapsed()) { <span>Games</span> }

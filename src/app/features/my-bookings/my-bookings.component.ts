@@ -284,7 +284,18 @@ export class MyBookingsComponent implements OnInit {
   }
 
   setRating(stars: number): void {
-    this.reviewRating.set(stars);
+    this.reviewRating.set(Math.max(1.0, Math.min(5.0, Number(stars.toFixed(1)))));
+  }
+
+  getRatingFeedback(rating: number): string {
+    if (rating >= 5.0) return 'Exceptional! DualSense immersion at its peak.';
+    if (rating >= 4.5) return 'Superb session! Smooth gameplay and top-notch station.';
+    if (rating >= 4.0) return 'Great session, really enjoyed it.';
+    if (rating >= 3.5) return 'Very good experience, minor room for improvement.';
+    if (rating >= 3.0) return 'Good experience overall.';
+    if (rating >= 2.5) return 'Average session, acceptable.';
+    if (rating >= 2.0) return 'Could have been better.';
+    return 'Had issues with console, controller, or game.';
   }
 
   submitReview(): void {
