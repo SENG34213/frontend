@@ -5,7 +5,7 @@ import { of, throwError } from 'rxjs';
 import { DashboardComponent } from './dashboard.component';
 import { BookingService } from '../../core/services/booking.service';
 import { TournamentService, TournamentViewItem } from '../../core/services/tournament.service';
-import { Game } from '../../shared/models';
+import { Game, BookingReview } from '../../shared/models';
 
 import { signal, WritableSignal } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
@@ -68,15 +68,59 @@ describe('DashboardComponent', () => {
     }
   ];
 
+  const mockReviews: BookingReview[] = [
+    {
+      id: 'rev-1',
+      bookingId: 'bk-1',
+      userId: 'usr-1',
+      userName: 'Player One',
+      gameTitle: 'Spider-Man 2',
+      stationCode: 'PS5-01',
+      rating: 5,
+      comment: 'Incredible frame rates and OLED setup!',
+      createdAt: new Date().toISOString(),
+      featured: true,
+      helpfulCount: 3
+    },
+    {
+      id: 'rev-2',
+      bookingId: 'bk-2',
+      userId: 'usr-2',
+      userName: 'Player Two',
+      gameTitle: 'Tekken 8',
+      stationCode: 'PS5-02',
+      rating: 4.5,
+      comment: 'Very responsive controllers and great atmosphere.',
+      createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+      featured: false,
+      helpfulCount: 1
+    },
+    {
+      id: 'rev-3',
+      bookingId: 'bk-3',
+      userId: 'usr-3',
+      userName: 'Gamer',
+      gameTitle: 'Gran Turismo 7',
+      stationCode: 'PS5-03',
+      rating: 3,
+      comment: 'Steering wheel had slight vibration delay.',
+      createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+      featured: false,
+      helpfulCount: 0
+    }
+  ];
+
   beforeEach(async () => {
     mockBookingService = jasmine.createSpyObj<BookingService>('BookingService', [
       'getGames',
       'getStations',
-      'getStationGames'
+      'getStationGames',
+      'getRecentReviews'
     ]);
     mockBookingService.getGames.and.returnValue(of(mockGames));
     mockBookingService.getStations.and.returnValue(of([]));
     mockBookingService.getStationGames.and.returnValue(of([]));
+    mockBookingService.getRecentReviews.and.returnValue(of(mockReviews));
 
     mockTournamentService = jasmine.createSpyObj<TournamentService>('TournamentService', [
       'getTournaments'
@@ -350,6 +394,104 @@ describe('DashboardComponent', () => {
           queryParams: { returnUrl: '/tournaments' }
         });
       });
+    });
+  });
+
+  describe('Reviews Section', () => {
+    it('should load reviews on init and compute summary metrics', () => {
+      expect(mockBookingService.getRecentReviews).toHaveBeenCalled();
+      expect(component.reviews().length).toBe(3);
+      expect(component.reviewsLoading()).toBeFalse();
+      // average: (5 + 4.5 + 3) / 3 = 12.5 / 3 = 4.1666... -> 4.2
+      expect(component.averageRating()).toBe(4.2);
+      expect(component.totalReviewCount()).toBe(3);
+      // positive: rating >= 4 -> 2 of 3 = 67%
+      expect(component.recommendationPercent()).toBe(67);
+    });
+
+    it('should use default metrics when reviews list is empty', () => {
+      component.reviews.set([]);
+      expect(component.averageRating()).toBe(4.9);
+      expect(component.totalReviewCount()).toBe(148);
+      expect(component.recommendationPercent()).toBe(98);
+    });
+
+    it('should compute star breakdown and available game filters', () => {
+      const breakdown = component.starBreakdown();
+      expect(breakdown.length).toBe(5);
+      const fiveStar = breakdown.find((b) => b.stars === 5);
+      expect(fiveStar?.count).toBe(2); // 5 and round(4.5)=5
+
+      const games = component.availableGameFilters();
+      expect(games).toContain('Spider-Man 2');
+      expect(games).toContain('Tekken 8');
+      expect(games).toContain('Gran Turismo 7');
+    });
+
+    it('should filter reviews by star rating and game filter', () => {
+      component.setStarFilter(3);
+      expect(component.filteredReviews().length).toBe(1);
+      expect(component.filteredReviews()[0].gameTitle).toBe('Gran Turismo 7');
+
+      component.setStarFilter(null);
+      component.setGameFilter('Tekken');
+      expect(component.filteredReviews().length).toBe(1);
+      expect(component.filteredReviews()[0].id).toBe('rev-2');
+
+      component.setGameFilter('ALL');
+      expect(component.filteredReviews().length).toBe(3);
+    });
+
+    it('should toggle helpful votes for a review', () => {
+      const reviewId = 'rev-1';
+      expect(component.hasUserVoted(reviewId)).toBeFalse();
+      expect(component.getHelpfulCount(mockReviews[0])).toBe(3);
+
+      // Add vote
+      component.toggleHelpful(reviewId);
+      expect(component.hasUserVoted(reviewId)).toBeTrue();
+      expect(component.getHelpfulCount(mockReviews[0])).toBe(4);
+
+      // Remove vote
+      component.toggleHelpful(reviewId);
+      expect(component.hasUserVoted(reviewId)).toBeFalse();
+      expect(component.getHelpfulCount(mockReviews[0])).toBe(3);
+    });
+
+    it('should format review dates correctly', () => {
+      expect(component.formatReviewDate('')).toBe('Recently');
+      expect(component.formatReviewDate('invalid-date')).toBe('Recently');
+
+      const justNow = new Date(Date.now() - 1000 * 60 * 10).toISOString();
+      expect(component.formatReviewDate(justNow)).toBe('Just now');
+
+      const hoursAgo = new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString();
+      expect(component.formatReviewDate(hoursAgo)).toBe('4h ago');
+
+      const yesterday = new Date(Date.now() - 1000 * 60 * 60 * 25).toISOString();
+      expect(component.formatReviewDate(yesterday)).toBe('Yesterday');
+
+      const daysAgo = new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString();
+      expect(component.formatReviewDate(daysAgo)).toBe('3 days ago');
+
+      const weeksAgo = new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString();
+      expect(component.formatReviewDate(weeksAgo)).toBe('2w ago');
+
+      const older = new Date('2025-01-15T00:00:00Z').toISOString();
+      expect(component.formatReviewDate(older)).toContain('Jan');
+    });
+
+    it('should generate initials properly', () => {
+      expect(component.getInitials()).toBe('GC');
+      expect(component.getInitials('Gamer')).toBe('GA');
+      expect(component.getInitials('John Doe')).toBe('JD');
+      expect(component.getInitials('First Middle Last')).toBe('FL');
+    });
+
+    it('should handle reviews loading error gracefully', () => {
+      mockBookingService.getRecentReviews.and.returnValue(throwError(() => new Error('Service down')));
+      component.ngOnInit();
+      expect(component.reviewsLoading()).toBeFalse();
     });
   });
 });
