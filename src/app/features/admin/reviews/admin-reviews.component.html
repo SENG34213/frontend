@@ -132,7 +132,8 @@
 
       <div class="station-rankings-list">
         @for (st of stationRankings(); track st.stationCode) {
-          <div
+          <button
+            type="button"
             class="station-rank-item"
             [class.filtered]="stationFilter() === st.stationCode"
             (click)="setStationFilter(stationFilter() === st.stationCode ? 'ALL' : st.stationCode)">
@@ -151,7 +152,7 @@
               </div>
               <span class="rec-percent">{{ st.recommendationRate }}% rec.</span>
             </div>
-          </div>
+          </button>
         }
       </div>
     </div>
@@ -340,9 +341,9 @@
 
                   <!-- Comment Column -->
                   <td class="td-comment">
-                    <div class="comment-cell" (click)="openDetail(review)" title="Click to view full review">
+                    <button type="button" class="comment-cell" (click)="openDetail(review)" title="Click to view full review">
                       <p class="comment-text">“{{ review.comment || 'No text provided.' }}”</p>
-                    </div>
+                    </button>
                   </td>
 
                   <!-- Date Column -->

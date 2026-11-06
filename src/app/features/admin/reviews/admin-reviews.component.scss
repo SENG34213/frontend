@@ -353,6 +353,10 @@
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
+  width: 100%;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
 
   &:hover {
     border-color: var(--gc-primary-light, #60a5fa);
@@ -786,6 +790,13 @@
 .comment-cell {
   max-width: 380px;
   cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: left;
+  font-family: inherit;
+  display: block;
+  width: 100%;
 
   .comment-text {
     margin: 0;
