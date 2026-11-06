@@ -135,6 +135,7 @@ describe('BookingsComponent', () => {
 
     fixture = TestBed.createComponent(BookingsComponent);
     component = fixture.componentInstance;
+    component.currentTimeFn = () => new Date(`${component.selectedDateStr()}T08:00:00+05:30`).getTime();
     fixture.detectChanges();
   });
 
@@ -602,6 +603,90 @@ describe('BookingsComponent', () => {
         component.selectedDateStr(),
         jasmine.any(String)
       );
+    });
+  });
+
+  describe('Past Time Slot Filtering & Multi-Slot Booking', () => {
+    it('should mark morning slots as past and unavailable when user visits in the evening on current day', () => {
+      component.currentTimeFn = () => new Date(`${component.selectedDateStr()}T18:30:00+05:30`).getTime();
+      component.loadSlotsForDate();
+
+      const slots = component.availableSlots();
+      expect(slots.every((s) => s.isPast)).toBeTrue();
+      expect(slots.every((s) => !s.isAvailable)).toBeTrue();
+      expect(component.selectedSlotId()).toBe('');
+    });
+
+    it('should allow future slots to be booked when visiting in the morning', () => {
+      component.currentTimeFn = () => new Date(`${component.selectedDateStr()}T09:30:00+05:30`).getTime();
+      component.loadSlotsForDate();
+
+      const slots = component.availableSlots();
+      const slot10 = slots.find((s) => s.startTime.includes('10:00'));
+      expect(slot10?.isPast).toBeFalse();
+      expect(slot10?.isAvailable).toBeTrue();
+    });
+
+    it('should allow setting multi-slot duration and update subtotal correctly', () => {
+      component.setSessionDuration(2);
+      expect(component.sessionHours()).toBe(2);
+      expect(component.subtotalAmount()).toBe(component.baseHourlyRate() * 2);
+
+      component.setSessionDuration(3);
+      expect(component.sessionHours()).toBe(3);
+      expect(component.subtotalAmount()).toBe(component.baseHourlyRate() * 3);
+    });
+
+    it('should select consecutive slots for multi-hour session and send combined time range in booking payload', () => {
+      component.currentTimeFn = () => new Date(`${component.selectedDateStr()}T08:00:00+05:30`).getTime();
+      component.loadSlotsForDate();
+
+      component.selectedStationId.set('st-01');
+      component.stationGames.set(testGamesStation1);
+      component.selectedGameId.set('game-01');
+
+      component.setSessionDuration(2);
+
+      const slots = component.availableSlots();
+      const firstAvail = slots.find((s) => s.isAvailable && component.canSlotFitDuration(s, 2));
+      expect(firstAvail).toBeDefined();
+
+      component.selectSlot(firstAvail!);
+      expect(component.selectedSlots().length).toBe(2);
+      expect(component.isSlotSelected(firstAvail!)).toBeTrue();
+
+      const selected = component.selectedSlot();
+      expect(selected).toBeTruthy();
+      expect(selected?.durationHours).toBe(2);
+
+      component.confirmPayment();
+
+      expect(mockBookingService.createBooking).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          stationId: 'st-01',
+          gameId: 'game-01',
+          startTime: selected?.rawStart,
+          endTime: selected?.rawEnd
+        })
+      );
+    });
+
+    it('should lock all selected consecutive slots when proceeding to payment for multi-slot', () => {
+      component.currentTimeFn = () => new Date(`${component.selectedDateStr()}T08:00:00+05:30`).getTime();
+      component.loadSlotsForDate();
+
+      component.selectedStationId.set('st-01');
+      component.stationGames.set(testGamesStation1);
+      component.selectedGameId.set('game-01');
+      component.setSessionDuration(2);
+
+      const firstAvail = component.availableSlots().find((s) => s.isAvailable && component.canSlotFitDuration(s, 2));
+      component.selectSlot(firstAvail!);
+
+      component.onProceedToPayment();
+
+      expect(component.paymentModalOpen()).toBeTrue();
+      expect(mockNotificationSocketService.lockSlot).toHaveBeenCalledTimes(2);
     });
   });
 });

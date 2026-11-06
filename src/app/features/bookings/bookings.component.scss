@@ -417,6 +417,83 @@
     background: #ef4444;
     box-shadow: 0 0 4px rgba(239, 68, 68, 0.5);
   }
+
+  &.past {
+    color: #94a3b8;
+
+    .legend-dot {
+      background: #64748b;
+      box-shadow: 0 0 4px rgba(100, 116, 139, 0.4);
+    }
+  }
+}
+
+.duration-selector-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.85rem;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--gc-radius-sm, 6px);
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.duration-label-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gc-text-secondary, #cbd5e1);
+}
+
+.duration-pills-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.duration-pill-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  padding: 0.28rem 0.7rem;
+  color: var(--gc-text-secondary, #cbd5e1);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--gc-transition-fast, 0.18s ease);
+  outline: none;
+
+  &:hover:not(.active) {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #ffffff;
+  }
+
+  &.active {
+    background: var(--gc-primary, #3b82f6);
+    border-color: #60a5fa;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  }
+}
+
+.all-slots-past-alert {
+  margin-top: 0.6rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: var(--gc-radius-sm, 6px);
+  font-size: 0.78rem;
+  color: #93c5fd;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .slots-loading-grid {
@@ -544,6 +621,21 @@
     }
   }
 
+  &.past {
+    opacity: 0.35 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    background: rgba(8, 11, 17, 0.45) !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+
+    .slot-start,
+    .slot-divider,
+    .slot-end {
+      color: #64748b !important;
+      text-decoration: line-through !important;
+    }
+  }
+
   .slot-badge {
     position: absolute;
     top: -6px;
@@ -562,6 +654,12 @@
     background: rgba(239, 68, 68, 0.25);
     backdrop-filter: blur(4px);
     border: 1px solid rgba(239, 68, 68, 0.4);
+  }
+
+  .past-badge {
+    color: #94a3b8;
+    background: rgba(100, 116, 139, 0.2);
+    border: 1px solid rgba(100, 116, 139, 0.35);
   }
 
   .avail-badge {
