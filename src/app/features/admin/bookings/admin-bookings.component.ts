@@ -838,7 +838,7 @@ export class AdminBookingsComponent implements OnInit {
 
     this.actionInFlight.set(true);
     this.svc.completeBooking(booking.id).subscribe({
-      next: (completed) => {
+      next: () => {
         this.actionInFlight.set(false);
         this.completeModalOpen.set(false);
         this.selectedBookingForComplete.set(null);
