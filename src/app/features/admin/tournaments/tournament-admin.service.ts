@@ -69,6 +69,20 @@ export class TournamentAdminService {
   }
 
   /**
+   * Complete tournament.
+   * Maps to PATCH /api/tournaments/{id}/complete
+   */
+  completeTournament(id: string): Observable<TournamentResponse> {
+    return this.api.patch<TournamentResponse>(`${this.tournamentsEndpoint}/${id}/complete`, {}).pipe(
+      map((t) => ({
+        ...t,
+        name: t.name || t.title || 'Tournament',
+        participantCount: t.participantCount ?? t.currentParticipants ?? 0
+      }))
+    );
+  }
+
+  /**
    * Cancel tournament.
    * Maps to POST /api/tournaments/{id}/cancel
    */

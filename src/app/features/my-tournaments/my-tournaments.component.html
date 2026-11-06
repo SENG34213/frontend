@@ -108,6 +108,27 @@
               </div>
             </div>
 
+            <!-- Tournament Completion Prompt (When ongoing or tournament date passed) -->
+            @if (item.canComplete) {
+              <div class="completion-prompt-banner" role="region" aria-label="Tournament completion check">
+                <div class="completion-prompt-info">
+                  <span class="completion-icon" aria-hidden="true">🏆</span>
+                  <div class="completion-texts">
+                    <strong class="completion-heading">Tournament Matches Concluded?</strong>
+                    <span class="completion-subtext">Are you completed your tournament participation?</span>
+                  </div>
+                </div>
+                <gc-button
+                  variant="primary"
+                  size="sm"
+                  class="complete-action-btn"
+                  [attr.aria-label]="'Mark tournament completed for ' + item.tournamentName"
+                  (btnClick)="openCompleteModal(item)">
+                  ✓ Mark Completed
+                </gc-button>
+              </div>
+            }
+
             <!-- Card footer actions -->
             <div class="tourn-card-footer">
               <a [routerLink]="['/tournaments', item.tournamentId]" class="details-link">
@@ -122,4 +143,64 @@
       </div>
     }
   }
+
+  <!-- Are You Completed Tournament Modal -->
+  <gc-modal
+    [isOpen]="completeModalOpen()"
+    title="Are you completed your tournament?"
+    modalId="modal-complete-tournament"
+    (closed)="closeCompleteModal()">
+    @if (selectedTournamentForComplete(); as item) {
+      <div class="complete-modal-content">
+        <div class="complete-modal-banner">
+          <span class="complete-modal-icon" aria-hidden="true">🏆</span>
+          <div>
+            <h4 class="complete-game-title">{{ item.tournamentName }}</h4>
+            <span class="complete-station-name">{{ item.gameTitle }}</span>
+          </div>
+        </div>
+
+        <div class="complete-session-details">
+          <div class="detail-row">
+            <span class="detail-label">Schedule:</span>
+            <span class="detail-val">{{ item.formattedDate }} at {{ item.formattedTime }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Entry Fee:</span>
+            <span class="detail-val font-mono">{{ item.entryFee === 0 ? 'FREE' : 'LKR ' + (item.entryFee | number) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Placement / Slot:</span>
+            <span class="detail-val">{{ item.resultPlacement }}</span>
+          </div>
+        </div>
+
+        <p class="complete-explain-text">
+          Confirming completion will finalize your participation record and move this tournament to your <strong>Played</strong> history.
+        </p>
+
+        @if (completeError()) {
+          <div class="complete-error-alert" role="alert" aria-live="polite">
+            {{ completeError() }}
+          </div>
+        }
+      </div>
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button
+        variant="outline"
+        [disabled]="isCompletingTournament()"
+        (btnClick)="closeCompleteModal()">
+        Keep In Upcoming
+      </gc-button>
+      <gc-button
+        variant="primary"
+        [attr.aria-busy]="isCompletingTournament()"
+        [disabled]="isCompletingTournament()"
+        (btnClick)="confirmCompleteTournament()">
+        {{ isCompletingTournament() ? 'Completing…' : '✓ Yes, Tournament Completed' }}
+      </gc-button>
+    </div>
+  </gc-modal>
 </div>

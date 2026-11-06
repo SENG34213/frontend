@@ -899,6 +899,39 @@
   }
 }
 
+.complete-btn {
+  font-weight: 600;
+}
+
+.complete-admin-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .complete-confirm-text {
+    font-size: 1rem;
+    color: var(--gc-text-primary, #f8fafc);
+    margin: 0;
+  }
+
+  .complete-admin-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.85rem 1rem;
+    background: rgba(15, 21, 35, 0.6);
+    border: 1px solid var(--gc-border-subtle, #1c263c);
+    border-radius: var(--gc-radius-sm, 8px);
+    font-size: 0.875rem;
+  }
+
+  .complete-admin-hint {
+    font-size: 0.825rem;
+    line-height: 1.4;
+    margin: 0;
+  }
+}
+
 /* ── Targeted Responsive Breakpoints (1024px, 768px, 425px, 375px, 320px) ── */
 
 @media (max-width: 1024px) {

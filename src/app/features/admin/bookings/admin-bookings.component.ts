@@ -97,6 +97,8 @@ export class AdminBookingsComponent implements OnInit {
   readonly selectedBookingForPayment = signal<AdminBookingRow | null>(null);
   readonly rescheduleModalOpen = signal(false);
   readonly cancelModalOpen = signal(false);
+  readonly completeModalOpen = signal(false);
+  readonly selectedBookingForComplete = signal<AdminBookingRow | null>(null);
   readonly actionInFlight = signal(false);
   readonly actionTarget = signal<AdminBookingRow | null>(null);
 
@@ -817,6 +819,46 @@ export class AdminBookingsComponent implements OnInit {
   getCustomerName(userId: string): string {
     const found = this.customers().find(c => c.id === userId);
     return found ? `${found.fullName} (${found.email})` : `User ${userId.slice(0, 8)}…`;
+  }
+
+  // ── Complete Booking ──────────────────────────────────────────────────────
+  canComplete(booking: AdminBookingRow): boolean {
+    return booking.status === 'CONFIRMED' || booking.status === 'PENDING';
+  }
+
+  openCompleteModal(booking: AdminBookingRow, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.selectedBookingForComplete.set(booking);
+    this.completeModalOpen.set(true);
+  }
+
+  confirmCompleteBooking(): void {
+    const booking = this.selectedBookingForComplete();
+    if (!booking) return;
+
+    this.actionInFlight.set(true);
+    this.svc.completeBooking(booking.id).subscribe({
+      next: (completed) => {
+        this.actionInFlight.set(false);
+        this.completeModalOpen.set(false);
+        this.selectedBookingForComplete.set(null);
+        this.toast.success(`Booking #${booking.id.slice(0, 8)} marked as COMPLETED.`);
+
+        if (this.selectedBooking()?.id === booking.id) {
+          this.selectedBooking.set({
+            ...this.selectedBooking()!,
+            status: 'COMPLETED'
+          });
+        }
+
+        this.loadBookings();
+      },
+      error: (err) => {
+        this.actionInFlight.set(false);
+        const msg = err?.error?.message || err?.message || 'Unable to complete this booking.';
+        this.toast.error(msg);
+      }
+    });
   }
 
   // ── Cancel ───────────────────────────────────────────────────────────────
