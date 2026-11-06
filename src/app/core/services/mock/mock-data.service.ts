@@ -6,7 +6,8 @@ import {
   BookingResponse,
   UserRole,
   LoyaltyTransactionDto,
-  UserProfile
+  UserProfile,
+  UpdateProfileRequest
 } from '../../../shared/models';
 
 /**
@@ -105,6 +106,22 @@ export class MockDataService {
       email: 'player@gamingcastle.lk',
       fullName: 'Kasun Perera',
       phoneNumber: '+94771234567',
+      role: 'CUSTOMER' as UserRole,
+      active: true,
+      enabled: true,
+      createdAt: '2026-09-02T10:00:00Z'
+    }).pipe(delay(150));
+  }
+
+  updateUserProfile(userId?: string, req?: UpdateProfileRequest): Observable<UserProfile> {
+    const uid = userId || 'usr-customer-1';
+    return of({
+      id: uid,
+      email: 'player@gamingcastle.lk',
+      fullName: req?.fullName || 'Kasun Perera',
+      phoneNumber: req?.phoneNumber || '+94771234567',
+      avatarUrl: req?.avatarUrl,
+      profileImageUrl: req?.avatarUrl,
       role: 'CUSTOMER' as UserRole,
       active: true,
       enabled: true,

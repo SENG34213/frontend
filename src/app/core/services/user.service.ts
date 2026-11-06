@@ -4,7 +4,7 @@ import { ApiService } from './api.service';
 import { MockDataService } from './mock/mock-data.service';
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
-import { UserProfile } from '../../shared/models/user.model';
+import { UserProfile, UpdateProfileRequest } from '../../shared/models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -60,6 +60,55 @@ export class UserService {
             return of(null);
           })
         );
+      })
+    );
+  }
+
+  /**
+   * Updates current authenticated user's profile details (fullName, phoneNumber, avatarUrl).
+   * Maps to PATCH /api/users/me
+   */
+  updateMyProfile(req: UpdateProfileRequest): Observable<UserProfile> {
+    this.isLoading.set(true);
+
+    if (environment.useMocks) {
+      const authUser = this.auth.currentUser();
+      const userId = authUser?.userId || authUser?.sub || 'usr-customer-1';
+      return this.mock.updateUserProfile(userId, req).pipe(
+        tap((p) => {
+          this.currentProfile.set(p);
+          const profileSig = this.auth.userProfile as unknown as { set?: (val: unknown) => void };
+          if (typeof profileSig?.set === 'function') {
+            profileSig.set(p);
+          }
+          if (typeof this.auth.currentUser === 'function') {
+            const cur = this.auth.currentUser();
+            const curUserSig = this.auth.currentUser as unknown as { set?: (val: unknown) => void };
+            if (cur && typeof curUserSig?.set === 'function') {
+              curUserSig.set({
+                ...cur,
+                fullName: p.fullName || cur.fullName,
+                avatarUrl: p.avatarUrl || p.profileImageUrl || undefined
+              });
+            }
+          }
+          this.isLoading.set(false);
+        }),
+        catchError((err) => {
+          this.isLoading.set(false);
+          throw err;
+        })
+      );
+    }
+
+    return this.auth.updateMyProfile(req).pipe(
+      tap((p) => {
+        this.currentProfile.set(p);
+        this.isLoading.set(false);
+      }),
+      catchError((err) => {
+        this.isLoading.set(false);
+        throw err;
       })
     );
   }

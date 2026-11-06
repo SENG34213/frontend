@@ -126,6 +126,7 @@ describe('ProfileModalComponent', () => {
   it('should save profile successfully and close modal', () => {
     spyOn(component.closed, 'emit');
     spyOn(component.isOpenChange, 'emit');
+    spyOn(component.profileUpdated, 'emit');
 
     component.fullName.set('Updated Name');
     component.phoneNumber.set('+94775555555');
@@ -139,9 +140,31 @@ describe('ProfileModalComponent', () => {
       avatarUrl: 'https://example.com/updated.jpg'
     });
     expect(toastServiceSpy.success).toHaveBeenCalledWith('Profile updated successfully!');
+    expect(component.profileUpdated.emit).toHaveBeenCalledWith(mockUserProfile);
     expect(component.closed.emit).toHaveBeenCalled();
     expect(component.isOpenChange.emit).toHaveBeenCalledWith(false);
     expect(component.isSaving()).toBeFalse();
+  });
+
+  it('should select preset avatar', () => {
+    const preset = component.avatarPresets[0];
+    component.selectPreset(preset.url);
+    expect(component.avatarUrl()).toBe(preset.url);
+  });
+
+  it('should validate full name minimum length', () => {
+    component.fullName.set('A');
+    component.saveProfile();
+    expect(component.errorMessage()).toBe('Full name must be at least 2 characters.');
+    expect(authServiceSpy.updateMyProfile).not.toHaveBeenCalled();
+  });
+
+  it('should validate phone number format', () => {
+    component.fullName.set('Valid Name');
+    component.phoneNumber.set('12345');
+    component.saveProfile();
+    expect(component.errorMessage()).toBe('Please enter a valid phone number (+947XXXXXXXX or 07XXXXXXXX).');
+    expect(authServiceSpy.updateMyProfile).not.toHaveBeenCalled();
   });
 
   it('should omit empty phoneNumber and avatarUrl on save', () => {

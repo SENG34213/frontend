@@ -80,6 +80,7 @@ export interface UserSummaryResponse {
   enabled: boolean;
   createdAt?: string;
   deactivatedBy?: 'USER' | 'ADMIN' | null;
+  avatarUrl?: string;
 }
 
 export interface AdminUpdateUserRequest {
@@ -87,6 +88,7 @@ export interface AdminUpdateUserRequest {
   phoneNumber?: string;
   role?: UserRole;
   enabled?: boolean;
+  avatarUrl?: string;
 }
 
 export interface PagedUsers {

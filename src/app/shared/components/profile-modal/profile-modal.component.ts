@@ -12,6 +12,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../ui/toast/toast.service';
+import { UserProfile } from '../../../shared/models/auth.model';
 import { ImageUploaderComponent } from '../image-uploader/image-uploader.component';
 import { ModalComponent } from '../../ui/modal/modal.component';
 import { ButtonComponent } from '../../ui/button/button.component';
@@ -38,6 +39,7 @@ export class ProfileModalComponent implements OnChanges {
   @Input() isOpen = false;
   @Output() isOpenChange = new EventEmitter<boolean>();
   @Output() closed = new EventEmitter<void>();
+  @Output() profileUpdated = new EventEmitter<UserProfile>();
 
   readonly fullName = signal<string>('');
   readonly phoneNumber = signal<string>('');
@@ -47,6 +49,19 @@ export class ProfileModalComponent implements OnChanges {
 
   readonly isSaving = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
+
+  readonly avatarPresets = [
+    { name: 'Neon Cyber', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=NeonCyber&backgroundColor=0d1117' },
+    { name: 'Mecha Pilot', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=MechaPilot&backgroundColor=1f1b2e' },
+    { name: 'Pixel Knight', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=PixelKnight&backgroundColor=161b22' },
+    { name: 'Shadow Ghost', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=ShadowGhost&backgroundColor=21262d' },
+    { name: 'Apex Striker', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=ApexStriker&backgroundColor=1a1b26' },
+    { name: 'Arcade Retro', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=ArcadeRetro&backgroundColor=24283b' }
+  ];
+
+  selectPreset(url: string): void {
+    this.avatarUrl.set(url);
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen'] && this.isOpen) {
@@ -89,18 +104,29 @@ export class ProfileModalComponent implements OnChanges {
       this.errorMessage.set('Full name cannot be empty.');
       return;
     }
+    if (name.length < 2) {
+      this.errorMessage.set('Full name must be at least 2 characters.');
+      return;
+    }
+
+    const phone = this.phoneNumber().trim();
+    if (phone && !/^(?:\+94|0)[0-9]{9}$/.test(phone)) {
+      this.errorMessage.set('Please enter a valid phone number (+947XXXXXXXX or 07XXXXXXXX).');
+      return;
+    }
 
     this.errorMessage.set(null);
     this.isSaving.set(true);
 
     this.authService.updateMyProfile({
       fullName: name,
-      phoneNumber: this.phoneNumber().trim() || undefined,
+      phoneNumber: phone || undefined,
       avatarUrl: this.avatarUrl().trim() || undefined
     }).subscribe({
-      next: () => {
+      next: (res) => {
         this.isSaving.set(false);
         this.toast.success('Profile updated successfully!');
+        this.profileUpdated.emit(res);
         this.closeModal();
       },
       error: (err) => {

@@ -183,11 +183,15 @@
                   <td>
                     <div class="user-meta-cell">
                       <div class="user-avatar" [class.admin]="user.role === 'ADMIN'">
-                        {{ user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U' }}
+                        @if (user.avatarUrl) {
+                          <img [src]="user.avatarUrl" [alt]="user.fullName" class="user-avatar-img" />
+                        } @else {
+                          {{ user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U' }}
+                        }
                       </div>
                       <div>
                         <div class="user-name">{{ user.fullName }}</div>
-                        <div class="user-id font-mono text-muted">{{ user.id.slice(0, 8) }}…</div>
+                        <div class="user-id font-mono text-muted">{{ user.id.slice(0, 8) }}...</div>
                       </div>
                     </div>
                   </td>
@@ -250,7 +254,7 @@
     }
   }
 
-  <!-- ── Detail Side Drawer ────────────────────────────────────────────── -->
+  <!-- ──── Detail Side Drawer ──────────────────────────────────────────────────────────────────────────────────────────── -->
   @if (detailDrawerOpen() && selectedUser(); as u) {
     <div class="detail-overlay" role="dialog" aria-modal="true" aria-label="User details panel" (click)="onOverlayClick($event)" (keydown.escape)="closeDetail()">
       <div class="detail-panel">
@@ -262,7 +266,11 @@
         <div class="panel-body">
           <div class="detail-avatar-hero mb-md">
             <div class="drawer-avatar" [class.admin]="u.role === 'ADMIN'">
-              {{ u.fullName ? u.fullName.charAt(0).toUpperCase() : 'U' }}
+              @if (u.avatarUrl) {
+                <img [src]="u.avatarUrl" [alt]="u.fullName" class="drawer-avatar-img" />
+              } @else {
+                {{ u.fullName ? u.fullName.charAt(0).toUpperCase() : 'U' }}
+              }
             </div>
             <div>
               <h3 class="drawer-name">{{ u.fullName }}</h3>
@@ -304,7 +312,7 @@
 
           <div class="panel-actions mt-lg">
             <gc-button variant="secondary" (btnClick)="openEditModal(u); closeDetail()">
-              ✏️ Edit Profile & Role
+              ✏️ï¸ Edit Profile & Role
             </gc-button>
             <gc-button
               variant="outline"
@@ -317,13 +325,19 @@
     </div>
   }
 
-  <!-- ── Edit User Modal ───────────────────────────────────────────────── -->
+  <!-- ──── Edit User Modal ────────────────────────────────────────────────────────────────────────────────────────────────── -->
   <gc-modal
     [isOpen]="editModalOpen()"
     [(isOpen)]="editModalOpen"
     title="Edit User Profile & Role"
     modalId="modal-edit-user">
     @if (editingUser(); as u) {
+      @if (u.id === currentAdminId()) {
+        <div class="self-edit-notice mb-sm">
+          <gc-badge variant="accent">👑 Your Admin Account</gc-badge>
+          <span class="notice-text">You are editing your own details. Updates will immediately reflect in your active session.</span>
+        </div>
+      }
       <p class="modal-context-text">
         Modifying account for <strong class="font-mono">{{ u.email }}</strong>
       </p>
@@ -357,6 +371,35 @@
             @if (editForm.get('phoneNumber')?.invalid && editForm.get('phoneNumber')?.touched) {
               <span class="field-error" role="alert">Valid Sri Lankan phone number required (+94... or 07...)</span>
             }
+          </div>
+
+          <!-- Avatar URL & Quick Presets -->
+          <div class="form-field full-width">
+            <label class="form-label" for="edit-user-avatar">Profile Picture / Avatar URL</label>
+            <div class="avatar-edit-row">
+              <div class="avatar-edit-preview">
+                @if (editForm.get('avatarUrl')?.value) {
+                  <img [src]="editForm.get('avatarUrl')?.value" alt="Avatar preview" class="preview-img" />
+                } @else {
+                  <span class="preview-placeholder">👤</span>
+                }
+              </div>
+              <div class="avatar-input-wrap">
+                <input
+                  id="edit-user-avatar"
+                  type="url"
+                  class="gc-input-native"
+                  placeholder="https://... image URL"
+                  formControlName="avatarUrl" />
+                <div class="admin-avatar-quick-picks">
+                  <span class="pick-label">Quick Avatars:</span>
+                  <button type="button" class="quick-pick-btn" (click)="editForm.patchValue({ avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=NeonCyber&backgroundColor=0d1117' })">Cyber</button>
+                  <button type="button" class="quick-pick-btn" (click)="editForm.patchValue({ avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=MechaPilot&backgroundColor=1f1b2e' })">Mecha</button>
+                  <button type="button" class="quick-pick-btn" (click)="editForm.patchValue({ avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=ShadowGhost&backgroundColor=21262d' })">Shadow</button>
+                  <button type="button" class="quick-pick-btn" (click)="editForm.patchValue({ avatarUrl: '' })">Clear</button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Role -->
@@ -394,12 +437,12 @@
         [attr.aria-busy]="actionInFlight()"
         [disabled]="actionInFlight()"
         (btnClick)="submitEdit()">
-        {{ actionInFlight() ? 'Saving…' : '💾 Save Changes' }}
+        {{ actionInFlight() ? 'Saving...' : '💾 Save Changes' }}
       </gc-button>
     </div>
   </gc-modal>
 
-  <!-- ── Deactivate / Reactivate Confirm Modal ─────────────────────────── -->
+  <!-- ──── Deactivate / Reactivate Confirm Modal ────────────────────────────────────────────────────── -->
   <gc-modal
     [isOpen]="toggleConfirmModalOpen()"
     [(isOpen)]="toggleConfirmModalOpen"
@@ -430,7 +473,7 @@
         [attr.aria-busy]="actionInFlight()"
         [disabled]="actionInFlight()"
         (btnClick)="confirmToggleActive()">
-        {{ actionInFlight() ? 'Processing…' : (targetToggleUser()?.enabled ? '⚡ Yes, Deactivate' : '⚡ Yes, Reactivate') }}
+        {{ actionInFlight() ? 'Processing...' : (targetToggleUser()?.enabled ? '⚡ Yes, Deactivate' : '⚡ Yes, Reactivate') }}
       </gc-button>
     </div>
   </gc-modal>

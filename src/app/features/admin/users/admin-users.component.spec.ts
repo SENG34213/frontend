@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
+import { signal } from '@angular/core';
 import { provideRouter, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
 import { AdminUsersComponent } from './admin-users.component';
 import { UserAdminService } from './user-admin.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import {
   UserSummaryResponse,
@@ -16,6 +18,7 @@ describe('AdminUsersComponent', () => {
   let fixture: ComponentFixture<AdminUsersComponent>;
   let userAdminServiceSpy: jasmine.SpyObj<UserAdminService>;
   let toastServiceSpy: jasmine.SpyObj<ToastService>;
+  let authServiceSpy: jasmine.SpyObj<AuthService>;
 
   const mockUsers: UserSummaryResponse[] = [
     {
@@ -93,11 +96,32 @@ describe('AdminUsersComponent', () => {
 
     toastServiceSpy = jasmine.createSpyObj('ToastService', ['show', 'success', 'error', 'warning', 'info']);
 
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['getUserId'], {
+      currentUser: signal({
+        userId: 'usr-admin-current',
+        sub: 'usr-admin-current',
+        email: 'admin@gamingcastle.lk',
+        fullName: 'Current Admin',
+        role: 'ADMIN',
+        iat: 0,
+        exp: 9999999999
+      }),
+      userProfile: signal({
+        id: 'usr-admin-current',
+        email: 'admin@gamingcastle.lk',
+        fullName: 'Current Admin',
+        role: 'ADMIN',
+        enabled: true
+      })
+    });
+    authServiceSpy.getUserId.and.returnValue('usr-admin-current');
+
     await TestBed.configureTestingModule({
       imports: [AdminUsersComponent, ReactiveFormsModule],
       providers: [
         provideRouter([]),
         { provide: UserAdminService, useValue: userAdminServiceSpy },
+        { provide: AuthService, useValue: authServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
         {
           provide: ActivatedRoute,
@@ -186,10 +210,45 @@ describe('AdminUsersComponent', () => {
       fullName: 'Kasun P. Updated',
       phoneNumber: '+94771234567',
       role: 'CUSTOMER',
-      enabled: true
+      enabled: true,
+      avatarUrl: undefined
     });
     expect(toastServiceSpy.success).toHaveBeenCalledWith(jasmine.stringMatching(/updated successfully/i));
     expect(component.editModalOpen()).toBeFalse();
+  });
+
+  it('TC-FE-USR-08b: should submit user edit with avatarUrl and update current admin session if self-edited', () => {
+    const adminUser: UserSummaryResponse = {
+      id: 'usr-admin-current',
+      email: 'admin@gamingcastle.lk',
+      fullName: 'Current Admin',
+      role: 'ADMIN',
+      enabled: true
+    };
+    userAdminServiceSpy.updateUser.and.returnValue(
+      of({
+        ...adminUser,
+        fullName: 'Admin Boss',
+        avatarUrl: 'https://example.com/admin.png'
+      })
+    );
+
+    component.openEditModal(adminUser);
+    component.editForm.patchValue({
+      fullName: 'Admin Boss',
+      avatarUrl: 'https://example.com/admin.png'
+    });
+    component.submitEdit();
+
+    expect(userAdminServiceSpy.updateUser).toHaveBeenCalledWith('usr-admin-current', {
+      fullName: 'Admin Boss',
+      phoneNumber: undefined,
+      role: 'ADMIN',
+      enabled: true,
+      avatarUrl: 'https://example.com/admin.png'
+    });
+    expect(authServiceSpy.currentUser()?.fullName).toBe('Admin Boss');
+    expect(authServiceSpy.currentUser()?.avatarUrl).toBe('https://example.com/admin.png');
   });
 
   it('TC-FE-USR-09: should not submit invalid edit form', () => {
@@ -215,6 +274,24 @@ describe('AdminUsersComponent', () => {
     expect(userAdminServiceSpy.deactivateUser).toHaveBeenCalledWith('usr-01');
     expect(toastServiceSpy.success).toHaveBeenCalledWith(jasmine.stringMatching(/deactivated/i));
     expect(component.toggleConfirmModalOpen()).toBeFalse();
+  });
+
+  it('TC-FE-USR-10b: should prevent admin from deactivating their own account', () => {
+    const selfAdmin: UserSummaryResponse = {
+      id: 'usr-admin-current',
+      email: 'admin@gamingcastle.lk',
+      fullName: 'Current Admin',
+      role: 'ADMIN',
+      enabled: true
+    };
+    component.promptToggleActive(selfAdmin);
+
+    expect(toastServiceSpy.warning).toHaveBeenCalledWith(
+      jasmine.stringMatching(/cannot deactivate your own/i),
+      jasmine.any(String)
+    );
+    expect(component.toggleConfirmModalOpen()).toBeFalse();
+    expect(userAdminServiceSpy.deactivateUser).not.toHaveBeenCalled();
   });
 
   it('TC-FE-USR-11: should prompt toggle active and reactivate inactive user', () => {

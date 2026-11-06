@@ -17,6 +17,22 @@
         [maxDimension]="400"
         (valueChange)="onImageChange($event)">
       </gc-image-uploader>
+
+      <div class="preset-avatars-row">
+        <span class="preset-label">Or choose a gamer avatar:</span>
+        <div class="presets-list">
+          @for (preset of avatarPresets; track preset.name) {
+            <button
+              type="button"
+              class="preset-btn"
+              [class.active]="avatarUrl() === preset.url"
+              [title]="preset.name"
+              (click)="selectPreset(preset.url)">
+              <img [src]="preset.url" [alt]="preset.name" class="preset-img" />
+            </button>
+          }
+        </div>
+      </div>
     </div>
 
     <!-- User Information Form -->
@@ -63,7 +79,7 @@
             class="form-control readonly"
             [value]="email()"
             readonly />
-          <span class="verified-tag">✓ Verified</span>
+          <span class="verified-tag">✏️“ Verified</span>
         </div>
       </div>
 
