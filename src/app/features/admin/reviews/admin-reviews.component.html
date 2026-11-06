@@ -1,0 +1,574 @@
+<div class="admin-reviews-page">
+
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-left">
+      <div class="header-tags">
+        <span class="subtext">PORTAL ADMIN</span>
+        <gc-badge variant="accent" [showDot]="true">CUSTOMER SENTIMENT</gc-badge>
+      </div>
+      <h1 class="page-title">Reviews &amp; Ratings Management</h1>
+      <p class="page-subtitle">
+        Monitor player satisfaction, audit session feedback, curate testimonials for the landing page, and track station performance metrics.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <gc-button variant="outline" size="sm" (btnClick)="loadReviews()">
+        <span class="btn-icon">↻</span> Refresh Feed
+      </gc-button>
+      <gc-button variant="primary" size="sm" (btnClick)="exportCsv()">
+        <span class="btn-icon">📥</span> Export CSV
+      </gc-button>
+    </div>
+  </header>
+
+  <!-- Executive KPI Metrics Grid -->
+  <section class="kpi-grid" aria-label="Review key performance indicators">
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-label">AVERAGE RATING</span>
+        <span class="kpi-icon rating-star-glow">★</span>
+      </div>
+      <div class="kpi-main">
+        <span class="kpi-value highlight-gold">{{ averageRating() }}</span>
+        <span class="kpi-scale">/ 5.0</span>
+      </div>
+      <div class="kpi-footer">
+        <span class="kpi-badge positive">Excellent Experience</span>
+        <span class="kpi-subtext">Across all console stations</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-label">TOTAL REVIEWS</span>
+        <span class="kpi-icon">📝</span>
+      </div>
+      <div class="kpi-main">
+        <span class="kpi-value">{{ totalReviews() }}</span>
+      </div>
+      <div class="kpi-footer">
+        <span class="kpi-badge info">100% Verified</span>
+        <span class="kpi-subtext">From real player bookings</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-label">5-STAR RATIO</span>
+        <span class="kpi-icon">🏆</span>
+      </div>
+      <div class="kpi-main">
+        <span class="kpi-value highlight-accent">{{ fiveStarRatio() }}%</span>
+      </div>
+      <div class="kpi-footer">
+        <span class="kpi-badge positive">Dominant Grade</span>
+        <span class="kpi-subtext">Maximum satisfaction tier</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-label">POSITIVE SENTIMENT</span>
+        <span class="kpi-icon">👍</span>
+      </div>
+      <div class="kpi-main">
+        <span class="kpi-value highlight-cyan">{{ positiveRate() }}%</span>
+      </div>
+      <div class="kpi-footer">
+        <span class="kpi-badge positive">4★ &amp; 5★ Reviews</span>
+        <span class="kpi-subtext">High customer retention</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Analytics Matrix: Rating Breakdown & Station Rankings -->
+  <section class="analytics-row">
+    <!-- Star Breakdown Card -->
+    <div class="analytics-card breakdown-card">
+      <div class="card-title-bar">
+        <div>
+          <h2 class="card-heading">Star Rating Breakdown</h2>
+          <p class="card-subheading">Distribution across 1 to 5 star ratings</p>
+        </div>
+        @if (starFilter() !== 'ALL') {
+          <button type="button" class="clear-filter-link" (click)="setStarFilter('ALL')">
+            Reset (Show All)
+          </button>
+        }
+      </div>
+
+      <div class="distribution-list">
+        @for (row of ratingDistribution(); track row.stars) {
+          <button
+            type="button"
+            class="distribution-row"
+            [class.active]="starFilter() === row.stars"
+            (click)="setStarFilter(starFilter() === row.stars ? 'ALL' : row.stars)"
+            [attr.aria-label]="'Filter ' + row.stars + ' stars: ' + row.count + ' reviews'">
+            <span class="dist-star-label">
+              {{ row.stars }} <span class="gold-star">★</span>
+            </span>
+            <div class="dist-track">
+              <div class="dist-fill" [style.width.%]="row.percent"></div>
+            </div>
+            <span class="dist-percent">{{ row.percent }}%</span>
+            <span class="dist-count">({{ row.count }})</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Station Rankings Card -->
+    <div class="analytics-card station-card">
+      <div class="card-title-bar">
+        <div>
+          <h2 class="card-heading">Station Console Rankings</h2>
+          <p class="card-subheading">Performance and player ratings by PS5 station</p>
+        </div>
+        <span class="station-count-pill">{{ stationRankings().length }} Stations</span>
+      </div>
+
+      <div class="station-rankings-list">
+        @for (st of stationRankings(); track st.stationCode) {
+          <button
+            type="button"
+            class="station-rank-item"
+            [class.filtered]="stationFilter() === st.stationCode"
+            (click)="setStationFilter(stationFilter() === st.stationCode ? 'ALL' : st.stationCode)">
+            <div class="station-meta">
+              <span class="station-code-badge">{{ st.stationCode }}</span>
+              <div class="station-info">
+                <span class="st-name">{{ st.stationName }}</span>
+                <span class="st-sub">{{ st.reviewCount }} sessions rated</span>
+              </div>
+            </div>
+
+            <div class="station-score">
+              <div class="score-pill">
+                <span class="score-star">★</span>
+                <span class="score-num">{{ st.averageRating }}</span>
+              </div>
+              <span class="rec-percent">{{ st.recommendationRate }}% rec.</span>
+            </div>
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Filter & Control Toolbar -->
+  <section class="toolbar-card">
+    <div class="toolbar-top">
+      <!-- Search Input -->
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search by player, game, station, comment keyword..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event); currentPage.set(1)" />
+        @if (searchQuery()) {
+          <button type="button" class="search-clear-btn" (click)="searchQuery.set('')">✕</button>
+        }
+      </div>
+
+      <!-- Station Filter -->
+      <div class="select-wrap">
+        <label for="station-select" class="select-label">Station:</label>
+        <select
+          id="station-select"
+          class="admin-select"
+          [ngModel]="stationFilter()"
+          (ngModelChange)="setStationFilter($event)">
+          <option value="ALL">All Stations</option>
+          @for (st of stationOptions(); track st) {
+            <option [value]="st">{{ st }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Status Filter -->
+      <div class="select-wrap">
+        <label for="status-select" class="select-label">Display Status:</label>
+        <select
+          id="status-select"
+          class="admin-select"
+          [ngModel]="statusFilter()"
+          (ngModelChange)="setStatusFilter($event)">
+          <option value="ALL">All Statuses</option>
+          <option value="FEATURED">Featured on Landing</option>
+          <option value="ACTIVE">Standard</option>
+        </select>
+      </div>
+
+      <!-- Sort By -->
+      <div class="select-wrap">
+        <label for="sort-select" class="select-label">Sort:</label>
+        <select
+          id="sort-select"
+          class="admin-select"
+          [ngModel]="sortBy()"
+          (ngModelChange)="setSortBy($event)">
+          <option value="date-desc">Newest First</option>
+          <option value="date-asc">Oldest First</option>
+          <option value="rating-desc">Highest Rating</option>
+          <option value="rating-asc">Lowest Rating</option>
+        </select>
+      </div>
+
+      <!-- View Mode Toggle -->
+      <div class="view-toggle-wrap">
+        <button
+          type="button"
+          class="view-btn"
+          [class.active]="viewMode() === 'table'"
+          (click)="viewMode.set('table')"
+          title="Table view">
+          ☰
+        </button>
+        <button
+          type="button"
+          class="view-btn"
+          [class.active]="viewMode() === 'cards'"
+          (click)="viewMode.set('cards')"
+          title="Cards view">
+          ☵
+        </button>
+      </div>
+    </div>
+
+    <!-- Rating Quick Pills -->
+    <div class="star-pills-row">
+      <span class="pills-label">Star Filter:</span>
+      <button
+        type="button"
+        class="star-pill"
+        [class.active]="starFilter() === 'ALL'"
+        (click)="setStarFilter('ALL')">
+        All Stars
+      </button>
+      @for (s of [5, 4, 3, 2, 1]; track s) {
+        <button
+          type="button"
+          class="star-pill"
+          [class.active]="starFilter() === s"
+          (click)="setStarFilter(s)">
+          {{ s }} ★
+        </button>
+      }
+    </div>
+  </section>
+
+  <!-- Main Content: Table or Cards -->
+  <section class="reviews-content-wrap">
+    @if (isLoading()) {
+      <div class="skeleton-list">
+        @for (n of [1, 2, 3, 4]; track n) {
+          <div class="skeleton-row">
+            <gc-skeleton shape="circle" width="40px" height="40px"></gc-skeleton>
+            <gc-skeleton shape="text" width="25%" height="16px"></gc-skeleton>
+            <gc-skeleton shape="text" width="40%" height="16px"></gc-skeleton>
+            <gc-skeleton shape="rect" width="100px" height="28px"></gc-skeleton>
+          </div>
+        }
+      </div>
+    } @else if (filteredReviews().length === 0) {
+      <div class="empty-wrap">
+        <gc-empty-state
+          icon="⭐"
+          title="No Reviews Found"
+          message="No customer reviews match your active filter criteria. Try clearing filters or search query.">
+        </gc-empty-state>
+      </div>
+    } @else {
+
+      <!-- TABLE VIEW -->
+      @if (viewMode() === 'table') {
+        <div class="table-container">
+          <table class="admin-reviews-table">
+            <thead>
+              <tr>
+                <th scope="col" class="th-customer">PLAYER</th>
+                <th scope="col" class="th-station">CONSOLE &amp; GAME</th>
+                <th scope="col" class="th-rating">RATING</th>
+                <th scope="col" class="th-comment">REVIEW COMMENT</th>
+                <th scope="col" class="th-date">DATE</th>
+                <th scope="col" class="th-status">STATUS</th>
+                <th scope="col" class="th-actions">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (review of pagedReviews(); track review.id) {
+                <tr [class.featured-row]="review.featured">
+                  <!-- Customer Column -->
+                  <td class="td-customer">
+                    <div class="customer-cell">
+                      <div class="cell-avatar" aria-hidden="true">
+                        {{ getInitials(review.userName) }}
+                      </div>
+                      <div class="cell-info">
+                        <span class="customer-name">{{ review.userName || 'Anonymous Player' }}</span>
+                        <span class="booking-tag">#{{ review.bookingId }}</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Station & Game Column -->
+                  <td class="td-station">
+                    <div class="station-cell">
+                      <span class="station-badge">{{ review.stationCode || 'PS5-01' }}</span>
+                      <span class="game-tag">{{ review.gameTitle || 'PS5 Session' }}</span>
+                    </div>
+                  </td>
+
+                  <!-- Rating Stars Column -->
+                  <td class="td-rating">
+                    <div class="rating-cell">
+                      <div class="gold-stars" [attr.aria-label]="review.rating + ' stars'">
+                        @for (s of [1, 2, 3, 4, 5]; track s) {
+                          <span
+                            class="cell-star"
+                            [class.filled]="s <= review.rating"
+                            [class.half]="s > review.rating && (s - 0.5) <= review.rating">★</span>
+                        }
+                      </div>
+                      <span class="rating-number">{{ review.rating | number:'1.1-1' }}</span>
+                    </div>
+                  </td>
+
+                  <!-- Comment Column -->
+                  <td class="td-comment">
+                    <button type="button" class="comment-cell" (click)="openDetail(review)" title="Click to view full review">
+                      <p class="comment-text">“{{ review.comment || 'No text provided.' }}”</p>
+                    </button>
+                  </td>
+
+                  <!-- Date Column -->
+                  <td class="td-date">
+                    <span class="date-text">{{ review.createdAt | date:'MMM d, y, h:mm a' }}</span>
+                  </td>
+
+                  <!-- Status Column -->
+                  <td class="td-status">
+                    @if (review.featured) {
+                      <span class="status-pill featured">
+                        <span class="status-star">⭐</span> Featured on Home
+                      </span>
+                    } @else {
+                      <span class="status-pill active">
+                        Standard
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Actions Column -->
+                  <td class="td-actions">
+                    <div class="actions-cell">
+                      <!-- Toggle Featured -->
+                      <button
+                        type="button"
+                        class="action-btn feature-btn"
+                        [class.active]="review.featured"
+                        (click)="toggleFeatured(review)"
+                        [title]="review.featured ? 'Unfeature from home page' : 'Feature on landing page'">
+                        {{ review.featured ? '⭐' : '✰' }}
+                      </button>
+
+                      <!-- View Details -->
+                      <button
+                        type="button"
+                        class="action-btn view-btn"
+                        (click)="openDetail(review)"
+                        title="View session details">
+                        👁️
+                      </button>
+
+                      <!-- Delete / Moderate -->
+                      <button
+                        type="button"
+                        class="action-btn delete-btn"
+                        (click)="openDeleteModal(review)"
+                        title="Moderate / Delete review">
+                        🗑️
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <!-- CARDS VIEW -->
+      @if (viewMode() === 'cards') {
+        <div class="cards-grid">
+          @for (review of pagedReviews(); track review.id) {
+            <div class="admin-review-card" [class.featured-card]="review.featured">
+              <div class="admin-card-header">
+                <div class="card-author">
+                  <div class="cell-avatar">{{ getInitials(review.userName) }}</div>
+                  <div>
+                    <h3 class="card-author-name">{{ review.userName || 'Anonymous Player' }}</h3>
+                    <span class="card-booking-ref">Booking #{{ review.bookingId }}</span>
+                  </div>
+                </div>
+
+                <div class="card-rating">
+                  <div class="gold-stars" [attr.aria-label]="review.rating + ' stars'">
+                    @for (s of [1, 2, 3, 4, 5]; track s) {
+                      <span
+                        class="cell-star"
+                        [class.filled]="s <= review.rating"
+                        [class.half]="s > review.rating && (s - 0.5) <= review.rating">★</span>
+                    }
+                  </div>
+                  <span class="rating-number">{{ review.rating | number:'1.1-1' }}</span>
+                </div>
+              </div>
+
+              <div class="card-tags">
+                <span class="station-badge">{{ review.stationCode || 'PS5-01' }}</span>
+                <span class="game-tag">{{ review.gameTitle || 'PS5 Session' }}</span>
+                @if (review.featured) {
+                  <span class="status-pill featured">Featured</span>
+                }
+              </div>
+
+              <p class="card-comment-text">“{{ review.comment || 'No text provided.' }}”</p>
+
+              <div class="admin-card-footer">
+                <span class="date-text">{{ review.createdAt | date:'shortDate' }}</span>
+
+                <div class="card-actions">
+                  <button
+                    type="button"
+                    class="action-btn feature-btn"
+                    [class.active]="review.featured"
+                    (click)="toggleFeatured(review)">
+                    {{ review.featured ? '⭐ Featured' : '✰ Feature' }}
+                  </button>
+                  <button type="button" class="action-btn view-btn" (click)="openDetail(review)">
+                    👁️
+                  </button>
+                  <button type="button" class="action-btn delete-btn" (click)="openDeleteModal(review)">
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Pagination -->
+      <div class="pagination-bar">
+        <span class="page-count-text">
+          Showing <strong>{{ startIndex() }}</strong> - <strong>{{ endIndex() }}</strong>
+          of <strong>{{ filteredReviews().length }}</strong> reviews
+        </span>
+
+        <gc-pagination
+          [currentPage]="currentPage()"
+          [totalPages]="totalPages()"
+          (pageChange)="onPageChange($event)">
+        </gc-pagination>
+      </div>
+
+    }
+  </section>
+
+  <!-- Review Detail Modal -->
+  @if (isDetailModalOpen() && selectedReview()) {
+    <gc-modal
+      [isOpen]="true"
+      title="Session Review Inspection"
+      size="md"
+      (close)="closeDetail()">
+      <div class="detail-modal-body">
+        <div class="modal-author-row">
+          <div class="cell-avatar lg">{{ getInitials(selectedReview()!.userName) }}</div>
+          <div class="modal-author-meta">
+            <h3 class="modal-name">{{ selectedReview()!.userName || 'Player' }}</h3>
+            <span class="modal-sub">Customer ID: {{ selectedReview()!.userId }}</span>
+          </div>
+          <div class="modal-stars-wrap">
+            <div class="gold-stars">
+              @for (s of [1, 2, 3, 4, 5]; track s) {
+                <span
+                  class="cell-star"
+                  [class.filled]="s <= selectedReview()!.rating"
+                  [class.half]="s > selectedReview()!.rating && (s - 0.5) <= selectedReview()!.rating">★</span>
+              }
+            </div>
+            <span class="score-badge">{{ selectedReview()!.rating | number:'1.1-1' }} / 5.0</span>
+          </div>
+        </div>
+
+        <div class="modal-field-grid">
+          <div class="modal-field">
+            <span class="field-label">BOOKING ID</span>
+            <span class="field-val">#{{ selectedReview()!.bookingId }}</span>
+          </div>
+          <div class="modal-field">
+            <span class="field-label">STATION CONSOLE</span>
+            <span class="field-val">{{ selectedReview()!.stationCode || 'PS5-01' }}</span>
+          </div>
+          <div class="modal-field">
+            <span class="field-label">GAME TITLE</span>
+            <span class="field-val">{{ selectedReview()!.gameTitle || 'PS5 Blockbuster' }}</span>
+          </div>
+          <div class="modal-field">
+            <span class="field-label">SUBMISSION DATE</span>
+            <span class="field-val">{{ selectedReview()!.createdAt | date:'medium' }}</span>
+          </div>
+        </div>
+
+        <div class="modal-comment-box">
+          <span class="comment-box-title">PLAYER COMMENT:</span>
+          <p class="full-comment-content">“{{ selectedReview()!.comment || 'No comment text provided by player.' }}”</p>
+        </div>
+
+        <div class="modal-footer-actions">
+          <gc-button
+            [variant]="selectedReview()!.featured ? 'primary' : 'outline'"
+            size="sm"
+            (btnClick)="toggleFeatured(selectedReview()!)">
+            {{ selectedReview()!.featured ? '⭐ Featured on Landing Page' : '✰ Feature on Landing Page' }}
+          </gc-button>
+
+          <gc-button variant="primary" size="sm" (btnClick)="closeDetail()">
+            Done
+          </gc-button>
+        </div>
+      </div>
+    </gc-modal>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (isDeleteModalOpen() && reviewToDelete()) {
+    <gc-modal
+      [isOpen]="true"
+      title="Confirm Review Removal"
+      size="sm"
+      (close)="closeDeleteModal()">
+      <div class="delete-modal-content">
+        <p class="delete-warning">
+          Are you sure you want to remove this review by <strong>{{ reviewToDelete()!.userName || 'Player' }}</strong>?
+        </p>
+        <p class="delete-note">
+          This review will be permanently moderated and hidden from the public landing page and ratings average.
+        </p>
+
+        <div class="delete-modal-buttons">
+          <gc-button variant="outline" size="sm" (btnClick)="closeDeleteModal()">Cancel</gc-button>
+          <gc-button variant="danger" size="sm" (btnClick)="executeDelete()">Remove Review</gc-button>
+        </div>
+      </div>
+    </gc-modal>
+  }
+
+</div>

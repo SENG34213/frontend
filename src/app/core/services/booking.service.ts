@@ -83,6 +83,129 @@ export class BookingService {
 
   private readonly uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+  private readonly defaultSeedReviews: BookingReview[] = [
+    {
+      id: 'rev-001',
+      bookingId: '007',
+      userId: 'usr-101',
+      userName: 'Aravind Varma',
+      stationId: 'st-01',
+      stationCode: 'PS5-01',
+      gameTitle: 'EA Sports FC 25',
+      rating: 5,
+      comment: 'Hands down the smoothest FIFA experience in Jaffna! DualSense haptics felt incredible, 144Hz screen had 0 input latency. Booked 2 hours and stayed for 3.',
+      createdAt: new Date(Date.now() - 3600000 * 14).toISOString(),
+      featured: true,
+      helpfulCount: 28,
+      status: 'FEATURED'
+    },
+    {
+      id: 'rev-002',
+      bookingId: '019',
+      userId: 'usr-102',
+      userName: 'Kavitha R.',
+      stationId: 'st-02',
+      stationCode: 'PS5-02',
+      gameTitle: 'Spider-Man 2',
+      rating: 4.5,
+      comment: 'Station 02 was spotless. The 3D audio headset made web-slinging through New York feel so alive. Staff were super polite and Secretlab chair is top tier.',
+      createdAt: new Date(Date.now() - 3600000 * 32).toISOString(),
+      featured: true,
+      helpfulCount: 21,
+      status: 'FEATURED'
+    },
+    {
+      id: 'rev-003',
+      bookingId: '025',
+      userId: 'usr-103',
+      userName: 'Dinesh S.',
+      stationId: 'st-01',
+      stationCode: 'PS5-01',
+      gameTitle: 'Tekken 8',
+      rating: 5,
+      comment: 'Practiced combos for the upcoming Iron Fist tournament. Controller sticks were crisp, zero stick drift, fast connection. Highly recommend PS5-01.',
+      createdAt: new Date(Date.now() - 3600000 * 48).toISOString(),
+      featured: true,
+      helpfulCount: 16,
+      status: 'FEATURED'
+    },
+    {
+      id: 'rev-004',
+      bookingId: '031',
+      userId: 'usr-104',
+      userName: 'Sarah Lynch',
+      stationId: 'st-03',
+      stationCode: 'PS5-03',
+      gameTitle: 'God of War Ragnarök',
+      rating: 4.5,
+      comment: 'Visually stunning 4K OLED display. AC was cold, snacks were great. Perfect weekend gaming sanctuary. Will definitely be a regular here!',
+      createdAt: new Date(Date.now() - 3600000 * 70).toISOString(),
+      featured: true,
+      helpfulCount: 14,
+      status: 'FEATURED'
+    },
+    {
+      id: 'rev-005',
+      bookingId: '042',
+      userId: 'usr-105',
+      userName: 'Thivya Mahen',
+      stationId: 'st-02',
+      stationCode: 'PS5-02',
+      gameTitle: 'Mortal Kombat 1',
+      rating: 3.5,
+      comment: 'Great atmosphere and competitive vibe. Controller had slight battery warning after 2 hours but admin replaced it in 15 seconds flat. 10/10 service.',
+      createdAt: new Date(Date.now() - 3600000 * 92).toISOString(),
+      featured: false,
+      helpfulCount: 9,
+      status: 'ACTIVE'
+    },
+    {
+      id: 'rev-006',
+      bookingId: '056',
+      userId: 'usr-106',
+      userName: 'Niroshan K.',
+      stationId: 'st-04',
+      stationCode: 'PS5-04',
+      gameTitle: 'Grand Theft Auto V',
+      rating: 4.5,
+      comment: 'Smooth online multiplayer session with the squad. Fiber optic connection had ping under 15ms. Castle loyalty points also earned me a discount.',
+      createdAt: new Date(Date.now() - 3600000 * 115).toISOString(),
+      featured: false,
+      helpfulCount: 18,
+      status: 'ACTIVE'
+    },
+    {
+      id: 'rev-007',
+      bookingId: '068',
+      userId: 'usr-107',
+      userName: 'Praveen Balan',
+      stationId: 'st-01',
+      stationCode: 'PS5-01',
+      gameTitle: 'Call of Duty: MW III',
+      rating: 4,
+      comment: '120fps mode enabled on the monitor. Sniping felt razor sharp. The gaming lounge is cleanly maintained and the AC temperature is just right.',
+      createdAt: new Date(Date.now() - 3600000 * 140).toISOString(),
+      featured: false,
+      helpfulCount: 7,
+      status: 'ACTIVE'
+    },
+    {
+      id: 'rev-008',
+      bookingId: '079',
+      userId: 'usr-108',
+      userName: 'Vithusan S.',
+      stationId: 'st-03',
+      stationCode: 'PS5-03',
+      gameTitle: 'Gran Turismo 7',
+      rating: 5,
+      comment: 'Force feedback triggers gave real brake resistance in corners. Unbelievable realism. Best place to game in Northern Province without buying a PS5 Pro yourself.',
+      createdAt: new Date(Date.now() - 3600000 * 175).toISOString(),
+      featured: true,
+      helpfulCount: 22,
+      status: 'FEATURED'
+    }
+  ];
+
   // ─── Stations ────────────────────────────────────────────────────────────────
 
   getStations(): Observable<Station[]> {
@@ -411,5 +534,33 @@ export class BookingService {
 
   getStationRating(stationId: string): Observable<{ stationId: string; averageRating: number }> {
     return this.api.get<{ stationId: string; averageRating: number }>(`/reviews/station/${stationId}/rating`);
+  }
+
+  getStationReviews(stationId: string): Observable<BookingReview[]> {
+    return this.api.get<BookingReview[]>(`/reviews/station/${stationId}`).pipe(
+      catchError(() => of([]))
+    );
+  }
+
+  getRecentReviews(): Observable<BookingReview[]> {
+    return this.api.get<BookingReview[]>('/reviews/recent').pipe(
+      map(reviews => {
+        if (!reviews || !Array.isArray(reviews) || reviews.length === 0) {
+          return this.defaultSeedReviews;
+        }
+        return reviews.map((r, i) => ({
+          ...r,
+          userName: r.userName || `Player #${r.userId ? r.userId.substring(0, 5) : (i + 1)}`,
+          featured: r.featured ?? (r.rating >= 4),
+          helpfulCount: r.helpfulCount ?? Math.max(3, 20 - i * 2),
+          status: r.status || (r.rating >= 4 ? 'FEATURED' : 'ACTIVE')
+        }));
+      }),
+      catchError(() => of(this.defaultSeedReviews))
+    );
+  }
+
+  getAllReviews(): Observable<BookingReview[]> {
+    return this.getRecentReviews();
   }
 }

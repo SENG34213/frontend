@@ -112,6 +112,7 @@
                 </span>
               </div>
             </div>
+
             <!-- Actions Row: Reschedule & Cancel Buttons (Visible for Upcoming PENDING/CONFIRMED) -->
             @if (item.canReschedule || item.canShowCancel) {
               <div class="booking-card-actions">
@@ -176,9 +177,14 @@
                 @if (userReviews()[item.id]; as rev) {
                   <div class="existing-review-pill">
                     <span class="stars-gold">
-                      {{ '★'.repeat(rev.rating) }}{{ '☆'.repeat(5 - rev.rating) }}
+                      @for (s of [1, 2, 3, 4, 5]; track s) {
+                        <span
+                          class="pill-star"
+                          [class.full]="s <= rev.rating"
+                          [class.half]="s > rev.rating && (s - 0.5) <= rev.rating">★</span>
+                      }
                     </span>
-                    <span class="review-label">Rated {{ rev.rating }}/5</span>
+                    <span class="review-label">Rated {{ rev.rating | number:'1.1-1' }}/5.0</span>
                   </div>
                 } @else {
                   <gc-button
@@ -197,6 +203,7 @@
     }
   }
 </div>
+
 <!-- Reschedule Modal -->
 <gc-modal
   [isOpen]="isRescheduleModalOpen()"
@@ -355,26 +362,53 @@
 
       <div class="rating-picker-section">
         <span class="rating-picker-label">How was your session?</span>
-        <div class="star-rating-row" role="radiogroup" aria-label="Select star rating from 1 to 5">
+        <div class="rating-score-pill">
+          <span class="rating-score-star">★</span>
+          <span class="rating-score-val">{{ reviewRating() | number:'1.1-1' }}</span>
+          <span class="rating-score-max">/ 5.0</span>
+        </div>
+
+        <div class="star-rating-row" role="radiogroup" aria-label="Select star rating from 1.0 to 5.0">
           @for (star of [1, 2, 3, 4, 5]; track star) {
+            <div
+              class="star-picker-item"
+              [class.active]="star <= reviewRating()"
+              [class.half]="star > reviewRating() && (star - 0.5) <= reviewRating()">
+              <button
+                type="button"
+                class="star-half-btn left"
+                [attr.aria-label]="(star - 0.5) + ' stars'"
+                (click)="setRating(star - 0.5)">
+              </button>
+              <button
+                type="button"
+                class="star-half-btn right"
+                [attr.aria-label]="star + ' stars'"
+                (click)="setRating(star)">
+              </button>
+              <span
+                class="star-glyph"
+                [class.full]="star <= reviewRating()"
+                [class.half]="star > reviewRating() && (star - 0.5) <= reviewRating()">★</span>
+            </div>
+          }
+        </div>
+
+        <!-- Quick Preset Chips for Convenient Float Rating Selection -->
+        <div class="quick-ratings-row" aria-label="Quick rating presets">
+          @for (val of [3.0, 3.5, 4.0, 4.5, 5.0]; track val) {
             <button
               type="button"
-              class="star-btn"
-              [class.active]="star <= reviewRating()"
-              (click)="setRating(star)"
-              [attr.aria-label]="star + ' star' + (star > 1 ? 's' : '')">
-              ★
+              class="rating-chip"
+              [class.chip-active]="reviewRating() === val"
+              (click)="setRating(val)">
+              {{ val | number:'1.1-1' }} ★
             </button>
           }
         </div>
+
         <span class="rating-feedback-text">
-          @switch (reviewRating()) {
-            @case (5) { Excellent! DualSense immersion at its peak. }
-            @case (4) { Great session, really enjoyed it. }
-            @case (3) { Good experience overall. }
-            @case (2) { Could have been better. }
-            @case (1) { Had issues with console/game. }
-          }
+          {{ getRatingFeedback(reviewRating()) }}
         </span>
       </div>
 

@@ -10,6 +10,11 @@ describe('MyTournamentsComponent', () => {
   let fixture: ComponentFixture<MyTournamentsComponent>;
   let tournamentServiceSpy: jasmine.SpyObj<TournamentService>;
 
+  const futureStartDate = new Date(Date.now() + 86400000 * 7).toISOString();
+  const futureDeadline = new Date(Date.now() + 86400000 * 6).toISOString();
+  const pastStartDate = new Date(Date.now() - 86400000 * 7).toISOString();
+  const pastDeadline = new Date(Date.now() - 86400000 * 8).toISOString();
+
   const mockRegistrations: RegistrationResponse[] = [
     {
       id: 'reg-1',
@@ -17,7 +22,7 @@ describe('MyTournamentsComponent', () => {
       tournamentName: 'Colombo FC 25 Championship',
       userId: 'usr-1',
       status: 'CONFIRMED',
-      registeredAt: '2026-10-18T10:00:00Z',
+      registeredAt: new Date(Date.now() - 86400000 * 2).toISOString(),
       gamerTag: 'Striker99'
     },
     {
@@ -26,7 +31,7 @@ describe('MyTournamentsComponent', () => {
       tournamentName: 'Tekken 8 Iron Fist Colombo',
       userId: 'usr-1',
       status: 'CONFIRMED',
-      registeredAt: '2026-10-01T10:00:00Z',
+      registeredAt: new Date(Date.now() - 86400000 * 14).toISOString(),
       gamerTag: 'Striker99'
     }
   ];
@@ -36,11 +41,11 @@ describe('MyTournamentsComponent', () => {
       id: 't-1',
       name: 'Colombo FC 25 Championship',
       gameTitle: 'EA SPORTS FC 25',
-      startDate: '2026-10-30T10:00:00Z',
+      startDate: futureStartDate,
       entryFee: 1500,
       maxParticipants: 16,
       participantCount: 12,
-      registrationDeadline: '2026-10-29T23:59:00Z',
+      registrationDeadline: futureDeadline,
       status: 'UPCOMING',
       spotsLeft: 4,
       progressPercent: 75,
@@ -51,11 +56,11 @@ describe('MyTournamentsComponent', () => {
       id: 't-2',
       name: 'Tekken 8 Iron Fist Colombo',
       gameTitle: 'TEKKEN 8',
-      startDate: '2026-10-05T10:00:00Z',
+      startDate: pastStartDate,
       entryFee: 1000,
       maxParticipants: 16,
       participantCount: 16,
-      registrationDeadline: '2026-10-04T23:59:00Z',
+      registrationDeadline: pastDeadline,
       status: 'COMPLETED',
       spotsLeft: 0,
       progressPercent: 100,

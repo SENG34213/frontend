@@ -51,4 +51,9 @@ export interface BookingReview {
   comment?: string;
   createdAt: string;
   updatedAt?: string;
+  userName?: string;
+  userAvatar?: string;
+  featured?: boolean;
+  helpfulCount?: number;
+  status?: 'ACTIVE' | 'FEATURED' | 'ARCHIVED';
 }
