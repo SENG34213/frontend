@@ -60,6 +60,8 @@ export class DashboardComponent implements OnInit {
   readonly selectedGameFilter = signal<string>('ALL');
   readonly helpfulVotes = signal<Record<string, number>>({});
   readonly userVotedReviews = signal<Set<string>>(new Set());
+  readonly showAllReviews = signal<boolean>(false);
+  readonly REVIEWS_COLLAPSED_COUNT = 6; // 2 rows in a 3-column grid
 
   readonly fallbackTournaments: TournamentViewItem[] = [
     {
@@ -184,6 +186,23 @@ export class DashboardComponent implements OnInit {
     }
 
     return list;
+  });
+
+  readonly displayedReviews = computed(() => {
+    const list = this.filteredReviews();
+    if (this.showAllReviews() || list.length <= this.REVIEWS_COLLAPSED_COUNT) {
+      return list;
+    }
+    return list.slice(0, this.REVIEWS_COLLAPSED_COUNT);
+  });
+
+  readonly hasMoreReviews = computed(() => {
+    return this.filteredReviews().length > this.REVIEWS_COLLAPSED_COUNT;
+  });
+
+  readonly remainingReviewsCount = computed(() => {
+    const total = this.filteredReviews().length;
+    return Math.max(0, total - this.REVIEWS_COLLAPSED_COUNT);
   });
 
   readonly whyItems = [
@@ -368,6 +387,10 @@ export class DashboardComponent implements OnInit {
 
   setGameFilter(game: string): void {
     this.selectedGameFilter.set(game);
+  }
+
+  toggleShowAllReviews(): void {
+    this.showAllReviews.update((prev) => !prev);
   }
 
   toggleHelpful(reviewId: string): void {
