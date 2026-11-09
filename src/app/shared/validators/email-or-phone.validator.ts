@@ -4,6 +4,12 @@ const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const SL_PHONE_REGEX = /^(?:\+94|0094|94|0)?7[0-9]{8}$/;
 
 /**
+ * Standard Sri Lankan phone number input pattern for Angular form validators:
+ * allows empty string or +94XXXXXXXXX (9 digits) or 0XXXXXXXXX (9 digits after 0).
+ */
+export const SL_PHONE_PATTERN = /^$|^(?:\+94|0)[0-9]{9}$/;
+
+/**
  * Checks whether a trimmed string matches a standard email format.
  */
 export function isEmail(value: string): boolean {

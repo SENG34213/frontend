@@ -262,6 +262,49 @@ describe('AdminUsersComponent', () => {
     expect(authServiceSpy.currentUser()?.avatarUrl).toBe('https://example.com/admin.png');
   });
 
+  it('TC-FE-USR-08c: should submit user edit changing role from CUSTOMER to ADMIN with 07XXXXXXXX phone', () => {
+    component.openEditModal(mockUsers[0]);
+    component.editForm.patchValue({
+      role: 'ADMIN',
+      phoneNumber: '0771234567'
+    });
+
+    component.submitEdit();
+
+    expect(userAdminServiceSpy.updateUser).toHaveBeenCalledWith('usr-01', {
+      fullName: 'Kasun Perera',
+      phoneNumber: '0771234567',
+      role: 'ADMIN',
+      enabled: true,
+      avatarUrl: undefined
+    });
+    expect(toastServiceSpy.success).toHaveBeenCalledWith(jasmine.stringMatching(/updated successfully/i));
+    expect(component.editModalOpen()).toBeFalse();
+  });
+
+  it('TC-FE-USR-08d: should handle backend validation error and map fieldErrors onto editForm', () => {
+    userAdminServiceSpy.updateUser.and.returnValue(
+      throwError(() => ({
+        status: 400,
+        fieldErrors: { phoneNumber: 'Phone must match +94XXXXXXXXX or 0XXXXXXXXX' },
+        message: 'Request validation failed'
+      }))
+    );
+
+    component.openEditModal(mockUsers[0]);
+    component.editForm.patchValue({
+      phoneNumber: '12345'
+    });
+
+    // Form allows submitting if custom pattern bypasses or testing server response
+    component.editForm.controls.phoneNumber.setErrors(null);
+    component.submitEdit();
+
+    expect(component.actionInFlight()).toBeFalse();
+    expect(component.editForm.get('phoneNumber')?.errors?.['serverError']).toBe('Phone must match +94XXXXXXXXX or 0XXXXXXXXX');
+    expect(toastServiceSpy.error).toHaveBeenCalledWith('Phone must match +94XXXXXXXXX or 0XXXXXXXXX');
+  });
+
   it('TC-FE-USR-09: should not submit invalid edit form', () => {
     component.openEditModal(mockUsers[0]);
     component.editForm.patchValue({

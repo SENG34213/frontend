@@ -13,6 +13,7 @@ import {
 } from './booking-admin.service';
 import { BookingService } from '../../../core/services/booking.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
+import { SL_PHONE_PATTERN } from '../../../shared/validators';
 import { AdminBookingRow, Station, UserSummaryResponse, GameTitle, AdminCreateUserRequest } from '../../../shared/models';
 
 export interface WalkInSlotView {
@@ -236,7 +237,7 @@ export class AdminBookingsComponent implements OnInit {
     this.newCustomerForm = this.fb.group({
       fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       email: ['', [Validators.required, Validators.email]],
-      phoneNumber: ['', [Validators.pattern(/^$|^(?:\+94|0)[0-9]{9}$/)]],
+      phoneNumber: ['', [Validators.pattern(SL_PHONE_PATTERN)]],
       password: ['Gaming@123', [Validators.required, Validators.minLength(6)]]
     });
 
@@ -422,7 +423,19 @@ export class AdminBookingsComponent implements OnInit {
       },
       error: (err) => {
         this.actionInFlight.set(false);
-        this.toast.error(err?.message || 'Failed to register customer');
+        if (err?.fieldErrors) {
+          Object.entries(err.fieldErrors).forEach(([field, msg]) => {
+            const ctrl = this.newCustomerForm.get(field);
+            if (ctrl) {
+              ctrl.setErrors({ serverError: msg });
+              ctrl.markAsTouched();
+            }
+          });
+          const firstMsg = Object.values(err.fieldErrors)[0] as string;
+          this.toast.error(firstMsg || err?.message || 'Failed to register customer');
+        } else {
+          this.toast.error(err?.message || 'Failed to register customer');
+        }
       }
     });
   }
