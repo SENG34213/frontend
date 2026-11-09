@@ -404,7 +404,9 @@
                 formControlName="phoneNumber"
                 [attr.aria-invalid]="newCustomerForm.get('phoneNumber')?.invalid && newCustomerForm.get('phoneNumber')?.touched" />
               @if (newCustomerForm.get('phoneNumber')?.invalid && newCustomerForm.get('phoneNumber')?.touched) {
-                <span class="field-error" role="alert">Valid Sri Lankan phone number (+94... or 07...)</span>
+                <span class="field-error" role="alert">
+                  {{ newCustomerForm.get('phoneNumber')?.errors?.['serverError'] || 'Valid Sri Lankan phone number (+94... or 07...)' }}
+                </span>
               }
             </div>
 

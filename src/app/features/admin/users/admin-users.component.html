@@ -381,7 +381,9 @@
             formControlName="phoneNumber"
             [attr.aria-invalid]="createForm.get('phoneNumber')?.invalid && createForm.get('phoneNumber')?.touched" />
           @if (createForm.get('phoneNumber')?.invalid && createForm.get('phoneNumber')?.touched) {
-            <span class="field-error" role="alert">Valid Sri Lankan phone number required (+94... or 07...)</span>
+            <span class="field-error" role="alert">
+              {{ createForm.get('phoneNumber')?.errors?.['serverError'] || 'Valid Sri Lankan phone number required (+94... or 07...)' }}
+            </span>
           }
         </div>
 
@@ -514,7 +516,9 @@
               formControlName="phoneNumber"
               [attr.aria-invalid]="editForm.get('phoneNumber')?.invalid && editForm.get('phoneNumber')?.touched" />
             @if (editForm.get('phoneNumber')?.invalid && editForm.get('phoneNumber')?.touched) {
-              <span class="field-error" role="alert">Valid Sri Lankan phone number required (+94... or 07...)</span>
+              <span class="field-error" role="alert">
+                {{ editForm.get('phoneNumber')?.errors?.['serverError'] || 'Valid Sri Lankan phone number required (+94... or 07...)' }}
+              </span>
             }
           </div>
 
