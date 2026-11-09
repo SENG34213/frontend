@@ -22,7 +22,7 @@ describe('TournamentAdminService', () => {
   };
 
   beforeEach(() => {
-    apiSpy = jasmine.createSpyObj('ApiService', ['get', 'post', 'put', 'patch']);
+    apiSpy = jasmine.createSpyObj('ApiService', ['get', 'post', 'put', 'patch', 'delete']);
     TestBed.configureTestingModule({
       providers: [
         TournamentAdminService,
@@ -126,6 +126,15 @@ describe('TournamentAdminService', () => {
     service.cancelTournament('t-101').subscribe(res => {
       expect(res.status).toBe('CANCELLED');
       expect(apiSpy.post).toHaveBeenCalledWith('/tournaments/t-101/cancel', {});
+      done();
+    });
+  });
+
+  it('should delete tournament via DELETE', (done) => {
+    apiSpy.delete.and.returnValue(of(undefined));
+
+    service.deleteTournament('t-101').subscribe(() => {
+      expect(apiSpy.delete).toHaveBeenCalledWith('/tournaments/t-101');
       done();
     });
   });

@@ -215,6 +215,12 @@
                 <span class="date-label">Starts:</span>
                 <span class="date-val font-mono">{{ formatDate(t.startDate) }}</span>
               </div>
+              @if (t.endDate) {
+                <div class="date-item">
+                  <span class="date-label">Ends:</span>
+                  <span class="date-val font-mono">{{ formatDate(t.endDate) }}</span>
+                </div>
+              }
               <div class="date-item">
                 <span class="date-label">Registration Ends:</span>
                 <span class="date-val font-mono">{{ formatDate(t.registrationDeadline) }}</span>
@@ -280,6 +286,15 @@
                   ✕
                 </gc-button>
               }
+
+              <gc-button
+                variant="outline"
+                size="sm"
+                class="btn-danger-hover"
+                (btnClick)="openDeleteModal(t, $event)"
+                aria-label="Delete this tournament">
+                🗑️ Delete
+              </gc-button>
             </div>
           </gc-card>
         }
@@ -347,18 +362,31 @@
             }
           </div>
 
-          <!-- Registration Deadline -->
+          <!-- End Date -->
           <div class="form-field">
-            <label class="form-label" for="tourn-deadline">Registration Deadline <span class="required" aria-hidden="true">*</span></label>
+            <label class="form-label" for="tourn-end">End Date & Time <span class="required" aria-hidden="true">*</span></label>
             <input
-              id="tourn-deadline"
+              id="tourn-end"
               type="datetime-local"
               class="gc-input-native"
-              formControlName="registrationDeadline" />
-            @if (createForm.get('registrationDeadline')?.invalid && createForm.get('registrationDeadline')?.touched) {
-              <span class="field-error" role="alert">Deadline must be before start date</span>
+              formControlName="endDate" />
+            @if (createForm.get('endDate')?.invalid && createForm.get('endDate')?.touched) {
+              <span class="field-error" role="alert">End date is required and must be a future date</span>
             }
           </div>
+        </div>
+
+        <!-- Registration Deadline -->
+        <div class="form-field">
+          <label class="form-label" for="tourn-deadline">Registration Deadline <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="tourn-deadline"
+            type="datetime-local"
+            class="gc-input-native"
+            formControlName="registrationDeadline" />
+          @if (createForm.get('registrationDeadline')?.invalid && createForm.get('registrationDeadline')?.touched) {
+            <span class="field-error" role="alert">Deadline must be before start date</span>
+          }
         </div>
 
         <div class="form-row-2">
@@ -468,18 +496,31 @@
             }
           </div>
 
-          <!-- Registration Deadline -->
+          <!-- End Date -->
           <div class="form-field">
-            <label class="form-label" for="edit-tourn-deadline">Registration Deadline <span class="required" aria-hidden="true">*</span></label>
+            <label class="form-label" for="edit-tourn-end">End Date & Time <span class="required" aria-hidden="true">*</span></label>
             <input
-              id="edit-tourn-deadline"
+              id="edit-tourn-end"
               type="datetime-local"
               class="gc-input-native"
-              formControlName="registrationDeadline" />
-            @if (editForm.get('registrationDeadline')?.invalid && editForm.get('registrationDeadline')?.touched) {
-              <span class="field-error" role="alert">Deadline is required</span>
+              formControlName="endDate" />
+            @if (editForm.get('endDate')?.invalid && editForm.get('endDate')?.touched) {
+              <span class="field-error" role="alert">End date is required and must be a future date</span>
             }
           </div>
+        </div>
+
+        <!-- Registration Deadline -->
+        <div class="form-field">
+          <label class="form-label" for="edit-tourn-deadline">Registration Deadline <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="edit-tourn-deadline"
+            type="datetime-local"
+            class="gc-input-native"
+            formControlName="registrationDeadline" />
+          @if (editForm.get('registrationDeadline')?.invalid && editForm.get('registrationDeadline')?.touched) {
+            <span class="field-error" role="alert">Deadline is required</span>
+          }
         </div>
 
         <div class="form-row-2">
@@ -568,9 +609,14 @@
               @for (reg of registrationsList(); track reg.id) {
                 <tr>
                   <td>
-                    <strong>{{ reg.gamerTag || reg.userName || 'Anonymous Player' }}</strong>
+                    <div class="player-info-cell">
+                      <strong class="player-name">{{ getPlayerDisplayName(reg) }}</strong>
+                      @if (reg.userEmail) {
+                        <div class="text-muted text-xs font-mono">{{ reg.userEmail }}</div>
+                      }
+                    </div>
                   </td>
-                  <td class="font-mono text-muted">{{ reg.userId.slice(0, 8) }}…</td>
+                  <td class="font-mono text-muted">{{ reg.userId ? reg.userId.slice(0, 8) + '…' : '—' }}</td>
                   <td>
                     <gc-badge [variant]="reg.status === 'CONFIRMED' ? 'success' : 'warning'">
                       {{ reg.status }}
@@ -785,6 +831,36 @@
         [disabled]="actionInFlight()"
         (btnClick)="confirmCompleteTournament()">
         {{ actionInFlight() ? 'Completing…' : '✓ Confirm Completed' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Delete Tournament Confirm Modal ────────────────────────────── -->
+  <gc-modal
+    [isOpen]="deleteModalOpen()"
+    [(isOpen)]="deleteModalOpen"
+    title="Delete Tournament"
+    modalId="modal-delete-tourn">
+    @if (selectedTournamentForDelete(); as t) {
+      <div class="delete-tourn-content">
+        <p class="delete-confirm-text">
+          Are you sure you want to permanently delete tournament <strong>{{ t.name || t.title }}</strong>?
+        </p>
+        <p class="delete-warning text-danger">
+          ⚠️ This action will permanently remove the tournament, its bracket matches, and all registered participants. This cannot be undone.
+        </p>
+      </div>
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="deleteModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="outline"
+        class="btn-danger-hover"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="confirmDeleteTournament()">
+        {{ actionInFlight() ? 'Deleting…' : '🗑️ Yes, Delete Tournament' }}
       </gc-button>
     </div>
   </gc-modal>

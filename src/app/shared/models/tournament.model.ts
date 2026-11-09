@@ -53,6 +53,7 @@ export interface RegistrationResponse {
   registeredAt: string;
   gamerTag?: string;
   userName?: string;
+  userEmail?: string;
 }
 
 export interface MatchResponse {

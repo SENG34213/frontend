@@ -91,6 +91,14 @@ export class TournamentAdminService {
   }
 
   /**
+   * Delete tournament.
+   * Maps to DELETE /api/tournaments/{id}
+   */
+  deleteTournament(id: string): Observable<void> {
+    return this.api.delete<void>(`${this.tournamentsEndpoint}/${id}`);
+  }
+
+  /**
    * Get registered participants in real-time.
    * Maps to GET /api/tournaments/{id}/registrations
    */
