@@ -5,6 +5,7 @@ import { TournamentDetailComponent } from './tournament-detail.component';
 import { TournamentService, TournamentViewItem } from '../../../core/services/tournament.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationSocketService } from '../../../core/services/notification-socket.service';
+import { LoyaltyService } from '../../../core/services/loyalty.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { RegistrationResponse, BracketResponse, TournamentResponse } from '../../../shared/models';
 
@@ -14,6 +15,7 @@ describe('TournamentDetailComponent', () => {
   let tournamentServiceSpy: jasmine.SpyObj<TournamentService>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
   let notifSocketSpy: jasmine.SpyObj<NotificationSocketService>;
+  let loyaltyServiceSpy: jasmine.SpyObj<LoyaltyService>;
   let toastSpy: jasmine.SpyObj<ToastService>;
   let routerSpy: jasmine.SpyObj<Router>;
 
@@ -65,10 +67,17 @@ describe('TournamentDetailComponent', () => {
     notifSocketSpy = jasmine.createSpyObj('NotificationSocketService', ['sendNotification']);
     toastSpy = jasmine.createSpyObj('ToastService', ['success', 'error', 'info', 'warning']);
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    loyaltyServiceSpy = jasmine.createSpyObj('LoyaltyService', ['getBalance', 'invalidateCache']);
 
     tournamentServiceSpy.getTournamentById.and.returnValue(of(mockTournament));
     tournamentServiceSpy.getMyRegistrations.and.returnValue(of([]));
     tournamentServiceSpy.getBracket.and.returnValue(of(mockBracket));
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 200,
+      tier: 'GOLD',
+      equivalentDiscountLkr: 200
+    }));
     tournamentServiceSpy.calculateCountdown.and.returnValue({
       days: 3,
       hours: 0,
@@ -106,6 +115,7 @@ describe('TournamentDetailComponent', () => {
         { provide: NotificationSocketService, useValue: notifSocketSpy },
         { provide: ToastService, useValue: toastSpy },
         { provide: Router, useValue: routerSpy },
+        { provide: LoyaltyService, useValue: loyaltyServiceSpy },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -153,13 +163,31 @@ describe('TournamentDetailComponent', () => {
 
     component.submitRegistration();
 
-    expect(tournamentServiceSpy.registerForTournament).toHaveBeenCalledWith('t-101', 'Striker');
+    expect(tournamentServiceSpy.registerForTournament).toHaveBeenCalledWith('t-101', 'Striker', undefined);
     expect(component.isRegistered()).toBeTrue();
     expect(toastSpy.success).toHaveBeenCalled();
     expect(notifSocketSpy.sendNotification).toHaveBeenCalledWith(jasmine.objectContaining({
       type: 'TOURNAMENT_REGISTRATION',
       category: 'TOURNAMENT'
     }));
+  });
+
+  it('should redeem loyalty points and send points on registration', () => {
+    tournamentServiceSpy.registerForTournament.and.returnValue(of(mockRegistration));
+    component.gamerTag.set('Striker');
+    component.agreedToRules.set(true);
+
+    expect(component.canRedeemLoyalty()).toBeTrue();
+    component.toggleLoyalty();
+    expect(component.redeemLoyalty()).toBeTrue();
+    expect(component.effectivePointsToRedeem()).toBe(200);
+    expect(component.loyaltyDiscountAmount()).toBe(100);
+    expect(component.finalPayableAmount()).toBe(1400);
+
+    component.submitRegistration();
+
+    expect(tournamentServiceSpy.registerForTournament).toHaveBeenCalledWith('t-101', 'Striker', 200);
+    expect(loyaltyServiceSpy.invalidateCache).toHaveBeenCalled();
   });
 
   it('should navigate back to tournament list', () => {

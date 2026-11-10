@@ -486,6 +486,128 @@
         }
       }
 
+      .loyalty-discount-card {
+        background: rgba(139, 92, 246, 0.08);
+        border: 1px solid rgba(139, 92, 246, 0.25);
+        border-radius: var(--gc-radius-md);
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+
+        .loyalty-info {
+          display: flex;
+          align-items: center;
+          gap: 0.65rem;
+
+          .loyalty-icon {
+            font-size: 1.25rem;
+          }
+
+          .loyalty-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+          }
+
+          .loyalty-title-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+          }
+
+          .loyalty-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--gc-text-primary);
+          }
+
+          .tier-badge {
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+
+            &[data-tier="BRONZE"] {
+              background: rgba(205, 127, 50, 0.2);
+              color: #e09756;
+              border: 1px solid rgba(205, 127, 50, 0.4);
+            }
+            &[data-tier="SILVER"] {
+              background: rgba(192, 192, 192, 0.2);
+              color: #e2e8f0;
+              border: 1px solid rgba(192, 192, 192, 0.4);
+            }
+            &[data-tier="GOLD"] {
+              background: rgba(255, 215, 0, 0.2);
+              color: #ffd700;
+              border: 1px solid rgba(255, 215, 0, 0.4);
+            }
+            &[data-tier="VIP"] {
+              background: rgba(168, 85, 247, 0.2);
+              color: #c084fc;
+              border: 1px solid rgba(168, 85, 247, 0.4);
+            }
+          }
+
+          .loyalty-balance {
+            font-size: 0.72rem;
+            color: var(--gc-accent-light);
+          }
+        }
+
+        .toggle-switch {
+          position: relative;
+          display: inline-block;
+          width: 40px;
+          height: 22px;
+          flex-shrink: 0;
+
+          &.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+          }
+
+          input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+          }
+
+          .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: var(--gc-border-default);
+            border-radius: 22px;
+            transition: var(--gc-transition-fast);
+
+            &:before {
+              position: absolute;
+              content: "";
+              height: 16px;
+              width: 16px;
+              left: 3px;
+              bottom: 3px;
+              background-color: #ffffff;
+              border-radius: 50%;
+              transition: var(--gc-transition-fast);
+            }
+          }
+
+          input:checked + .slider {
+            background-color: var(--gc-accent);
+          }
+
+          input:checked + .slider:before {
+            transform: translateX(18px);
+          }
+        }
+      }
+
       .price-breakdown {
         background: rgba(8, 11, 17, 0.5);
         border: 1px solid var(--gc-border-subtle);
@@ -504,6 +626,23 @@
             color: var(--gc-status-available);
             font-weight: 700;
             font-size: 0.75rem;
+          }
+
+          &.discount-line {
+            color: var(--gc-status-available);
+            font-weight: 600;
+
+            .discount-label {
+              display: flex;
+              align-items: center;
+              gap: 0.35rem;
+              color: var(--gc-status-available);
+            }
+
+            .discount-val {
+              color: var(--gc-status-available);
+              font-family: var(--gc-font-mono);
+            }
           }
 
           &.total-line {

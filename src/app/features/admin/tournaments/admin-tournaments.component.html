@@ -11,7 +11,7 @@
       </p>
     </div>
     <div class="header-actions">
-      <gc-button variant="outline" size="sm" (btnClick)="loadTournaments()" aria-label="Refresh tournaments list">
+      <gc-button variant="outline" size="sm" (btnClick)="refreshAll()" aria-label="Refresh tournaments and registrations">
         🔄 Refresh
       </gc-button>
       <gc-button variant="primary" (btnClick)="openCreateModal()" aria-label="Create new tournament">
@@ -71,6 +71,163 @@
           <span class="stat-label">Enrolled Players</span>
           <span class="stat-val font-mono text-accent" id="stat-enrolled-players">{{ totalEnrolledPlayers() }}</span>
         </div>
+      </div>
+    </gc-card>
+  </section>
+
+  <!-- Live Tournament Activity: 2 Side-by-Side Tables ("Near by near") -->
+  <section class="admin-tables-row mb-xl" aria-label="Today Registrations and Happening Tournaments">
+    <!-- TABLE 1: Today's Customer Registrations -->
+    <gc-card class="admin-table-card">
+      <div class="table-card-header">
+        <div class="table-header-title-group">
+          <div class="table-icon-badge">📅</div>
+          <div>
+            <h2 class="table-card-title">Today's Registrations</h2>
+            <span class="table-card-subtitle">Recent player signups across all tournaments today</span>
+          </div>
+        </div>
+        <div class="table-badge-counter">
+          <span class="counter-pill">{{ todayRegistrations().length }} Registrations</span>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        @if (isTodayRegistrationsLoading()) {
+          <div class="table-loading-state">
+            <gc-skeleton height="38px" class="mb-xs"></gc-skeleton>
+            <gc-skeleton height="38px" class="mb-xs"></gc-skeleton>
+            <gc-skeleton height="38px"></gc-skeleton>
+          </div>
+        } @else if (todayRegistrations().length === 0) {
+          <div class="table-empty-box">
+            <span class="empty-icon">📝</span>
+            <p class="empty-title">No registrations recorded today</p>
+            <p class="empty-sub">When players enroll in tournaments today, their registration details will appear here live.</p>
+          </div>
+        } @else {
+          <table class="gc-admin-table" aria-label="Today customer registrations">
+            <thead>
+              <tr>
+                <th>Player / Customer</th>
+                <th>Gamer Tag</th>
+                <th>Tournament</th>
+                <th>Registered At</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (reg of todayRegistrations(); track reg.id) {
+                <tr>
+                  <td class="player-cell">
+                    <div class="player-avatar-mini">{{ (reg.userName || reg.gamerTag || 'P').charAt(0).toUpperCase() }}</div>
+                    <div class="player-info-col">
+                      <span class="player-full-name">{{ reg.userName || 'Player' }}</span>
+                      @if (reg.userEmail) {
+                        <span class="player-email">{{ reg.userEmail }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    <span class="gamer-tag-badge">🎮 {{ reg.gamerTag || 'N/A' }}</span>
+                  </td>
+                  <td class="tournament-name-cell">
+                    <span class="t-name font-semibold">{{ reg.tournamentName || 'Tournament' }}</span>
+                  </td>
+                  <td class="date-cell font-mono">
+                    {{ formatDate(reg.registeredAt) }}
+                  </td>
+                  <td>
+                    <gc-badge [variant]="reg.status === 'CONFIRMED' ? 'available' : 'warning'">
+                      {{ reg.status }}
+                    </gc-badge>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    </gc-card>
+
+    <!-- TABLE 2: Current Happening Tournaments -->
+    <gc-card class="admin-table-card">
+      <div class="table-card-header">
+        <div class="table-header-title-group">
+          <div class="table-icon-badge live-pulse">🔥</div>
+          <div>
+            <h2 class="table-card-title">Currently Happening Tournaments</h2>
+            <span class="table-card-subtitle">Active esports championships in progress right now</span>
+          </div>
+        </div>
+        <div class="table-badge-counter">
+          <span class="counter-pill live-pill">{{ currentHappeningTournaments().length }} Active</span>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        @if (isLoading()) {
+          <div class="table-loading-state">
+            <gc-skeleton height="38px" class="mb-xs"></gc-skeleton>
+            <gc-skeleton height="38px" class="mb-xs"></gc-skeleton>
+            <gc-skeleton height="38px"></gc-skeleton>
+          </div>
+        } @else if (currentHappeningTournaments().length === 0) {
+          <div class="table-empty-box">
+            <span class="empty-icon">🎮</span>
+            <p class="empty-title">No tournaments currently happening</p>
+            <p class="empty-sub">Tournaments set to ONGOING or IN_PROGRESS will be shown here with quick bracket access.</p>
+          </div>
+        } @else {
+          <table class="gc-admin-table" aria-label="Currently happening tournaments">
+            <thead>
+              <tr>
+                <th>Tournament & Game</th>
+                <th>Enrolled</th>
+                <th>Timeline</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (t of currentHappeningTournaments(); track t.id) {
+                <tr>
+                  <td class="tourn-title-cell">
+                    <div class="tourn-name-line">
+                      <span class="live-dot" aria-label="Live"></span>
+                      <span class="tourn-main-title">{{ t.name || t.title }}</span>
+                    </div>
+                    <span class="tourn-game-sub">🎮 {{ t.gameTitle }}</span>
+                  </td>
+                  <td class="capacity-cell font-mono">
+                    <strong>{{ t.participantCount || 0 }}</strong> / {{ t.maxParticipants }}
+                  </td>
+                  <td class="date-cell font-mono">
+                    <span class="d-line">Start: {{ formatDate(t.startDate) }}</span>
+                    @if (t.endDate) {
+                      <span class="d-line">End: {{ formatDate(t.endDate) }}</span>
+                    }
+                  </td>
+                  <td>
+                    <gc-badge [variant]="'info'">
+                      {{ t.status }}
+                    </gc-badge>
+                  </td>
+                  <td class="actions-cell">
+                    <div class="table-btn-group">
+                      <gc-button variant="outline" size="sm" (btnClick)="openBracket(t)" title="View Live Knockout Bracket">
+                        Bracket
+                      </gc-button>
+                      <gc-button variant="secondary" size="sm" (btnClick)="openRegistrations(t)" title="Inspect Participants">
+                        Players
+                      </gc-button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
       </div>
     </gc-card>
   </section>

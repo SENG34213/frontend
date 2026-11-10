@@ -126,6 +126,7 @@ describe('AdminTournamentsComponent', () => {
       'cancelTournament',
       'deleteTournament',
       'getRegistrations',
+      'getTodayRegistrations',
       'generateBracket',
       'getBracket',
       'recordMatchResult',
@@ -133,6 +134,7 @@ describe('AdminTournamentsComponent', () => {
     ]);
 
     tournamentAdminServiceSpy.getTournaments.and.returnValue(of(mockTournaments));
+    tournamentAdminServiceSpy.getTodayRegistrations.and.returnValue(of(mockRegistrations));
     tournamentAdminServiceSpy.createTournament.and.returnValue(
       of({
         id: 'tourn-new',
@@ -521,6 +523,27 @@ describe('AdminTournamentsComponent', () => {
     expect(component.getPlayerDisplayName({
       id: '4', tournamentId: 't1', userId: 'usr-987654321', userName: '', gamerTag: '', userEmail: '', registeredAt: '2026-10-01T00:00:00Z', status: 'CONFIRMED'
     })).toBe('Player usr-98');
+  });
+
+  it('TC-FE-TRN-26: should load today registrations on init and compute current happening tournaments', () => {
+    expect(tournamentAdminServiceSpy.getTodayRegistrations).toHaveBeenCalled();
+    expect(component.todayRegistrations().length).toBe(2);
+    expect(component.todayRegistrations()[0].gamerTag).toBe('Kasun_FC');
+
+    const happening = component.currentHappeningTournaments();
+    expect(happening.length).toBe(1);
+    expect(happening[0].id).toBe('tourn-02');
+    expect(happening[0].name).toBe('Valorant Colombo Masters');
+  });
+
+  it('TC-FE-TRN-27: should refresh both tournaments and registrations on refreshAll', () => {
+    tournamentAdminServiceSpy.getTournaments.calls.reset();
+    tournamentAdminServiceSpy.getTodayRegistrations.calls.reset();
+
+    component.refreshAll();
+
+    expect(tournamentAdminServiceSpy.getTournaments).toHaveBeenCalledTimes(1);
+    expect(tournamentAdminServiceSpy.getTodayRegistrations).toHaveBeenCalledTimes(1);
   });
 });
 

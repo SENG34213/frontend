@@ -202,6 +202,30 @@ describe('TournamentAdminService', () => {
     });
   });
 
+  it('should get today registrations via GET', (done) => {
+    const mockTodayRegs: RegistrationResponse[] = [
+      {
+        id: 'reg-today-1',
+        tournamentId: 't-101',
+        tournamentName: 'FC 25 Grand Championship',
+        userId: 'usr-1',
+        status: 'CONFIRMED',
+        registeredAt: new Date().toISOString(),
+        gamerTag: 'ApexStriker',
+        userName: 'John Doe',
+        userEmail: 'john@example.com'
+      }
+    ];
+    apiSpy.get.and.returnValue(of(mockTodayRegs));
+
+    service.getTodayRegistrations().subscribe(regs => {
+      expect(regs.length).toBe(1);
+      expect(regs[0].gamerTag).toBe('ApexStriker');
+      expect(apiSpy.get).toHaveBeenCalledWith('/tournaments/admin/today-registrations');
+      done();
+    });
+  });
+
   it('should send reminders via POST', (done) => {
     apiSpy.post.and.returnValue(of(undefined));
 

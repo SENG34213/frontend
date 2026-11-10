@@ -17,7 +17,9 @@ import { takeUntil } from 'rxjs/operators';
 import { TournamentService, TournamentViewItem } from '../../../core/services/tournament.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationSocketService } from '../../../core/services/notification-socket.service';
+import { LoyaltyService } from '../../../core/services/loyalty.service';
 import { RegistrationResponse } from '../../../shared/models';
+import { LoyaltyTier } from '../../../shared/models/loyalty.model';
 
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
@@ -53,6 +55,7 @@ export class TournamentsListComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly loyaltyService = inject(LoyaltyService);
   private readonly destroy$ = new Subject<void>();
 
   // ─── Signals ────────────────────────────────────────────────────────────────
@@ -82,6 +85,31 @@ export class TournamentsListComponent implements OnInit, OnDestroy {
   readonly gamerTag = signal('');
   readonly isRegistering = signal(false);
   readonly registrationError = signal<string | null>(null);
+
+  // Loyalty Redemption State
+  readonly loyaltyPointsBalance = signal<number>(0);
+  readonly userTier = signal<LoyaltyTier>('BRONZE');
+  readonly redeemLoyalty = signal<boolean>(false);
+  readonly canRedeemLoyalty = computed(
+    () => this.loyaltyPointsBalance() >= 100 && (this.selectedTournamentForRegister()?.entryFee || 0) > 0
+  );
+
+  readonly effectivePointsToRedeem = computed(() => {
+    if (!this.redeemLoyalty() || !this.canRedeemLoyalty()) return 0;
+    const fee = this.selectedTournamentForRegister()?.entryFee || 0;
+    const maxDiscountLkr = fee * 0.5;
+    const maxPointsByCap = Math.floor(maxDiscountLkr / 0.5);
+    const targetPoints = Math.min(this.loyaltyPointsBalance(), maxPointsByCap);
+    const stepped = Math.floor(targetPoints / 10) * 10;
+    return stepped >= 100 ? stepped : 0;
+  });
+
+  readonly loyaltyDiscountAmount = computed(() => this.effectivePointsToRedeem() * 0.5);
+
+  readonly finalPayableAmount = computed(() => {
+    const fee = this.selectedTournamentForRegister()?.entryFee || 0;
+    return Math.max(0, fee - this.loyaltyDiscountAmount());
+  });
 
   // ─── Computed Values ────────────────────────────────────────────────────────
 
@@ -197,6 +225,28 @@ export class TournamentsListComponent implements OnInit, OnDestroy {
 
     this.loadData();
     this.startCountdownTimer();
+    if (this.authService.isAuthenticated()) {
+      this.loadLoyalty();
+    }
+  }
+
+  toggleLoyalty(): void {
+    if (!this.canRedeemLoyalty()) return;
+    this.redeemLoyalty.update((v) => !v);
+  }
+
+  loadLoyalty(): void {
+    if (!this.authService.isAuthenticated()) return;
+    this.loyaltyService.getBalance()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (bal) => {
+          this.loyaltyPointsBalance.set(bal.pointsBalance || 0);
+          this.userTier.set(bal.tier || 'BRONZE');
+          this.cdr.markForCheck();
+        },
+        error: () => {}
+      });
   }
 
   ngOnDestroy(): void {
@@ -294,6 +344,8 @@ export class TournamentsListComponent implements OnInit, OnDestroy {
     this.selectedTournamentForRegister.set(tournament);
     this.gamerTag.set(this.authService.currentUser()?.fullName || '');
     this.registrationError.set(null);
+    this.redeemLoyalty.set(false);
+    this.loadLoyalty();
     this.registerModalOpen.set(true);
   }
 
@@ -302,6 +354,7 @@ export class TournamentsListComponent implements OnInit, OnDestroy {
     this.selectedTournamentForRegister.set(null);
     this.gamerTag.set('');
     this.registrationError.set(null);
+    this.redeemLoyalty.set(false);
   }
 
   submitRegistration(): void {
@@ -317,10 +370,14 @@ export class TournamentsListComponent implements OnInit, OnDestroy {
     this.isRegistering.set(true);
     this.registrationError.set(null);
 
-    this.tournamentService.registerForTournament(tournament.id, tag).subscribe({
+    const points = this.effectivePointsToRedeem();
+    this.tournamentService.registerForTournament(tournament.id, tag, points > 0 ? points : undefined).subscribe({
       next: (res) => {
         this.isRegistering.set(false);
         this.closeRegisterModal();
+        if (points > 0) {
+          this.loyaltyService.invalidateCache();
+        }
         this.toast.success(`Successfully registered for ${tournament.name}! Entry fee confirmed.`);
         
         // Emit real-time notification

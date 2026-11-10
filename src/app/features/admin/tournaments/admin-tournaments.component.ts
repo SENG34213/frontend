@@ -99,6 +99,15 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
   readonly deleteModalOpen = signal(false);
   readonly selectedTournamentForDelete = signal<TournamentResponse | null>(null);
 
+  // Today's Registrations State
+  readonly todayRegistrations = signal<RegistrationResponse[]>([]);
+  readonly isTodayRegistrationsLoading = signal(false);
+
+  // Currently Happening Tournaments
+  readonly currentHappeningTournaments = computed(() =>
+    this.tournaments().filter((t) => t.status === 'ONGOING' || t.status === 'IN_PROGRESS')
+  );
+
   // ── Reactive Forms ─────────────────────────────────────────────────────────
   readonly createForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
@@ -218,6 +227,7 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
     });
 
     this.loadTournaments();
+    this.loadTodayRegistrations();
   }
 
   ngOnDestroy(): void {
@@ -226,6 +236,26 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
   }
 
   // ── API Operations ─────────────────────────────────────────────────────────
+  refreshAll(): void {
+    this.loadTournaments();
+    this.loadTodayRegistrations();
+  }
+
+  loadTodayRegistrations(): void {
+    this.isTodayRegistrationsLoading.set(true);
+    this.tournamentAdminService.getTodayRegistrations()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.todayRegistrations.set(data || []);
+          this.isTodayRegistrationsLoading.set(false);
+        },
+        error: () => {
+          this.isTodayRegistrationsLoading.set(false);
+        }
+      });
+  }
+
   loadTournaments(): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
@@ -575,6 +605,10 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
   }
 
   // ── Registrations Inspector ────────────────────────────────────────────────
+  openRegistrationsModal(t: TournamentResponse): void {
+    this.openRegistrations(t);
+  }
+
   openRegistrations(t: TournamentResponse, event?: Event): void {
     if (event) event.stopPropagation();
     this.selectedTournamentForRegistrations.set(t);
@@ -597,6 +631,10 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
   }
 
   // ── Knockout Bracket Management ───────────────────────────────────────────
+  openBracketModal(t: TournamentResponse): void {
+    this.openBracket(t);
+  }
+
   openBracket(t: TournamentResponse, event?: Event): void {
     if (event) event.stopPropagation();
     this.selectedTournamentForBracket.set(t);
