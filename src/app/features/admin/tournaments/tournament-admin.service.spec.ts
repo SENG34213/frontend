@@ -22,7 +22,7 @@ describe('TournamentAdminService', () => {
   };
 
   beforeEach(() => {
-    apiSpy = jasmine.createSpyObj('ApiService', ['get', 'post', 'put', 'patch']);
+    apiSpy = jasmine.createSpyObj('ApiService', ['get', 'post', 'put', 'patch', 'delete']);
     TestBed.configureTestingModule({
       providers: [
         TournamentAdminService,
@@ -130,6 +130,15 @@ describe('TournamentAdminService', () => {
     });
   });
 
+  it('should delete tournament via DELETE', (done) => {
+    apiSpy.delete.and.returnValue(of(undefined));
+
+    service.deleteTournament('t-101').subscribe(() => {
+      expect(apiSpy.delete).toHaveBeenCalledWith('/tournaments/t-101');
+      done();
+    });
+  });
+
   it('should get registrations via GET', (done) => {
     const mockRegs: RegistrationResponse[] = [
       { id: 'reg-1', tournamentId: 't-101', tournamentName: 'FC 25', userId: 'usr-1', status: 'CONFIRMED', registeredAt: '2026-10-19T00:00:00Z' }
@@ -189,6 +198,30 @@ describe('TournamentAdminService', () => {
     service.recordMatchResult('t-101', 'm-1', 'usr-1').subscribe(res => {
       expect(res.winnerId).toBe('usr-1');
       expect(apiSpy.patch).toHaveBeenCalledWith('/tournaments/t-101/bracket/matches/m-1/result', { winnerId: 'usr-1' });
+      done();
+    });
+  });
+
+  it('should get today registrations via GET', (done) => {
+    const mockTodayRegs: RegistrationResponse[] = [
+      {
+        id: 'reg-today-1',
+        tournamentId: 't-101',
+        tournamentName: 'FC 25 Grand Championship',
+        userId: 'usr-1',
+        status: 'CONFIRMED',
+        registeredAt: new Date().toISOString(),
+        gamerTag: 'ApexStriker',
+        userName: 'John Doe',
+        userEmail: 'john@example.com'
+      }
+    ];
+    apiSpy.get.and.returnValue(of(mockTodayRegs));
+
+    service.getTodayRegistrations().subscribe(regs => {
+      expect(regs.length).toBe(1);
+      expect(regs[0].gamerTag).toBe('ApexStriker');
+      expect(apiSpy.get).toHaveBeenCalledWith('/tournaments/admin/today-registrations');
       done();
     });
   });

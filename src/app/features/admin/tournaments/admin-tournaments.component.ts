@@ -95,16 +95,29 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
   readonly completeModalOpen = signal(false);
   readonly selectedTournamentForComplete = signal<TournamentResponse | null>(null);
 
+  // Delete Modal
+  readonly deleteModalOpen = signal(false);
+  readonly selectedTournamentForDelete = signal<TournamentResponse | null>(null);
+
+  // Today's Registrations State
+  readonly todayRegistrations = signal<RegistrationResponse[]>([]);
+  readonly isTodayRegistrationsLoading = signal(false);
+
+  // Currently Happening Tournaments
+  readonly currentHappeningTournaments = computed(() =>
+    this.tournaments().filter((t) => t.status === 'ONGOING' || t.status === 'IN_PROGRESS')
+  );
+
   // ── Reactive Forms ─────────────────────────────────────────────────────────
   readonly createForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
     gameTitle: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(60)]],
     imageUrl: [''],
-    startDate: [this.toLocalDatetimeStr(new Date(Date.now() + 7 * 86400000)), [Validators.required]],
-    endDate: [this.toLocalDatetimeStr(new Date(Date.now() + 8 * 86400000))],
+    startDate: [this.getNearHourDate(7, 0), [Validators.required]],
+    endDate: [this.getNearHourDate(8, 0), [Validators.required]],
     entryFee: [1500, [Validators.required, Validators.min(0)]],
     maxParticipants: [16, [Validators.required, Validators.min(2)]],
-    registrationDeadline: [this.toLocalDatetimeStr(new Date(Date.now() + 5 * 86400000)), [Validators.required]]
+    registrationDeadline: [this.getNearHourDate(5, 0), [Validators.required]]
   });
 
   readonly editForm = this.fb.group({
@@ -112,7 +125,7 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
     gameTitle: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(60)]],
     imageUrl: [''],
     startDate: ['', [Validators.required]],
-    endDate: [''],
+    endDate: ['', [Validators.required]],
     entryFee: [1500, [Validators.required, Validators.min(0)]],
     maxParticipants: [16, [Validators.required, Validators.min(2)]],
     registrationDeadline: ['', [Validators.required]]
@@ -214,6 +227,7 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
     });
 
     this.loadTournaments();
+    this.loadTodayRegistrations();
   }
 
   ngOnDestroy(): void {
@@ -222,6 +236,26 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
   }
 
   // ── API Operations ─────────────────────────────────────────────────────────
+  refreshAll(): void {
+    this.loadTournaments();
+    this.loadTodayRegistrations();
+  }
+
+  loadTodayRegistrations(): void {
+    this.isTodayRegistrationsLoading.set(true);
+    this.tournamentAdminService.getTodayRegistrations()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.todayRegistrations.set(data || []);
+          this.isTodayRegistrationsLoading.set(false);
+        },
+        error: () => {
+          this.isTodayRegistrationsLoading.set(false);
+        }
+      });
+  }
+
   loadTournaments(): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
@@ -246,11 +280,11 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
       name: '',
       gameTitle: '',
       imageUrl: '',
-      startDate: this.toLocalDatetimeStr(new Date(Date.now() + 7 * 86400000)),
-      endDate: this.toLocalDatetimeStr(new Date(Date.now() + 8 * 86400000)),
+      startDate: this.getNearHourDate(7, 0),
+      endDate: this.getNearHourDate(8, 0),
       entryFee: 1500,
       maxParticipants: 16,
-      registrationDeadline: this.toLocalDatetimeStr(new Date(Date.now() + 5 * 86400000))
+      registrationDeadline: this.getNearHourDate(5, 0)
     });
     this.createModalOpen.set(true);
   }
@@ -262,15 +296,45 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
     }
 
     const val = this.createForm.value;
+    if (!val.startDate || !val.endDate || !val.registrationDeadline) {
+      this.toast.error('Start date, end date, and registration deadline are required');
+      return;
+    }
+
+    const startTime = new Date(val.startDate).getTime();
+    const endTime = new Date(val.endDate).getTime();
+    const deadlineTime = new Date(val.registrationDeadline).getTime();
+    const now = Date.now();
+
+    if (startTime <= now) {
+      this.toast.error('Start date must be in the future');
+      return;
+    }
+
+    if (endTime <= now) {
+      this.toast.error('End date must be in the future');
+      return;
+    }
+
+    if (endTime <= startTime) {
+      this.toast.error('End date cannot be earlier than start date');
+      return;
+    }
+
+    if (deadlineTime > startTime) {
+      this.toast.error('Registration deadline cannot be after tournament start date');
+      return;
+    }
+
     const req: TournamentRequest = {
       name: (val.name || '').trim(),
       gameTitle: (val.gameTitle || '').trim(),
       imageUrl: val.imageUrl ? String(val.imageUrl).trim() : undefined,
-      startDate: new Date(val.startDate!).toISOString(),
-      endDate: val.endDate ? new Date(val.endDate).toISOString() : undefined,
+      startDate: new Date(val.startDate).toISOString(),
+      endDate: new Date(val.endDate).toISOString(),
       entryFee: Number(val.entryFee) || 0,
       maxParticipants: Number(val.maxParticipants) || 16,
-      registrationDeadline: new Date(val.registrationDeadline!).toISOString()
+      registrationDeadline: new Date(val.registrationDeadline).toISOString()
     };
 
     this.actionInFlight.set(true);
@@ -306,7 +370,9 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
     this.selectedTournamentForEdit.set(t);
 
     const sDate = t.startDate ? this.toLocalDatetimeStr(new Date(t.startDate)) : '';
-    const eDate = t.endDate ? this.toLocalDatetimeStr(new Date(t.endDate)) : '';
+    const eDate = t.endDate
+      ? this.toLocalDatetimeStr(new Date(t.endDate))
+      : (t.startDate ? this.toLocalDatetimeStr(new Date(new Date(t.startDate).getTime() + 86400000)) : '');
     const dDate = t.registrationDeadline ? this.toLocalDatetimeStr(new Date(t.registrationDeadline)) : '';
 
     this.editForm.reset({
@@ -333,15 +399,40 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
     }
 
     const val = this.editForm.value;
+    if (!val.startDate || !val.endDate || !val.registrationDeadline) {
+      this.toast.error('Start date, end date, and registration deadline are required');
+      return;
+    }
+
+    const startTime = new Date(val.startDate).getTime();
+    const endTime = new Date(val.endDate).getTime();
+    const deadlineTime = new Date(val.registrationDeadline).getTime();
+    const now = Date.now();
+
+    if (endTime <= now) {
+      this.toast.error('End date must be in the future');
+      return;
+    }
+
+    if (endTime <= startTime) {
+      this.toast.error('End date cannot be earlier than start date');
+      return;
+    }
+
+    if (deadlineTime > startTime) {
+      this.toast.error('Registration deadline cannot be after tournament start date');
+      return;
+    }
+
     const req: TournamentRequest = {
       name: (val.name || '').trim(),
       gameTitle: (val.gameTitle || '').trim(),
       imageUrl: val.imageUrl ? String(val.imageUrl).trim() : undefined,
-      startDate: new Date(val.startDate!).toISOString(),
-      endDate: val.endDate ? new Date(val.endDate).toISOString() : undefined,
+      startDate: new Date(val.startDate).toISOString(),
+      endDate: new Date(val.endDate).toISOString(),
       entryFee: Number(val.entryFee) || 0,
       maxParticipants: Number(val.maxParticipants) || 16,
-      registrationDeadline: new Date(val.registrationDeadline!).toISOString()
+      registrationDeadline: new Date(val.registrationDeadline).toISOString()
     };
 
     this.actionInFlight.set(true);
@@ -483,7 +574,41 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ── Delete Tournament ──────────────────────────────────────────────────────
+  openDeleteModal(t: TournamentResponse, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.selectedTournamentForDelete.set(t);
+    this.deleteModalOpen.set(true);
+  }
+
+  confirmDeleteTournament(): void {
+    const t = this.selectedTournamentForDelete();
+    if (!t) return;
+
+    this.actionInFlight.set(true);
+    this.tournamentAdminService.deleteTournament(t.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.actionInFlight.set(false);
+          this.deleteModalOpen.set(false);
+          this.selectedTournamentForDelete.set(null);
+          this.toast.success(`Tournament "${t.name || t.title}" deleted successfully`);
+          this.loadTournaments();
+        },
+        error: (err) => {
+          this.actionInFlight.set(false);
+          const msg = err?.error?.message || err?.message || 'Failed to delete tournament';
+          this.toast.error(msg);
+        }
+      });
+  }
+
   // ── Registrations Inspector ────────────────────────────────────────────────
+  openRegistrationsModal(t: TournamentResponse): void {
+    this.openRegistrations(t);
+  }
+
   openRegistrations(t: TournamentResponse, event?: Event): void {
     if (event) event.stopPropagation();
     this.selectedTournamentForRegistrations.set(t);
@@ -506,6 +631,10 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
   }
 
   // ── Knockout Bracket Management ───────────────────────────────────────────
+  openBracketModal(t: TournamentResponse): void {
+    this.openBracket(t);
+  }
+
   openBracket(t: TournamentResponse, event?: Event): void {
     if (event) event.stopPropagation();
     this.selectedTournamentForBracket.set(t);
@@ -680,6 +809,34 @@ export class AdminTournamentsComponent implements OnInit, OnDestroy {
     if (diff === 1) return 'Semifinals';
     if (diff === 2) return 'Quarterfinals';
     return `Round ${round}`;
+  }
+
+  getPlayerDisplayName(reg: RegistrationResponse): string {
+    if (reg.userName && reg.userName.trim().length > 0) {
+      return reg.userName.trim();
+    }
+    if (reg.gamerTag && reg.gamerTag.trim().length > 0) {
+      return reg.gamerTag.trim();
+    }
+    if (reg.userEmail && reg.userEmail.trim().length > 0) {
+      return reg.userEmail.split('@')[0];
+    }
+    return `Player ${reg.userId ? reg.userId.slice(0, 6) : 'User'}`;
+  }
+
+  getNearHourDate(offsetDays = 0, hourOffset = 0): string {
+    const d = new Date();
+    if (d.getMinutes() >= 30) {
+      d.setHours(d.getHours() + 1);
+    }
+    d.setMinutes(0, 0, 0);
+    if (offsetDays) {
+      d.setDate(d.getDate() + offsetDays);
+    }
+    if (hourOffset) {
+      d.setHours(d.getHours() + hourOffset);
+    }
+    return this.toLocalDatetimeStr(d);
   }
 
   private toLocalDatetimeStr(d: Date): string {

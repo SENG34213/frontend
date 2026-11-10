@@ -268,19 +268,56 @@
                 />
               </div>
 
+              <!-- Loyalty Points Redemption -->
+              @if (t.entryFee > 0 && loyaltyPointsBalance() > 0) {
+                <div class="loyalty-discount-card">
+                  <div class="loyalty-info">
+                    <span class="loyalty-icon">⭐</span>
+                    <div class="loyalty-details">
+                      <div class="loyalty-title-row">
+                        <span class="loyalty-title">Redeem Loyalty Points</span>
+                        <span class="tier-badge" [attr.data-tier]="userTier()">{{ userTier() }}</span>
+                      </div>
+                      <span class="loyalty-balance">
+                        @if (canRedeemLoyalty()) {
+                          {{ loyaltyPointsBalance() }} Pts Available (Save LKR {{ (effectivePointsToRedeem() * 0.5) | number:'1.2-2' }})
+                        } @else {
+                          {{ loyaltyPointsBalance() }} Pts Available (Min. 100 pts required)
+                        }
+                      </span>
+                    </div>
+                  </div>
+                  <label class="toggle-switch" [class.disabled]="!canRedeemLoyalty()">
+                    <input
+                      type="checkbox"
+                      [checked]="redeemLoyalty()"
+                      [disabled]="!canRedeemLoyalty() || isRegistering()"
+                      (change)="toggleLoyalty()"
+                      aria-label="Redeem loyalty points for entry fee discount" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              }
+
               <!-- Price Breakdown -->
               <div class="price-breakdown">
                 <div class="p-line">
                   <span>Entry Fee</span>
                   <span>{{ tournamentService.formatLkr(t.entryFee) }}</span>
                 </div>
+                @if (redeemLoyalty() && loyaltyDiscountAmount() > 0) {
+                  <div class="p-line discount-line">
+                    <span class="discount-label">Loyalty Reward ({{ effectivePointsToRedeem() }} Pts · {{ userTier() }})</span>
+                    <span class="discount-val">-LKR {{ loyaltyDiscountAmount() | number:'1.2-2' }}</span>
+                  </div>
+                }
                 <div class="p-line">
                   <span>Arena & Hardware Fee</span>
                   <span class="free-text">INCLUDED</span>
                 </div>
                 <div class="p-line total-line">
                   <span>TOTAL PAYABLE</span>
-                  <span class="total-amount">{{ tournamentService.formatLkr(t.entryFee) }}</span>
+                  <span class="total-amount">{{ tournamentService.formatLkr(finalPayableAmount()) }}</span>
                 </div>
               </div>
 
@@ -314,7 +351,7 @@
                 [loading]="isRegistering()"
                 [disabled]="isRegistering()"
                 (btnClick)="submitRegistration()">
-                CONFIRM & PAY ({{ tournamentService.formatLkr(t.entryFee) }})
+                CONFIRM & PAY ({{ tournamentService.formatLkr(finalPayableAmount()) }})
               </gc-button>
 
               <p class="secure-checkout-text">

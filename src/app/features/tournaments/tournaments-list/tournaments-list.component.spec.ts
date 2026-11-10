@@ -5,6 +5,7 @@ import { TournamentsListComponent } from './tournaments-list.component';
 import { TournamentService, TournamentViewItem } from '../../../core/services/tournament.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationSocketService } from '../../../core/services/notification-socket.service';
+import { LoyaltyService } from '../../../core/services/loyalty.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { RegistrationResponse, TournamentResponse } from '../../../shared/models';
 
@@ -14,6 +15,7 @@ describe('TournamentsListComponent', () => {
   let tournamentServiceSpy: jasmine.SpyObj<TournamentService>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
   let notifSocketSpy: jasmine.SpyObj<NotificationSocketService>;
+  let loyaltyServiceSpy: jasmine.SpyObj<LoyaltyService>;
   let toastSpy: jasmine.SpyObj<ToastService>;
   let navigateSpy: jasmine.Spy;
   const mockTournaments: TournamentViewItem[] = [
@@ -72,9 +74,16 @@ describe('TournamentsListComponent', () => {
     authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'currentUser', 'getUserId']);
     notifSocketSpy = jasmine.createSpyObj('NotificationSocketService', ['sendNotification']);
     toastSpy = jasmine.createSpyObj('ToastService', ['success', 'error', 'info', 'warning']);
+    loyaltyServiceSpy = jasmine.createSpyObj('LoyaltyService', ['getBalance', 'invalidateCache']);
 
     tournamentServiceSpy.getTournaments.and.returnValue(of(mockTournaments));
     tournamentServiceSpy.getMyRegistrations.and.returnValue(of([mockReg]));
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 200,
+      tier: 'GOLD',
+      equivalentDiscountLkr: 200
+    }));
     tournamentServiceSpy.calculateCountdown.and.returnValue({
       days: 2,
       hours: 4,
@@ -111,6 +120,7 @@ describe('TournamentsListComponent', () => {
         { provide: AuthService, useValue: authServiceSpy },
         { provide: NotificationSocketService, useValue: notifSocketSpy },
         { provide: ToastService, useValue: toastSpy },
+        { provide: LoyaltyService, useValue: loyaltyServiceSpy },
         provideRouter([]),
         {
           provide: ActivatedRoute,
@@ -185,12 +195,30 @@ describe('TournamentsListComponent', () => {
 
     component.submitRegistration();
 
-    expect(tournamentServiceSpy.registerForTournament).toHaveBeenCalledWith('tourn-1', 'ProGamerLK');
+    expect(tournamentServiceSpy.registerForTournament).toHaveBeenCalledWith('tourn-1', 'ProGamerLK', undefined);
     expect(toastSpy.success).toHaveBeenCalled();
     expect(notifSocketSpy.sendNotification).toHaveBeenCalledWith(jasmine.objectContaining({
       type: 'TOURNAMENT_REGISTRATION',
       category: 'TOURNAMENT'
     }));
     expect(component.registerModalOpen()).toBeFalse();
+  });
+
+  it('should redeem loyalty points and send points to registerForTournament in quick register', () => {
+    tournamentServiceSpy.registerForTournament.and.returnValue(of(mockReg));
+    component.selectedTournamentForRegister.set(mockTournaments[0]);
+    component.gamerTag.set('ProGamerLK');
+
+    expect(component.canRedeemLoyalty()).toBeTrue();
+    component.toggleLoyalty();
+    expect(component.redeemLoyalty()).toBeTrue();
+    expect(component.effectivePointsToRedeem()).toBe(200);
+    expect(component.loyaltyDiscountAmount()).toBe(100);
+    expect(component.finalPayableAmount()).toBe(1400);
+
+    component.submitRegistration();
+
+    expect(tournamentServiceSpy.registerForTournament).toHaveBeenCalledWith('tourn-1', 'ProGamerLK', 200);
+    expect(loyaltyServiceSpy.invalidateCache).toHaveBeenCalled();
   });
 });

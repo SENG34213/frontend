@@ -60,11 +60,16 @@ export class TournamentService {
    */
   registerForTournament(
     tournamentId: string,
-    gamerTag?: string
+    gamerTag?: string,
+    loyaltyPointsToRedeem?: number
   ): Observable<RegistrationResponse> {
-    return this.api.post<RegistrationResponse>(`${this.endpoint}/${tournamentId}/register`, {
+    const payload: { gamerTag?: string; loyaltyPointsToRedeem?: number } = {
       gamerTag
-    });
+    };
+    if (loyaltyPointsToRedeem !== undefined && loyaltyPointsToRedeem > 0) {
+      payload.loyaltyPointsToRedeem = loyaltyPointsToRedeem;
+    }
+    return this.api.post<RegistrationResponse>(`${this.endpoint}/${tournamentId}/register`, payload);
   }
 
   /**

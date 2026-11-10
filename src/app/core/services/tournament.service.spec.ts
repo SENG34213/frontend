@@ -160,6 +160,21 @@ describe('TournamentService', () => {
       });
     });
 
+    it('should submit registration with loyalty points and return response', (done) => {
+      apiServiceSpy.post.and.returnValue(of(mockRegistration));
+
+      service.registerForTournament('t-101', 'GamerKasun', 200).subscribe({
+        next: (res) => {
+          expect(res.id).toBe('reg-1');
+          expect(apiServiceSpy.post).toHaveBeenCalledWith('/tournaments/t-101/register', {
+            gamerTag: 'GamerKasun',
+            loyaltyPointsToRedeem: 200
+          });
+          done();
+        }
+      });
+    });
+
     it('should rethrow error on backend validation failures', (done) => {
       const errResponse = { status: 409, error: { message: 'Already registered' } };
       apiServiceSpy.post.and.returnValue(throwError(() => errResponse));

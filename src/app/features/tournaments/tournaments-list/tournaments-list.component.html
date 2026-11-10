@@ -387,7 +387,48 @@
               <span class="label">ENTRY FEE:</span>
               <span class="val price">{{ tournamentService.formatLkr(tournament.entryFee) }}</span>
             </div>
+            @if (redeemLoyalty() && loyaltyDiscountAmount() > 0) {
+              <div class="summary-line discount-summary-line">
+                <span class="label">LOYALTY REWARD ({{ effectivePointsToRedeem() }} Pts):</span>
+                <span class="val discount-val">-LKR {{ loyaltyDiscountAmount() | number:'1.2-2' }}</span>
+              </div>
+              <div class="summary-line total-summary-line">
+                <span class="label">TOTAL PAYABLE:</span>
+                <span class="val total-val">{{ tournamentService.formatLkr(finalPayableAmount()) }}</span>
+              </div>
+            }
           </div>
+
+          <!-- Loyalty Reward Option -->
+          @if (tournament.entryFee > 0 && loyaltyPointsBalance() > 0) {
+            <div class="loyalty-discount-card">
+              <div class="loyalty-info">
+                <span class="loyalty-icon">⭐</span>
+                <div class="loyalty-details">
+                  <div class="loyalty-title-row">
+                    <span class="loyalty-title">Redeem Loyalty Points</span>
+                    <span class="tier-badge" [attr.data-tier]="userTier()">{{ userTier() }}</span>
+                  </div>
+                  <span class="loyalty-balance">
+                    @if (canRedeemLoyalty()) {
+                      {{ loyaltyPointsBalance() }} Pts (Save LKR {{ (effectivePointsToRedeem() * 0.5) | number:'1.2-2' }})
+                    } @else {
+                      {{ loyaltyPointsBalance() }} Pts (Min. 100 pts required)
+                    }
+                  </span>
+                </div>
+              </div>
+              <label class="toggle-switch" [class.disabled]="!canRedeemLoyalty()">
+                <input
+                  type="checkbox"
+                  [checked]="redeemLoyalty()"
+                  [disabled]="!canRedeemLoyalty() || isRegistering()"
+                  (change)="toggleLoyalty()"
+                  aria-label="Redeem loyalty points for discount" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          }
 
           <div class="form-group">
             <label for="gamer-tag-input" class="input-label">
@@ -437,7 +478,7 @@
               [loading]="isRegistering()"
               [disabled]="isRegistering()"
               (btnClick)="submitRegistration()">
-              CONFIRM & PAY ({{ tournamentService.formatLkr(tournament.entryFee) }})
+              CONFIRM & PAY ({{ tournamentService.formatLkr(finalPayableAmount()) }})
             </gc-button>
           </div>
         </div>

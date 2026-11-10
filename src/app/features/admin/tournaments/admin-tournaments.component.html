@@ -11,7 +11,7 @@
       </p>
     </div>
     <div class="header-actions">
-      <gc-button variant="outline" size="sm" (btnClick)="loadTournaments()" aria-label="Refresh tournaments list">
+      <gc-button variant="outline" size="sm" (btnClick)="refreshAll()" aria-label="Refresh tournaments and registrations">
         🔄 Refresh
       </gc-button>
       <gc-button variant="primary" (btnClick)="openCreateModal()" aria-label="Create new tournament">
@@ -71,6 +71,163 @@
           <span class="stat-label">Enrolled Players</span>
           <span class="stat-val font-mono text-accent" id="stat-enrolled-players">{{ totalEnrolledPlayers() }}</span>
         </div>
+      </div>
+    </gc-card>
+  </section>
+
+  <!-- Live Tournament Activity: 2 Side-by-Side Tables ("Near by near") -->
+  <section class="admin-tables-row mb-xl" aria-label="Today Registrations and Happening Tournaments">
+    <!-- TABLE 1: Today's Customer Registrations -->
+    <gc-card class="admin-table-card">
+      <div class="table-card-header">
+        <div class="table-header-title-group">
+          <div class="table-icon-badge">📅</div>
+          <div>
+            <h2 class="table-card-title">Today's Registrations</h2>
+            <span class="table-card-subtitle">Recent player signups across all tournaments today</span>
+          </div>
+        </div>
+        <div class="table-badge-counter">
+          <span class="counter-pill">{{ todayRegistrations().length }} Registrations</span>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        @if (isTodayRegistrationsLoading()) {
+          <div class="table-loading-state">
+            <gc-skeleton height="38px" class="mb-xs"></gc-skeleton>
+            <gc-skeleton height="38px" class="mb-xs"></gc-skeleton>
+            <gc-skeleton height="38px"></gc-skeleton>
+          </div>
+        } @else if (todayRegistrations().length === 0) {
+          <div class="table-empty-box">
+            <span class="empty-icon">📝</span>
+            <p class="empty-title">No registrations recorded today</p>
+            <p class="empty-sub">When players enroll in tournaments today, their registration details will appear here live.</p>
+          </div>
+        } @else {
+          <table class="gc-admin-table" aria-label="Today customer registrations">
+            <thead>
+              <tr>
+                <th>Player / Customer</th>
+                <th>Gamer Tag</th>
+                <th>Tournament</th>
+                <th>Registered At</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (reg of todayRegistrations(); track reg.id) {
+                <tr>
+                  <td class="player-cell">
+                    <div class="player-avatar-mini">{{ (reg.userName || reg.gamerTag || 'P').charAt(0).toUpperCase() }}</div>
+                    <div class="player-info-col">
+                      <span class="player-full-name">{{ reg.userName || 'Player' }}</span>
+                      @if (reg.userEmail) {
+                        <span class="player-email">{{ reg.userEmail }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    <span class="gamer-tag-badge">🎮 {{ reg.gamerTag || 'N/A' }}</span>
+                  </td>
+                  <td class="tournament-name-cell">
+                    <span class="t-name font-semibold">{{ reg.tournamentName || 'Tournament' }}</span>
+                  </td>
+                  <td class="date-cell font-mono">
+                    {{ formatDate(reg.registeredAt) }}
+                  </td>
+                  <td>
+                    <gc-badge [variant]="reg.status === 'CONFIRMED' ? 'available' : 'warning'">
+                      {{ reg.status }}
+                    </gc-badge>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    </gc-card>
+
+    <!-- TABLE 2: Current Happening Tournaments -->
+    <gc-card class="admin-table-card">
+      <div class="table-card-header">
+        <div class="table-header-title-group">
+          <div class="table-icon-badge live-pulse">🔥</div>
+          <div>
+            <h2 class="table-card-title">Currently Happening Tournaments</h2>
+            <span class="table-card-subtitle">Active esports championships in progress right now</span>
+          </div>
+        </div>
+        <div class="table-badge-counter">
+          <span class="counter-pill live-pill">{{ currentHappeningTournaments().length }} Active</span>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        @if (isLoading()) {
+          <div class="table-loading-state">
+            <gc-skeleton height="38px" class="mb-xs"></gc-skeleton>
+            <gc-skeleton height="38px" class="mb-xs"></gc-skeleton>
+            <gc-skeleton height="38px"></gc-skeleton>
+          </div>
+        } @else if (currentHappeningTournaments().length === 0) {
+          <div class="table-empty-box">
+            <span class="empty-icon">🎮</span>
+            <p class="empty-title">No tournaments currently happening</p>
+            <p class="empty-sub">Tournaments set to ONGOING or IN_PROGRESS will be shown here with quick bracket access.</p>
+          </div>
+        } @else {
+          <table class="gc-admin-table" aria-label="Currently happening tournaments">
+            <thead>
+              <tr>
+                <th>Tournament & Game</th>
+                <th>Enrolled</th>
+                <th>Timeline</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (t of currentHappeningTournaments(); track t.id) {
+                <tr>
+                  <td class="tourn-title-cell">
+                    <div class="tourn-name-line">
+                      <span class="live-dot" aria-label="Live"></span>
+                      <span class="tourn-main-title">{{ t.name || t.title }}</span>
+                    </div>
+                    <span class="tourn-game-sub">🎮 {{ t.gameTitle }}</span>
+                  </td>
+                  <td class="capacity-cell font-mono">
+                    <strong>{{ t.participantCount || 0 }}</strong> / {{ t.maxParticipants }}
+                  </td>
+                  <td class="date-cell font-mono">
+                    <span class="d-line">Start: {{ formatDate(t.startDate) }}</span>
+                    @if (t.endDate) {
+                      <span class="d-line">End: {{ formatDate(t.endDate) }}</span>
+                    }
+                  </td>
+                  <td>
+                    <gc-badge [variant]="'info'">
+                      {{ t.status }}
+                    </gc-badge>
+                  </td>
+                  <td class="actions-cell">
+                    <div class="table-btn-group">
+                      <gc-button variant="outline" size="sm" (btnClick)="openBracket(t)" title="View Live Knockout Bracket">
+                        Bracket
+                      </gc-button>
+                      <gc-button variant="secondary" size="sm" (btnClick)="openRegistrations(t)" title="Inspect Participants">
+                        Players
+                      </gc-button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
       </div>
     </gc-card>
   </section>
@@ -215,6 +372,12 @@
                 <span class="date-label">Starts:</span>
                 <span class="date-val font-mono">{{ formatDate(t.startDate) }}</span>
               </div>
+              @if (t.endDate) {
+                <div class="date-item">
+                  <span class="date-label">Ends:</span>
+                  <span class="date-val font-mono">{{ formatDate(t.endDate) }}</span>
+                </div>
+              }
               <div class="date-item">
                 <span class="date-label">Registration Ends:</span>
                 <span class="date-val font-mono">{{ formatDate(t.registrationDeadline) }}</span>
@@ -280,6 +443,15 @@
                   ✕
                 </gc-button>
               }
+
+              <gc-button
+                variant="outline"
+                size="sm"
+                class="btn-danger-hover"
+                (btnClick)="openDeleteModal(t, $event)"
+                aria-label="Delete this tournament">
+                🗑️ Delete
+              </gc-button>
             </div>
           </gc-card>
         }
@@ -347,18 +519,31 @@
             }
           </div>
 
-          <!-- Registration Deadline -->
+          <!-- End Date -->
           <div class="form-field">
-            <label class="form-label" for="tourn-deadline">Registration Deadline <span class="required" aria-hidden="true">*</span></label>
+            <label class="form-label" for="tourn-end">End Date & Time <span class="required" aria-hidden="true">*</span></label>
             <input
-              id="tourn-deadline"
+              id="tourn-end"
               type="datetime-local"
               class="gc-input-native"
-              formControlName="registrationDeadline" />
-            @if (createForm.get('registrationDeadline')?.invalid && createForm.get('registrationDeadline')?.touched) {
-              <span class="field-error" role="alert">Deadline must be before start date</span>
+              formControlName="endDate" />
+            @if (createForm.get('endDate')?.invalid && createForm.get('endDate')?.touched) {
+              <span class="field-error" role="alert">End date is required and must be a future date</span>
             }
           </div>
+        </div>
+
+        <!-- Registration Deadline -->
+        <div class="form-field">
+          <label class="form-label" for="tourn-deadline">Registration Deadline <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="tourn-deadline"
+            type="datetime-local"
+            class="gc-input-native"
+            formControlName="registrationDeadline" />
+          @if (createForm.get('registrationDeadline')?.invalid && createForm.get('registrationDeadline')?.touched) {
+            <span class="field-error" role="alert">Deadline must be before start date</span>
+          }
         </div>
 
         <div class="form-row-2">
@@ -468,18 +653,31 @@
             }
           </div>
 
-          <!-- Registration Deadline -->
+          <!-- End Date -->
           <div class="form-field">
-            <label class="form-label" for="edit-tourn-deadline">Registration Deadline <span class="required" aria-hidden="true">*</span></label>
+            <label class="form-label" for="edit-tourn-end">End Date & Time <span class="required" aria-hidden="true">*</span></label>
             <input
-              id="edit-tourn-deadline"
+              id="edit-tourn-end"
               type="datetime-local"
               class="gc-input-native"
-              formControlName="registrationDeadline" />
-            @if (editForm.get('registrationDeadline')?.invalid && editForm.get('registrationDeadline')?.touched) {
-              <span class="field-error" role="alert">Deadline is required</span>
+              formControlName="endDate" />
+            @if (editForm.get('endDate')?.invalid && editForm.get('endDate')?.touched) {
+              <span class="field-error" role="alert">End date is required and must be a future date</span>
             }
           </div>
+        </div>
+
+        <!-- Registration Deadline -->
+        <div class="form-field">
+          <label class="form-label" for="edit-tourn-deadline">Registration Deadline <span class="required" aria-hidden="true">*</span></label>
+          <input
+            id="edit-tourn-deadline"
+            type="datetime-local"
+            class="gc-input-native"
+            formControlName="registrationDeadline" />
+          @if (editForm.get('registrationDeadline')?.invalid && editForm.get('registrationDeadline')?.touched) {
+            <span class="field-error" role="alert">Deadline is required</span>
+          }
         </div>
 
         <div class="form-row-2">
@@ -568,9 +766,14 @@
               @for (reg of registrationsList(); track reg.id) {
                 <tr>
                   <td>
-                    <strong>{{ reg.gamerTag || reg.userName || 'Anonymous Player' }}</strong>
+                    <div class="player-info-cell">
+                      <strong class="player-name">{{ getPlayerDisplayName(reg) }}</strong>
+                      @if (reg.userEmail) {
+                        <div class="text-muted text-xs font-mono">{{ reg.userEmail }}</div>
+                      }
+                    </div>
                   </td>
-                  <td class="font-mono text-muted">{{ reg.userId.slice(0, 8) }}…</td>
+                  <td class="font-mono text-muted">{{ reg.userId ? reg.userId.slice(0, 8) + '…' : '—' }}</td>
                   <td>
                     <gc-badge [variant]="reg.status === 'CONFIRMED' ? 'success' : 'warning'">
                       {{ reg.status }}
@@ -785,6 +988,36 @@
         [disabled]="actionInFlight()"
         (btnClick)="confirmCompleteTournament()">
         {{ actionInFlight() ? 'Completing…' : '✓ Confirm Completed' }}
+      </gc-button>
+    </div>
+  </gc-modal>
+
+  <!-- ── Delete Tournament Confirm Modal ────────────────────────────── -->
+  <gc-modal
+    [isOpen]="deleteModalOpen()"
+    [(isOpen)]="deleteModalOpen"
+    title="Delete Tournament"
+    modalId="modal-delete-tourn">
+    @if (selectedTournamentForDelete(); as t) {
+      <div class="delete-tourn-content">
+        <p class="delete-confirm-text">
+          Are you sure you want to permanently delete tournament <strong>{{ t.name || t.title }}</strong>?
+        </p>
+        <p class="delete-warning text-danger">
+          ⚠️ This action will permanently remove the tournament, its bracket matches, and all registered participants. This cannot be undone.
+        </p>
+      </div>
+    }
+
+    <div modal-footer class="modal-footer-actions">
+      <gc-button variant="outline" (btnClick)="deleteModalOpen.set(false)">Cancel</gc-button>
+      <gc-button
+        variant="outline"
+        class="btn-danger-hover"
+        [attr.aria-busy]="actionInFlight()"
+        [disabled]="actionInFlight()"
+        (btnClick)="confirmDeleteTournament()">
+        {{ actionInFlight() ? 'Deleting…' : '🗑️ Yes, Delete Tournament' }}
       </gc-button>
     </div>
   </gc-modal>

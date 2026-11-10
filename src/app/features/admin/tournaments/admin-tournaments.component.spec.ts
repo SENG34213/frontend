@@ -124,7 +124,9 @@ describe('AdminTournamentsComponent', () => {
       'updateTournament',
       'updateStatus',
       'cancelTournament',
+      'deleteTournament',
       'getRegistrations',
+      'getTodayRegistrations',
       'generateBracket',
       'getBracket',
       'recordMatchResult',
@@ -132,6 +134,7 @@ describe('AdminTournamentsComponent', () => {
     ]);
 
     tournamentAdminServiceSpy.getTournaments.and.returnValue(of(mockTournaments));
+    tournamentAdminServiceSpy.getTodayRegistrations.and.returnValue(of(mockRegistrations));
     tournamentAdminServiceSpy.createTournament.and.returnValue(
       of({
         id: 'tourn-new',
@@ -154,6 +157,7 @@ describe('AdminTournamentsComponent', () => {
     tournamentAdminServiceSpy.cancelTournament.and.returnValue(
       of({ ...mockTournaments[0], status: 'CANCELLED' })
     );
+    tournamentAdminServiceSpy.deleteTournament.and.returnValue(of(void 0));
     tournamentAdminServiceSpy.getRegistrations.and.returnValue(of(mockRegistrations));
     tournamentAdminServiceSpy.getBracket.and.returnValue(of(mockBracket));
     tournamentAdminServiceSpy.generateBracket.and.returnValue(of(mockBracket));
@@ -258,8 +262,9 @@ describe('AdminTournamentsComponent', () => {
     component.createForm.patchValue({
       name: 'Rocket League Open',
       gameTitle: 'Rocket League',
-      startDate: '2026-11-10T10:00',
-      registrationDeadline: '2026-11-08T10:00',
+      startDate: '2027-11-10T10:00',
+      endDate: '2027-11-12T10:00',
+      registrationDeadline: '2027-11-08T10:00',
       entryFee: 1500,
       maxParticipants: 16
     });
@@ -416,6 +421,9 @@ describe('AdminTournamentsComponent', () => {
     component.editForm.patchValue({
       name: 'Updated FC 25 Championship',
       gameTitle: 'EA Sports FC 25',
+      startDate: '2027-10-20T10:00',
+      endDate: '2027-10-22T10:00',
+      registrationDeadline: '2027-10-18T10:00',
       entryFee: 2000,
       maxParticipants: 16
     });
@@ -460,6 +468,82 @@ describe('AdminTournamentsComponent', () => {
     }));
     expect(component.cancelModalOpen()).toBeFalse();
     expect(toastServiceSpy.success).toHaveBeenCalledWith(jasmine.stringMatching(/cancelled/i));
+  });
+
+  it('TC-FE-TRN-22: should open delete modal and delete tournament on confirm', () => {
+    const t = mockTournaments[0];
+    component.openDeleteModal(t);
+
+    expect(component.deleteModalOpen()).toBeTrue();
+    expect(component.selectedTournamentForDelete()).toEqual(t);
+
+    component.confirmDeleteTournament();
+
+    expect(tournamentAdminServiceSpy.deleteTournament).toHaveBeenCalledWith('tourn-01');
+    expect(toastServiceSpy.success).toHaveBeenCalledWith(jasmine.stringMatching(/deleted successfully/i));
+    expect(component.deleteModalOpen()).toBeFalse();
+  });
+
+  it('TC-FE-TRN-23: should reject create if endDate is before startDate or in past', () => {
+    component.openCreateModal();
+    component.createForm.patchValue({
+      name: 'Rocket League Open',
+      gameTitle: 'Rocket League',
+      startDate: '2027-11-10T10:00',
+      endDate: '2027-11-09T10:00', // Before startDate
+      registrationDeadline: '2027-11-08T10:00',
+      entryFee: 1500,
+      maxParticipants: 16
+    });
+
+    component.submitCreate();
+
+    expect(tournamentAdminServiceSpy.createTournament).not.toHaveBeenCalled();
+    expect(toastServiceSpy.error).toHaveBeenCalledWith('End date cannot be earlier than start date');
+  });
+
+  it('TC-FE-TRN-24: should return near hour string with 00 minutes', () => {
+    const nearHour = component.getNearHourDate(1, 0);
+    expect(nearHour).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:00$/);
+  });
+
+  it('TC-FE-TRN-25: should resolve original player name with proper fallbacks', () => {
+    expect(component.getPlayerDisplayName({
+      id: '1', tournamentId: 't1', userId: 'usr-123456', userName: 'Kamal Gunaratne', gamerTag: 'KamalX', registeredAt: '2026-10-01T00:00:00Z', status: 'CONFIRMED'
+    })).toBe('Kamal Gunaratne');
+
+    expect(component.getPlayerDisplayName({
+      id: '2', tournamentId: 't1', userId: 'usr-123456', userName: '', gamerTag: 'ProSniper', registeredAt: '2026-10-01T00:00:00Z', status: 'CONFIRMED'
+    })).toBe('ProSniper');
+
+    expect(component.getPlayerDisplayName({
+      id: '3', tournamentId: 't1', userId: 'usr-abcdef', userName: '', gamerTag: '', userEmail: 'chathura@gmail.com', registeredAt: '2026-10-01T00:00:00Z', status: 'CONFIRMED'
+    })).toBe('chathura');
+
+    expect(component.getPlayerDisplayName({
+      id: '4', tournamentId: 't1', userId: 'usr-987654321', userName: '', gamerTag: '', userEmail: '', registeredAt: '2026-10-01T00:00:00Z', status: 'CONFIRMED'
+    })).toBe('Player usr-98');
+  });
+
+  it('TC-FE-TRN-26: should load today registrations on init and compute current happening tournaments', () => {
+    expect(tournamentAdminServiceSpy.getTodayRegistrations).toHaveBeenCalled();
+    expect(component.todayRegistrations().length).toBe(2);
+    expect(component.todayRegistrations()[0].gamerTag).toBe('Kasun_FC');
+
+    const happening = component.currentHappeningTournaments();
+    expect(happening.length).toBe(1);
+    expect(happening[0].id).toBe('tourn-02');
+    expect(happening[0].name).toBe('Valorant Colombo Masters');
+  });
+
+  it('TC-FE-TRN-27: should refresh both tournaments and registrations on refreshAll', () => {
+    tournamentAdminServiceSpy.getTournaments.calls.reset();
+    tournamentAdminServiceSpy.getTodayRegistrations.calls.reset();
+
+    component.refreshAll();
+
+    expect(tournamentAdminServiceSpy.getTournaments).toHaveBeenCalledTimes(1);
+    expect(tournamentAdminServiceSpy.getTodayRegistrations).toHaveBeenCalledTimes(1);
   });
 });
 
