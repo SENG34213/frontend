@@ -1,16 +1,28 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal, WritableSignal } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { ProfileModalComponent } from './profile-modal.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { LoyaltyService } from '../../../core/services/loyalty.service';
 import { ToastService } from '../../ui/toast/toast.service';
 import { UserProfile } from '../../models/auth.model';
+import { LoyaltyTier } from '../../models/loyalty.model';
 
 describe('ProfileModalComponent', () => {
   let component: ProfileModalComponent;
   let fixture: ComponentFixture<ProfileModalComponent>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
   let toastServiceSpy: jasmine.SpyObj<ToastService>;
+  let loyaltyServiceMock: {
+    userTier: WritableSignal<LoyaltyTier>;
+    userPoints: WritableSignal<number>;
+    silverThreshold: WritableSignal<number>;
+    goldThreshold: WritableSignal<number>;
+    silverMultiplier: WritableSignal<number>;
+    goldMultiplier: WritableSignal<number>;
+  };
 
   const mockUserProfile: UserProfile = {
     id: 'user-1',
@@ -44,11 +56,23 @@ describe('ProfileModalComponent', () => {
 
     toastServiceSpy = jasmine.createSpyObj('ToastService', ['success', 'error', 'info', 'warning']);
 
+    loyaltyServiceMock = {
+      userTier: signal<LoyaltyTier>('SILVER'),
+      userPoints: signal<number>(1250),
+      silverThreshold: signal<number>(1000),
+      goldThreshold: signal<number>(3000),
+      silverMultiplier: signal<number>(1.25),
+      goldMultiplier: signal<number>(1.50)
+    };
+
     await TestBed.configureTestingModule({
       imports: [ProfileModalComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: AuthService, useValue: authServiceSpy },
-        { provide: ToastService, useValue: toastServiceSpy }
+        { provide: ToastService, useValue: toastServiceSpy },
+        { provide: LoyaltyService, useValue: loyaltyServiceMock }
       ]
     }).compileComponents();
 
@@ -61,6 +85,21 @@ describe('ProfileModalComponent', () => {
     expect(component).toBeTruthy();
     expect(component.isSaving()).toBeFalse();
     expect(component.errorMessage()).toBeNull();
+  });
+
+  it('should display loyalty tier and points badge with appropriate variant', () => {
+    expect(component.loyaltyTier()).toBe('SILVER');
+    expect(component.loyaltyPoints()).toBe(1250);
+    expect(component.tierBadgeVariant()).toBe('accent');
+
+    loyaltyServiceMock.userTier.set('GOLD');
+    expect(component.tierBadgeVariant()).toBe('warning');
+
+    loyaltyServiceMock.userTier.set('VIP');
+    expect(component.tierBadgeVariant()).toBe('warning');
+
+    loyaltyServiceMock.userTier.set('BRONZE');
+    expect(component.tierBadgeVariant()).toBe('info');
   });
 
   it('should populate fields on ngOnChanges when isOpen becomes true', () => {

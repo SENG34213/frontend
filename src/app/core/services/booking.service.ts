@@ -536,7 +536,11 @@ export class BookingService {
 
   submitReview(bookingId: string, rating: number, comment?: string, userName?: string): Observable<BookingReview> {
     const authorName = userName || this.auth.userProfile()?.fullName || this.auth.currentUser()?.fullName || undefined;
-    return this.api.post<BookingReview>(`/bookings/${bookingId}/review`, { rating, comment, userName: authorName });
+    const payload: { rating: number; comment?: string; userName?: string } = { rating, comment };
+    if (authorName) {
+      payload.userName = authorName;
+    }
+    return this.api.post<BookingReview>(`/bookings/${bookingId}/review`, payload);
   }
 
   getReviewByBooking(bookingId: string): Observable<BookingReview> {

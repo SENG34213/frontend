@@ -1,7 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
 import { LoginComponent } from './login.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { LoyaltyService } from '../../../core/services/loyalty.service';
 import { Router, ActivatedRoute, RouterLink, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -12,6 +15,7 @@ describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let loyaltyServiceSpy: jasmine.SpyObj<LoyaltyService>;
   let toastServiceSpy: jasmine.SpyObj<ToastService>;
   let router: Router;
   let routeSnapshotStub: { queryParamMap: { get: jasmine.Spy }; queryParams: Record<string, string> };
@@ -21,7 +25,15 @@ describe('LoginComponent', () => {
       isAuthenticated: jasmine.createSpy('isAuthenticated').and.returnValue(false)
     });
     authServiceSpy.isAdmin.and.returnValue(false);
-    toastServiceSpy = jasmine.createSpyObj('ToastService', ['error']);
+    toastServiceSpy = jasmine.createSpyObj('ToastService', ['error', 'info', 'success', 'warning']);
+
+    loyaltyServiceSpy = jasmine.createSpyObj('LoyaltyService', ['getBalance']);
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'u1',
+      pointsBalance: 1250,
+      tier: 'SILVER',
+      equivalentDiscountLkr: 1250
+    }));
 
     routeSnapshotStub = {
       queryParamMap: { get: jasmine.createSpy('get').and.returnValue(null) },
@@ -31,9 +43,12 @@ describe('LoginComponent', () => {
     await TestBed.configureTestingModule({
       imports: [LoginComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         provideRouter([]),
         { provide: AuthService, useValue: authServiceSpy },
         { provide: ToastService, useValue: toastServiceSpy },
+        { provide: LoyaltyService, useValue: loyaltyServiceSpy },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: routeSnapshotStub }

@@ -226,4 +226,102 @@ describe('ProfileComponent', () => {
     expect(progress.nextTier).toBe('SILVER');
     expect(progress.pointsNeeded).toBe(2000 - 1624); // 376
   });
+
+  it('should compute MAX TIER when points exceed goldThreshold', () => {
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 4000,
+      tier: 'GOLD',
+      equivalentDiscountLkr: 4000,
+      silverThreshold: 1000,
+      goldThreshold: 3000
+    }));
+
+    component.loadProfileData();
+    fixture.detectChanges();
+
+    const progress = component.nextTierProgress();
+    expect(progress.nextTier).toBe('MAX TIER');
+    expect(progress.pointsNeeded).toBe(0);
+    expect(progress.percent).toBe(100);
+  });
+
+  it('should display singular point label when exactly 1 point is needed for Gold', () => {
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 3000,
+      tier: 'SILVER',
+      equivalentDiscountLkr: 3000,
+      silverThreshold: 1000,
+      goldThreshold: 3000
+    }));
+
+    component.loadProfileData();
+    fixture.detectChanges();
+
+    const progress = component.nextTierProgress();
+    expect(progress.pointsNeeded).toBe(1);
+    expect(progress.label).toBe('1 point to unlock Gold');
+  });
+
+  it('should map badge variants, glow classes, and multiplier labels correctly for all tiers', () => {
+    // SILVER
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 1500,
+      tier: 'SILVER',
+      silverMultiplier: 1.25,
+      goldMultiplier: 1.50
+    }));
+    component.loadProfileData();
+    expect(component.tierBadgeVariant()).toBe('accent');
+    expect(component.tierIcon()).toBe('🥈');
+    expect(component.tierGlowClass()).toBe('tier-silver-ring');
+    expect(component.tierMultiplierLabel()).toContain('1.25x');
+
+    // GOLD
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 3500,
+      tier: 'GOLD',
+      silverMultiplier: 1.25,
+      goldMultiplier: 1.50
+    }));
+    component.loadProfileData();
+    expect(component.tierBadgeVariant()).toBe('warning');
+    expect(component.tierIcon()).toBe('🥇');
+    expect(component.tierGlowClass()).toBe('tier-gold-ring');
+    expect(component.tierMultiplierLabel()).toContain('1.5x');
+
+    // BRONZE
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 200,
+      tier: 'BRONZE',
+      silverMultiplier: 1.25,
+      goldMultiplier: 1.50
+    }));
+    component.loadProfileData();
+    expect(component.tierBadgeVariant()).toBe('info');
+    expect(component.tierIcon()).toBe('🥉');
+    expect(component.tierGlowClass()).toBe('tier-bronze-ring');
+    expect(component.tierMultiplierLabel()).toBe('1.0x Standard Points Rate');
+  });
+
+  it('should format dates gracefully and handle missing dates', () => {
+    expect(component.formatDate(undefined)).toBe('Active Member');
+    const formatted = component.formatDate('2026-09-02T10:00:00Z');
+    expect(formatted).toContain('2026');
+  });
+
+  it('should fallback discountValue to pointsBalance when equivalentDiscountLkr is null', () => {
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 500,
+      tier: 'BRONZE',
+      equivalentDiscountLkr: null as any
+    }));
+    component.loadProfileData();
+    expect(component.discountValue()).toBe(500);
+  });
 });
