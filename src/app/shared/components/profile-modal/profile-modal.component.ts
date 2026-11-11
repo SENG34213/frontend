@@ -4,6 +4,7 @@ import {
   Output,
   EventEmitter,
   signal,
+  computed,
   inject,
   OnChanges,
   SimpleChanges
@@ -11,12 +12,14 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
+import { LoyaltyService } from '../../../core/services/loyalty.service';
 import { ToastService } from '../../ui/toast/toast.service';
 import { UserProfile } from '../../../shared/models/auth.model';
+import { LoyaltyTier } from '../../../shared/models/loyalty.model';
 import { ImageUploaderComponent } from '../image-uploader/image-uploader.component';
 import { ModalComponent } from '../../ui/modal/modal.component';
 import { ButtonComponent } from '../../ui/button/button.component';
-import { BadgeComponent } from '../../ui/badge/badge.component';
+import { BadgeComponent, BadgeVariant } from '../../ui/badge/badge.component';
 
 @Component({
   selector: 'gc-profile-modal',
@@ -34,6 +37,7 @@ import { BadgeComponent } from '../../ui/badge/badge.component';
 })
 export class ProfileModalComponent implements OnChanges {
   readonly authService = inject(AuthService);
+  readonly loyaltyService = inject(LoyaltyService);
   private readonly toast = inject(ToastService);
 
   @Input() isOpen = false;
@@ -46,6 +50,21 @@ export class ProfileModalComponent implements OnChanges {
   readonly avatarUrl = signal<string>('');
   readonly email = signal<string>('');
   readonly role = signal<string>('CUSTOMER');
+
+  readonly loyaltyTier = computed<LoyaltyTier>(() => this.loyaltyService.userTier());
+  readonly loyaltyPoints = computed<number>(() => this.loyaltyService.userPoints());
+  readonly tierBadgeVariant = computed<BadgeVariant>(() => {
+    switch (this.loyaltyTier()) {
+      case 'GOLD':
+      case 'VIP':
+        return 'warning';
+      case 'SILVER':
+        return 'accent';
+      case 'BRONZE':
+      default:
+        return 'info';
+    }
+  });
 
   readonly isSaving = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);

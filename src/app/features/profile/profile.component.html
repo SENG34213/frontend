@@ -1,8 +1,12 @@
 <div class="page-container container">
   <!-- Page Header -->
   <header class="page-header">
-    <h1 class="page-title">My <span class="text-gradient">Profile</span></h1>
-    <p class="page-subtitle">View and manage your account details and loyalty status</p>
+    <div class="header-badge">
+      <span class="live-pulse-dot" aria-hidden="true"></span>
+      <span class="badge-tag">GAMER IDENTITY &amp; REWARDS HUB</span>
+    </div>
+    <h1 class="page-title">PLAYER <span class="text-gradient">PROFILE</span></h1>
+    <p class="page-subtitle">Manage your personal credentials, castle loyalty rank, and gaming preferences</p>
   </header>
 
   <!-- Error State with Retry -->
@@ -18,131 +22,326 @@
     </gc-card>
   } @else if (isLoading()) {
     <!-- Loading Skeletons -->
-    <div class="profile-grid">
-      <gc-card class="profile-card">
+    <div class="skeleton-profile-container">
+      <gc-card class="profile-card skeleton-card">
         <div class="skeleton-profile-header">
-          <gc-skeleton shape="circle" width="100px" height="100px"></gc-skeleton>
+          <gc-skeleton shape="circle" width="104px" height="104px"></gc-skeleton>
           <div class="skeleton-lines">
-            <gc-skeleton shape="text" width="60%" height="28px"></gc-skeleton>
-            <gc-skeleton shape="text" width="40%" height="18px"></gc-skeleton>
-            <gc-skeleton shape="rect" width="80px" height="24px"></gc-skeleton>
+            <gc-skeleton shape="text" width="55%" height="32px"></gc-skeleton>
+            <gc-skeleton shape="text" width="35%" height="18px"></gc-skeleton>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+              <gc-skeleton shape="rect" width="100px" height="26px"></gc-skeleton>
+              <gc-skeleton shape="rect" width="80px" height="26px"></gc-skeleton>
+            </div>
           </div>
         </div>
         <div class="skeleton-details">
-          <gc-skeleton shape="rect" width="100%" height="45px"></gc-skeleton>
-          <gc-skeleton shape="rect" width="100%" height="45px"></gc-skeleton>
-          <gc-skeleton shape="rect" width="100%" height="45px"></gc-skeleton>
+          <gc-skeleton shape="rect" width="100%" height="56px"></gc-skeleton>
+          <gc-skeleton shape="rect" width="100%" height="56px"></gc-skeleton>
         </div>
       </gc-card>
     </div>
   } @else {
     @if (profile(); as user) {
-      <!-- Main Profile Content -->
-      <div class="profile-layout">
-      <!-- Account Overview Card -->
-      <gc-card [glow]="'blue'" class="profile-card">
-        <div class="profile-hero">
-          <!-- Large Avatar -->
-          <div class="large-avatar">
-            @if (avatarImageUrl()) {
-              <img
-                [src]="avatarImageUrl()"
-                [alt]="user.fullName"
-                class="avatar-photo"
-                (error)="onImageError()" />
-            } @else {
-              <span class="avatar-letter">{{ userInitial() }}</span>
-            }
+      <!-- Main Profile Layout -->
+      <div class="profile-layout-wrapper">
+
+        <!-- 1. Top Hero Identity Card (Banner + Avatar + Tier + Quick Edit) -->
+        <article class="gamer-hero-card" [class]="tierGlowClass()">
+          <div class="hero-banner-accent"></div>
+          
+          <div class="gamer-hero-body">
+            <!-- Large Tier-Glowing Avatar -->
+            <div class="gamer-avatar-box" [class]="tierGlowClass()">
+              @if (avatarImageUrl()) {
+                <img
+                  [src]="avatarImageUrl()"
+                  [alt]="user.fullName"
+                  class="avatar-photo"
+                  (error)="onImageError()" />
+              } @else {
+                <span class="avatar-letter">{{ userInitial() }}</span>
+              }
+              <span class="avatar-tier-icon" [title]="loyaltyTier() + ' Tier Member'">{{ tierIcon() }}</span>
+            </div>
+
+            <!-- Player Meta Information -->
+            <div class="gamer-hero-info">
+              <div class="name-tier-row">
+                <h2 class="user-fullname">{{ user.fullName || 'Gaming Castle Combatant' }}</h2>
+                
+                <div class="badges-flex">
+                  <gc-badge [variant]="tierBadgeVariant()" [showDot]="false" class="tier-pill">
+                    {{ tierIcon() }} {{ loyaltyTier() }} TIER
+                  </gc-badge>
+                  @if (user.role === 'ADMIN') {
+                    <gc-badge variant="accent" [showDot]="false">ADMIN</gc-badge>
+                  }
+                </div>
+              </div>
+
+              <div class="meta-row">
+                <span class="gamer-id-tag">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/>
+                  </svg>
+                  {{ memberId() }}
+                </span>
+
+                <span class="meta-separator">•</span>
+
+                <span class="user-email">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                  {{ user.email }}
+                </span>
+
+                <span class="meta-separator">•</span>
+
+                <span class="member-since">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  Joined {{ formatDate(user.createdAt) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Action: Edit Profile -->
+            <div class="gamer-hero-action">
+              <gc-button
+                variant="primary"
+                size="md"
+                (btnClick)="openEditModal()"
+                aria-label="Edit Profile Details">
+                <span class="btn-content-flex">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  <span>EDIT PROFILE</span>
+                </span>
+              </gc-button>
+            </div>
+          </div>
+        </article>
+
+        <!-- 2. Dual Column Content Layout -->
+        <div class="profile-two-col">
+
+          <!-- Left Main Column: Loyalty Rank & Account Credentials -->
+          <div class="col-main">
+
+            <!-- Loyalty Status & Tier Progression Card -->
+            <section class="profile-subcard loyalty-subcard" aria-labelledby="loyalty-subcard-title">
+              <div class="subcard-header">
+                <div class="subcard-title-group">
+                  <span class="subcard-icon">👑</span>
+                  <div>
+                    <h3 id="loyalty-subcard-title" class="subcard-title">CASTLE LOYALTY STATUS</h3>
+                    <p class="subcard-subtitle">Accumulate combat points with every hour played</p>
+                  </div>
+                </div>
+
+                <gc-badge [variant]="tierBadgeVariant()" [showDot]="false">
+                  {{ tierIcon() }} {{ loyaltyTier() }} MEMBER
+                </gc-badge>
+              </div>
+
+              <!-- Points Balance & Discount Display -->
+              <div class="points-hero-grid">
+                <div class="points-metric-box">
+                  <span class="metric-label">AVAILABLE POINTS</span>
+                  <div class="metric-number text-gradient">
+                    {{ pointsBalance() | number }} <span class="pts-unit">PTS</span>
+                  </div>
+                  <span class="metric-hint">1 point per LKR 100 spent</span>
+                </div>
+
+                <div class="points-metric-box">
+                  <span class="metric-label">REDEEMABLE CASH VALUE</span>
+                  <div class="metric-number metric-cash">
+                    LKR {{ discountValue() | number:'1.2-2' }}
+                  </div>
+                  <span class="metric-hint">Apply at booking checkout</span>
+                </div>
+              </div>
+
+              <!-- Tier Progression Bar -->
+              <div class="tier-progression-wrap">
+                <div class="progression-header">
+                  <span class="prog-target-label">
+                    Tier Progress: <strong>{{ nextTierProgress().label }}</strong>
+                  </span>
+                  <span class="prog-pct">{{ nextTierProgress().percent }}%</span>
+                </div>
+
+                <div class="prog-bar-track">
+                  <div
+                    class="prog-bar-fill"
+                    [class]="tierGlowClass()"
+                    [style.width.%]="nextTierProgress().percent">
+                  </div>
+                </div>
+
+                <div class="tier-milestones">
+                  <span class="milestone" [class.achieved]="pointsBalance() >= 0">
+                    <span class="ms-dot"></span> Bronze (&lt; {{ silverThreshold() | number }} pts)
+                  </span>
+                  <span class="milestone" [class.achieved]="pointsBalance() >= silverThreshold()">
+                    <span class="ms-dot"></span> Silver ({{ silverThreshold() | number }} - {{ goldThreshold() | number }} pts)
+                  </span>
+                  <span class="milestone" [class.achieved]="pointsBalance() > goldThreshold()">
+                    <span class="ms-dot"></span> Gold (&gt; {{ goldThreshold() | number }} pts)
+                  </span>
+                </div>
+              </div>
+
+              <!-- Active Tier Perks & Multiplier -->
+              <div class="tier-perks-box">
+                <div class="perks-headline">
+                  <span class="multiplier-tag">⚡ {{ tierMultiplierLabel() }}</span>
+                  <span class="perks-sub">Tier benefits applied automatically:</span>
+                </div>
+
+                <ul class="perks-list">
+                  @if (loyaltyTier() === 'GOLD' || loyaltyTier() === 'VIP') {
+                    <li><span class="check-icon">✓</span> <strong>{{ goldMultiplier() }}x Point Multiplier</strong> on all PS5 bookings and tournament fees</li>
+                    <li><span class="check-icon">✓</span> <strong>Priority Console Access:</strong> Guaranteed PS5 Pro station reservations</li>
+                    <li><span class="check-icon">✓</span> <strong>VIP Tournament Seeding:</strong> Automatic entry confirmation</li>
+                  } @else if (loyaltyTier() === 'SILVER') {
+                    <li><span class="check-icon">✓</span> <strong>{{ silverMultiplier() }}x Point Multiplier</strong> on every gaming session</li>
+                    <li><span class="check-icon">✓</span> <strong>Priority Booking:</strong> Faster reservation confirmations</li>
+                    <li><span class="check-icon">✓</span> <strong>{{ silverThreshold() | number }}+ XP Club:</strong> Special event and bracket invites</li>
+                  } @else {
+                    <li><span class="check-icon">✓</span> <strong>1.0x Base Earning:</strong> Earn 1 point per LKR 100 spent</li>
+                    <li><span class="check-icon">✓</span> <strong>Instant Redemption:</strong> 100 points = LKR 100 off any reservation</li>
+                    <li><span class="check-icon">✓</span> Earn <strong>{{ nextTierProgress().pointsNeeded | number }} more points</strong> to unlock Silver Tier</li>
+                  }
+                </ul>
+              </div>
+
+              <!-- Loyalty Action Buttons -->
+              <div class="subcard-actions">
+                <a routerLink="/loyalty" class="subcard-link-btn">
+                  View Full Loyalty Ledger &amp; History &rarr;
+                </a>
+                <gc-button variant="outline" size="sm" routerLink="/bookings">
+                  Book A Station
+                </gc-button>
+              </div>
+            </section>
+
+            <!-- Personal Account Credentials Card -->
+            <section class="profile-subcard credentials-subcard" aria-labelledby="creds-subcard-title">
+              <div class="subcard-header">
+                <div class="subcard-title-group">
+                  <span class="subcard-icon">🛡️</span>
+                  <div>
+                    <h3 id="creds-subcard-title" class="subcard-title">ACCOUNT CREDENTIALS</h3>
+                    <p class="subcard-subtitle">Verified player security and contact information</p>
+                  </div>
+                </div>
+
+                <gc-badge [variant]="user.enabled !== false ? 'success' : 'danger'">
+                  {{ user.enabled !== false ? 'Verified & Active' : 'Suspended' }}
+                </gc-badge>
+              </div>
+
+              <div class="credentials-grid">
+                <div class="cred-cell">
+                  <span class="cred-label">Full Name</span>
+                  <span class="cred-value">{{ user.fullName || '—' }}</span>
+                </div>
+
+                <div class="cred-cell">
+                  <span class="cred-label">Email Address</span>
+                  <div class="cred-with-badge">
+                    <span class="cred-value">{{ user.email }}</span>
+                    <span class="verified-dot-tag">Verified</span>
+                  </div>
+                </div>
+
+                <div class="cred-cell">
+                  <span class="cred-label">Phone Number</span>
+                  <span class="cred-value">{{ user.phoneNumber || 'Not provided (add in edit)' }}</span>
+                </div>
+
+                <div class="cred-cell">
+                  <span class="cred-label">Account Security</span>
+                  <span class="cred-value text-available">JWT Protected Session</span>
+                </div>
+              </div>
+            </section>
+
           </div>
 
-          <div class="profile-hero-info">
-            <div class="name-badge-row">
-              <h2 class="user-fullname">{{ user.fullName || 'Gaming Castle Player' }}</h2>
-              <gc-badge [variant]="user.role === 'ADMIN' ? 'accent' : 'primary'" [showDot]="false">
-                {{ user.role }}
-              </gc-badge>
-            </div>
-            <p class="user-email-text">{{ user.email }}</p>
-            <div class="status-row">
-              <gc-badge [variant]="user.enabled !== false ? 'success' : 'danger'">
-                {{ user.enabled !== false ? 'Active Account' : 'Inactive' }}
-              </gc-badge>
-              <span class="member-since">Member since {{ formatDate(user.createdAt) }}</span>
-            </div>
+          <!-- Right Sidebar Column: Quick Navigation & Castle Concierge -->
+          <div class="col-sidebar">
+
+            <!-- Quick Navigation Hub Card -->
+            <section class="profile-subcard shortcuts-subcard" aria-labelledby="shortcuts-title">
+              <div class="subcard-header">
+                <h3 id="shortcuts-title" class="subcard-title">QUICK ACCESS</h3>
+              </div>
+
+              <nav class="shortcuts-list" aria-label="Player profile shortcuts">
+                <a routerLink="/my-bookings" class="shortcut-item">
+                  <div class="shortcut-icon-box">🎮</div>
+                  <div class="shortcut-text">
+                    <span class="shortcut-name">My Bookings</span>
+                    <span class="shortcut-desc">View and manage reserved gaming stations</span>
+                  </div>
+                  <span class="shortcut-arrow">→</span>
+                </a>
+
+                <a routerLink="/my-tournaments" class="shortcut-item">
+                  <div class="shortcut-icon-box">🏆</div>
+                  <div class="shortcut-text">
+                    <span class="shortcut-name">My Tournaments</span>
+                    <span class="shortcut-desc">Registered brackets and match schedules</span>
+                  </div>
+                  <span class="shortcut-arrow">→</span>
+                </a>
+
+                <a routerLink="/loyalty" class="shortcut-item">
+                  <div class="shortcut-icon-box">💎</div>
+                  <div class="shortcut-text">
+                    <span class="shortcut-name">Points &amp; Rewards</span>
+                    <span class="shortcut-desc">Transaction audits and redemption vouchers</span>
+                  </div>
+                  <span class="shortcut-arrow">→</span>
+                </a>
+              </nav>
+            </section>
+
+            <!-- Castle Support & Session Help Card -->
+            <section class="profile-subcard support-subcard" aria-labelledby="support-card-title">
+              <div class="subcard-header">
+                <h3 id="support-card-title" class="subcard-title">CASTLE CONCIERGE</h3>
+              </div>
+
+              <div class="support-body">
+                <p class="support-text">
+                  Experiencing hardware drift or need custom tournament lobby assistance? Our lounge floor team is ready.
+                </p>
+
+                <div class="support-badge-row">
+                  <span class="station-chip">PS5 Pro Gear</span>
+                  <span class="station-chip">144Hz Displays</span>
+                </div>
+
+                <a routerLink="/info/support" class="support-cta-link">
+                  Open Support Channel &rarr;
+                </a>
+              </div>
+            </section>
+
           </div>
 
-          <div class="profile-hero-action">
-            <gc-button
-              variant="primary"
-              size="md"
-              (btnClick)="openEditModal()"
-              aria-label="Edit Profile Details">
-              ✏️ Edit Profile
-            </gc-button>
-          </div>
         </div>
 
-        <div class="details-divider"></div>
-
-        <!-- Details Grid -->
-        <div class="profile-details-grid">
-          <div class="detail-item">
-            <span class="detail-label">Full Name</span>
-            <span class="detail-value">{{ user.fullName || '—' }}</span>
-          </div>
-
-          <div class="detail-item">
-            <span class="detail-label">Email Address</span>
-            <span class="detail-value">{{ user.email }}</span>
-          </div>
-
-          <div class="detail-item">
-            <span class="detail-label">Phone Number</span>
-            <span class="detail-value">{{ user.phoneNumber || 'Not provided' }}</span>
-          </div>
-
-          <div class="detail-item">
-            <span class="detail-label">Account Status</span>
-            <span class="detail-value text-available">
-              {{ user.enabled !== false ? 'Verified & Active' : 'Suspended' }}
-            </span>
-          </div>
-        </div>
-      </gc-card>
-
-      <!-- Small Loyalty Summary Card -->
-      @if (loyalty(); as loy) {
-        <gc-card [glow]="'purple'" class="loyalty-summary-card">
-          <div class="loyalty-header">
-            <span class="loyalty-badge-icon">👑</span>
-            <div class="loyalty-titles">
-              <h3 class="card-title">Loyalty Status</h3>
-              <p class="card-subtitle">Your member tier & rewards</p>
-            </div>
-            <gc-badge [variant]="loy.tier === 'GOLD' || loy.tier === 'VIP' ? 'warning' : 'info'" [showDot]="false">
-              {{ loy.tier }} TIER
-            </gc-badge>
-          </div>
-
-          <div class="loyalty-stats-row">
-            <div class="loy-stat-box">
-              <span class="stat-number">{{ loy.pointsBalance | number }}</span>
-              <span class="stat-label">Points Balance</span>
-            </div>
-            <div class="loy-stat-box">
-              <span class="stat-number text-gradient">LKR {{ (loy.equivalentDiscountLkr || loy.pointsBalance) | number }}</span>
-              <span class="stat-label">Discount Value</span>
-            </div>
-          </div>
-
-          <div class="loyalty-action">
-            <a routerLink="/loyalty" class="view-loyalty-link">
-              View Complete Loyalty History &rarr;
-            </a>
-          </div>
-        </gc-card>
-      }
-    </div>
+      </div>
     }
   }
 

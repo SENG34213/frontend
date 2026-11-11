@@ -89,9 +89,9 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
   readonly ruleRedeemStep = signal<number>(10);
   readonly ruleMaxDiscountPercent = signal<number>(50);
   readonly ruleReservationTimeout = signal<number>(15);
-  readonly ruleSilverThreshold = signal<number>(500);
+  readonly ruleSilverThreshold = signal<number>(1000);
   readonly ruleSilverMultiplier = signal<number>(1.25);
-  readonly ruleGoldThreshold = signal<number>(1500);
+  readonly ruleGoldThreshold = signal<number>(3000);
   readonly ruleGoldMultiplier = signal<number>(1.5);
 
   // Preview adjusted balance

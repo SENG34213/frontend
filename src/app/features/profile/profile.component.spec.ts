@@ -34,7 +34,22 @@ describe('ProfileComponent', () => {
 
   beforeEach(async () => {
     userServiceSpy = jasmine.createSpyObj('UserService', ['getMyProfile']);
-    loyaltyServiceSpy = jasmine.createSpyObj('LoyaltyService', ['getBalance']);
+    loyaltyServiceSpy = jasmine.createSpyObj('LoyaltyService', [
+      'getBalance',
+      'refreshBalance',
+      'userTier',
+      'userPoints',
+      'silverThreshold',
+      'goldThreshold',
+      'silverMultiplier',
+      'goldMultiplier'
+    ]);
+    loyaltyServiceSpy.userTier.and.returnValue('SILVER');
+    loyaltyServiceSpy.userPoints.and.returnValue(1250);
+    loyaltyServiceSpy.silverThreshold.and.returnValue(1000);
+    loyaltyServiceSpy.goldThreshold.and.returnValue(3000);
+    loyaltyServiceSpy.silverMultiplier.and.returnValue(1.25);
+    loyaltyServiceSpy.goldMultiplier.and.returnValue(1.50);
     authServiceSpy = jasmine.createSpyObj('AuthService', ['getUserId', 'currentUser'], {
       currentUser: jasmine.createSpy('currentUser').and.returnValue({
         userId: 'usr-1',
@@ -159,5 +174,56 @@ describe('ProfileComponent', () => {
     expect(component.profile()?.fullName).toBe('Updated Kasun');
     expect(component.imageLoadFailed()).toBeFalse();
     expect(userServiceSpy.getMyProfile).toHaveBeenCalledWith(true);
+  });
+
+  it('should calculate SILVER tier and progress to GOLD for a user with 1624 points', () => {
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 1624,
+      tier: 'SILVER',
+      equivalentDiscountLkr: 1624,
+      silverThreshold: 1000,
+      goldThreshold: 3000,
+      silverMultiplier: 1.25,
+      goldMultiplier: 1.50
+    }));
+
+    component.loadProfileData();
+    fixture.detectChanges();
+
+    expect(component.loyaltyTier()).toBe('SILVER');
+    expect(component.pointsBalance()).toBe(1624);
+    expect(component.silverThreshold()).toBe(1000);
+    expect(component.goldThreshold()).toBe(3000);
+
+    const progress = component.nextTierProgress();
+    expect(progress.nextTier).toBe('GOLD');
+    expect(progress.pointsNeeded).toBe(3001 - 1624); // 1377
+    expect(progress.percent).toBe(Math.round(((1624 - 1000) / 2000) * 100)); // 31%
+  });
+
+  it('should dynamically update milestone thresholds from backend admin settings', () => {
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 1624,
+      tier: 'BRONZE',
+      equivalentDiscountLkr: 1624,
+      silverThreshold: 2000,
+      goldThreshold: 5000,
+      silverMultiplier: 1.30,
+      goldMultiplier: 1.60
+    }));
+
+    component.loadProfileData();
+    fixture.detectChanges();
+
+    expect(component.silverThreshold()).toBe(2000);
+    expect(component.goldThreshold()).toBe(5000);
+    expect(component.silverMultiplier()).toBe(1.30);
+    expect(component.goldMultiplier()).toBe(1.60);
+
+    const progress = component.nextTierProgress();
+    expect(progress.nextTier).toBe('SILVER');
+    expect(progress.pointsNeeded).toBe(2000 - 1624); // 376
   });
 });

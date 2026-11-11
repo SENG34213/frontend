@@ -85,12 +85,12 @@
 
       <!-- Role / Account Status -->
       <div class="form-group">
-        <span class="form-label">Account Tier</span>
+        <span class="form-label">Loyalty Tier &amp; Status</span>
         <div class="role-display">
-          <gc-badge [variant]="role() === 'ADMIN' ? 'accent' : 'primary'">
-            {{ role() }}
+          <gc-badge [variant]="tierBadgeVariant()" [showDot]="false">
+            {{ loyaltyTier() }} TIER
           </gc-badge>
-          <span class="status-indicator">● Active Member</span>
+          <span class="status-indicator">● {{ loyaltyPoints() | number }} Loyalty Points</span>
         </div>
       </div>
     </div>

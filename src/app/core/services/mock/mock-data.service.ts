@@ -55,11 +55,13 @@ export class MockDataService {
   }
 
   getLoyaltyBalance(userId = ''): Observable<LoyaltyBalanceDto> {
+    const pointsBalance = 0;
+    const tier = pointsBalance > 3000 ? 'GOLD' : pointsBalance >= 1000 ? 'SILVER' : 'BRONZE';
     return of({
       userId,
-      pointsBalance: 0,
-      tier: 'BRONZE',
-      equivalentDiscountLkr: 0
+      pointsBalance,
+      tier,
+      equivalentDiscountLkr: pointsBalance
     });
   }
 

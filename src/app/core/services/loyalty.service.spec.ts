@@ -16,8 +16,12 @@ describe('LoyaltyService', () => {
   const mockBalance: LoyaltyBalanceDto = {
     userId: 'usr-customer-1',
     pointsBalance: 1250,
-    tier: 'GOLD',
-    equivalentDiscountLkr: 1250
+    tier: 'SILVER',
+    equivalentDiscountLkr: 1250,
+    silverThreshold: 1000,
+    goldThreshold: 3000,
+    silverMultiplier: 1.25,
+    goldMultiplier: 1.50
   };
 
   const mockTransaction: LoyaltyTransactionDto = {
@@ -52,20 +56,65 @@ describe('LoyaltyService', () => {
   });
 
   describe('getBalance()', () => {
-    it('should call api.get when useMocks is false', (done) => {
+    it('should call api.get and resolve SILVER for 1250 points with default thresholds', (done) => {
       const orig = environment.useMocks;
       environment.useMocks = false;
       apiSpy.get.and.returnValue(of({
         userId: 'usr-customer-1',
         pointsBalance: 1250,
-        tier: 'GOLD',
-        equivalentDiscount: 1250
+        tier: 'BRONZE',
+        equivalentDiscount: 1250,
+        silverThreshold: 1000,
+        goldThreshold: 3000
       }));
 
       service.getBalance('usr-customer-1').subscribe((res) => {
         expect(apiSpy.get).toHaveBeenCalledWith('/loyalty/balance/usr-customer-1');
         expect(res.pointsBalance).toBe(1250);
-        expect(res.tier).toBe('GOLD');
+        expect(res.tier).toBe('SILVER');
+        environment.useMocks = orig;
+        done();
+      });
+    });
+
+    it('should correctly resolve SILVER tier for 1624 points (1000 <= 1624 <= 3000)', (done) => {
+      const orig = environment.useMocks;
+      environment.useMocks = false;
+      apiSpy.get.and.returnValue(of({
+        userId: 'usr-customer-1',
+        pointsBalance: 1624,
+        tier: 'BRONZE',
+        equivalentDiscount: 1624,
+        silverThreshold: 1000,
+        goldThreshold: 3000
+      }));
+
+      service.getBalance('usr-customer-1').subscribe((res) => {
+        expect(res.pointsBalance).toBe(1624);
+        expect(res.tier).toBe('SILVER');
+        environment.useMocks = orig;
+        done();
+      });
+    });
+
+    it('should dynamically adapt tier when admin changes thresholds from backend', (done) => {
+      const orig = environment.useMocks;
+      environment.useMocks = false;
+      // Admin changed silver threshold to 2000: 1624 is now BRONZE
+      apiSpy.get.and.returnValue(of({
+        userId: 'usr-customer-1',
+        pointsBalance: 1624,
+        tier: 'BRONZE',
+        equivalentDiscount: 1624,
+        silverThreshold: 2000,
+        goldThreshold: 5000
+      }));
+
+      service.getBalance('usr-customer-1').subscribe((res) => {
+        expect(res.pointsBalance).toBe(1624);
+        expect(res.tier).toBe('BRONZE');
+        expect(res.silverThreshold).toBe(2000);
+        expect(res.goldThreshold).toBe(5000);
         environment.useMocks = orig;
         done();
       });

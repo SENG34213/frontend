@@ -92,6 +92,42 @@
   justify-content: flex-end;
 }
 
+.navbar-loyalty-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  margin-right: 0.85rem;
+  background: rgba(19, 26, 44, 0.75);
+  border: 1px solid var(--gc-border-default);
+  border-radius: var(--gc-radius-full);
+  text-decoration: none;
+  transition: all var(--gc-transition-fast);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--gc-primary-light);
+    box-shadow: 0 0 14px var(--gc-primary-glow);
+    transform: translateY(-1px);
+  }
+
+  .pill-icon {
+    font-size: 0.95rem;
+  }
+
+  .pill-points {
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-family: var(--gc-font-display);
+    color: var(--gc-text-primary);
+    letter-spacing: 0.02em;
+  }
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+}
+
 // ─── Auth Skeleton (flash-prevention) ────────────────────────────────────────
 
 .auth-skeleton {
