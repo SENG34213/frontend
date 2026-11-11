@@ -214,7 +214,7 @@ describe('LoyaltyService', () => {
         goldMultiplier: 1.6
       }));
 
-      service.getRules().subscribe((rules) => {
+      service.getRules().subscribe(() => {
         expect(apiSpy.get).toHaveBeenCalledWith('/loyalty/rules');
         expect(service.silverThreshold()).toBe(800);
         expect(service.goldThreshold()).toBe(2500);

@@ -319,7 +319,7 @@ describe('ProfileComponent', () => {
       userId: 'usr-1',
       pointsBalance: 500,
       tier: 'BRONZE',
-      equivalentDiscountLkr: null as any
+      equivalentDiscountLkr: null
     }));
     component.loadProfileData();
     expect(component.discountValue()).toBe(500);
