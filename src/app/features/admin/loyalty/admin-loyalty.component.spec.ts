@@ -225,4 +225,27 @@ describe('AdminLoyaltyComponent', () => {
     expect(component.errorMessage()).toContain('DB connection failed');
     expect(component.isLoading()).toBeFalse();
   });
+
+  it('should filter accounts by searchTerm and tier, and clear filters on resetAccountFilters', () => {
+    component.searchTerm.set('Kasun');
+    component.applyAccountFilters();
+    expect(component.accounts().length).toBe(1);
+
+    component.searchTerm.set('NonExistentUser');
+    component.applyAccountFilters();
+    expect(component.accounts().length).toBe(0);
+
+    component.resetAccountFilters();
+    expect(component.searchTerm()).toBe('');
+    expect(component.selectedTier()).toBe('');
+    expect(component.accounts().length).toBe(1);
+
+    component.selectedTier.set('GOLD');
+    component.applyAccountFilters();
+    expect(component.accounts().length).toBe(0);
+
+    component.selectedTier.set('SILVER');
+    component.applyAccountFilters();
+    expect(component.accounts().length).toBe(1);
+  });
 });
