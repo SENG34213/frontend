@@ -51,6 +51,7 @@ export class DashboardComponent implements OnInit {
 
   readonly currentEvent = signal<TournamentViewItem | null>(null);
   readonly currentEventLoading = signal<boolean>(true);
+  readonly tournamentsError = signal<string | null>(null);
   readonly upcomingTournaments = signal<TournamentViewItem[]>([]);
 
   // ─── Reviews & Ratings Signals ──────────────────────────────────────────────
@@ -63,70 +64,7 @@ export class DashboardComponent implements OnInit {
   readonly showAllReviews = signal<boolean>(false);
   readonly REVIEWS_COLLAPSED_COUNT = 6; // 2 rows in a 3-column grid
 
-  readonly fallbackTournaments: TournamentViewItem[] = [
-    {
-      id: 'tourney-fc25',
-      name: 'EA Sports FC 25 Northern Cup',
-      gameTitle: 'EA Sports FC 25',
-      startDate: new Date(Date.now() + 86400000 * 3).toISOString(),
-      endDate: new Date(Date.now() + 86400000 * 3 + 14400000).toISOString(),
-      registrationDeadline: new Date(Date.now() + 86400000 * 2).toISOString(),
-      entryFee: 1500,
-      maxParticipants: 16,
-      participantCount: 10,
-      spotsLeft: 6,
-      progressPercent: 62,
-      isFull: false,
-      isClosingSoon: false,
-      status: 'REGISTRATION_OPEN',
-      isRegistrationOpen: true,
-      createdByAdminId: '00000000-0000-0000-0000-000000000001',
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: 'tourney-tekken8',
-      name: 'Tekken 8 Iron Fist Jaffna',
-      gameTitle: 'Tekken 8',
-      startDate: new Date(Date.now() + 86400000 * 5).toISOString(),
-      endDate: new Date(Date.now() + 86400000 * 5 + 18000000).toISOString(),
-      registrationDeadline: new Date(Date.now() + 86400000 * 4).toISOString(),
-      entryFee: 1000,
-      maxParticipants: 16,
-      participantCount: 12,
-      spotsLeft: 4,
-      progressPercent: 75,
-      isFull: false,
-      isClosingSoon: true,
-      status: 'REGISTRATION_OPEN',
-      isRegistrationOpen: true,
-      createdByAdminId: '00000000-0000-0000-0000-000000000001',
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: 'tourney-mk1',
-      name: 'Mortal Kombat 1 Showdown',
-      gameTitle: 'Mortal Kombat 1',
-      startDate: new Date(Date.now() + 86400000 * 7).toISOString(),
-      endDate: new Date(Date.now() + 86400000 * 7 + 14400000).toISOString(),
-      registrationDeadline: new Date(Date.now() + 86400000 * 6).toISOString(),
-      entryFee: 0,
-      maxParticipants: 8,
-      participantCount: 5,
-      spotsLeft: 3,
-      progressPercent: 62,
-      isFull: false,
-      isClosingSoon: false,
-      status: 'UPCOMING',
-      isRegistrationOpen: true,
-      createdByAdminId: '00000000-0000-0000-0000-000000000001',
-      createdAt: new Date().toISOString()
-    }
-  ];
-
-  readonly displayTournaments = computed(() => {
-    const list = this.upcomingTournaments();
-    return list.length > 0 ? list : this.fallbackTournaments;
-  });
+  readonly displayTournaments = computed(() => this.upcomingTournaments());
 
   // ─── Reviews Computations ──────────────────────────────────────────────────
   readonly averageRating = computed(() => {
@@ -255,6 +193,7 @@ export class DashboardComponent implements OnInit {
 
   loadCurrentEvent(): void {
     this.currentEventLoading.set(true);
+    this.tournamentsError.set(null);
     this.tournamentService.getTournaments().subscribe({
       next: (tournaments) => {
         if (tournaments && tournaments.length > 0) {
@@ -290,6 +229,7 @@ export class DashboardComponent implements OnInit {
       error: () => {
         this.upcomingTournaments.set([]);
         this.currentEvent.set(null);
+        this.tournamentsError.set('Unable to load tournaments at the moment.');
         this.currentEventLoading.set(false);
         this.cdr.markForCheck();
       }

@@ -24,6 +24,39 @@
   justify-content: center;
 }
 
+.empty-ticker {
+  justify-content: center;
+  background-color: var(--gc-bg-base);
+}
+
+.empty-viewport {
+  justify-content: center;
+}
+
+.empty-ticker-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.825rem;
+  color: var(--gc-text-secondary);
+  padding: 0 var(--gc-spacing-md);
+}
+
+.empty-ticker-link {
+  color: var(--gc-primary);
+  text-decoration: none;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  transition: color 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--gc-primary-light);
+    text-decoration: underline;
+  }
+}
+
 .ticker-skeleton-wrap {
   width: 100%;
   max-width: 1280px;

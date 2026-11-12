@@ -237,7 +237,7 @@ describe('TournamentTickerComponent', () => {
       expect(links[0].textContent).toContain('12 spots left');
     });
 
-    it('should render nothing when tournament list is empty', () => {
+    it('should showcase no upcoming tournaments when tournament list is empty', () => {
       tournamentServiceSpy.getTournaments.and.returnValue(of([]));
 
       fixture = TestBed.createComponent(TournamentTickerComponent);
@@ -248,10 +248,12 @@ describe('TournamentTickerComponent', () => {
       expect(component.tournaments().length).toBe(0);
 
       const compiled = fixture.nativeElement;
-      expect(compiled.querySelector('.tournament-ticker')).toBeNull();
+      const ticker = compiled.querySelector('.tournament-ticker.empty-ticker');
+      expect(ticker).toBeTruthy();
+      expect(ticker.textContent).toContain('No upcoming tournaments currently');
     });
 
-    it('should handle service error gracefully and render nothing', () => {
+    it('should handle service error gracefully and showcase no upcoming tournaments', () => {
       tournamentServiceSpy.getTournaments.and.returnValue(throwError(() => new Error('Network error')));
 
       fixture = TestBed.createComponent(TournamentTickerComponent);
@@ -262,7 +264,9 @@ describe('TournamentTickerComponent', () => {
       expect(component.tournaments().length).toBe(0);
 
       const compiled = fixture.nativeElement;
-      expect(compiled.querySelector('.tournament-ticker')).toBeNull();
+      const ticker = compiled.querySelector('.tournament-ticker.empty-ticker');
+      expect(ticker).toBeTruthy();
+      expect(ticker.textContent).toContain('No upcoming tournaments currently');
     });
 
     it('should scale animation duration based on item count', () => {

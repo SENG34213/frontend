@@ -217,13 +217,26 @@ describe('DashboardComponent', () => {
       expect(component.currentEvent()?.name).toBe('Earlier Cup');
     });
 
-    it('should set currentEvent to null and currentEventLoading to false on error', () => {
+    it('should set currentEvent to null, set tournamentsError, and empty displayTournaments on error', () => {
       mockTournamentService.getTournaments.and.returnValue(throwError(() => new Error('API error')));
 
       component.loadCurrentEvent();
 
       expect(component.currentEvent()).toBeNull();
       expect(component.currentEventLoading()).toBeFalse();
+      expect(component.tournamentsError()).toBe('Unable to load tournaments at the moment.');
+      expect(component.displayTournaments()).toEqual([]);
+    });
+
+    it('should set empty displayTournaments and null currentEvent when no tournaments exist', () => {
+      mockTournamentService.getTournaments.and.returnValue(of([]));
+
+      component.loadCurrentEvent();
+
+      expect(component.currentEvent()).toBeNull();
+      expect(component.currentEventLoading()).toBeFalse();
+      expect(component.tournamentsError()).toBeNull();
+      expect(component.displayTournaments()).toEqual([]);
     });
 
     it('should navigate to tournament detail on onEventClick with tournament', () => {
