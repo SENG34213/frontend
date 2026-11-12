@@ -29,15 +29,17 @@ describe('BookingService', () => {
 
   beforeEach(() => {
     apiSpy = jasmine.createSpyObj('ApiService', ['get', 'post', 'put', 'patch', 'delete']);
-    authSpy = jasmine.createSpyObj('AuthService', ['currentUser']);
+    authSpy = jasmine.createSpyObj('AuthService', ['currentUser', 'userProfile']);
 
     authSpy.currentUser.and.returnValue({
       sub: 'usr-test-123',
       userId: 'usr-test-123',
+      fullName: 'Kasun Perera',
       role: 'CUSTOMER',
       iat: 0,
       exp: 9999999999
     });
+    authSpy.userProfile.and.returnValue(null);
 
     TestBed.configureTestingModule({
       providers: [
@@ -673,6 +675,71 @@ describe('BookingService', () => {
       service.getStationRating('st-01').subscribe((res) => {
         expect(apiSpy.get).toHaveBeenCalledWith('/reviews/station/st-01/rating');
         expect(res).toEqual(mockRating);
+        done();
+      });
+    });
+
+    it('should submit a review with author userName when provided', (done) => {
+      const mockReview: BookingReview = {
+        id: 'rev-3',
+        bookingId: 'bk-999',
+        userId: 'usr-1',
+        userName: 'Kasun Perera',
+        rating: 5,
+        comment: 'Great game!',
+        createdAt: '2026-10-21T10:00:00Z'
+      };
+      apiSpy.post.and.returnValue(of(mockReview));
+
+      service.submitReview('bk-999', 5, 'Great game!', 'Kasun Perera').subscribe((res) => {
+        expect(apiSpy.post).toHaveBeenCalledWith('/bookings/bk-999/review', {
+          rating: 5,
+          comment: 'Great game!',
+          userName: 'Kasun Perera'
+        });
+        expect(res).toEqual(mockReview);
+        done();
+      });
+    });
+
+    it('should fetch recent reviews and resolve names from backend or current profile', (done) => {
+      const mockApiReviews: BookingReview[] = [
+        {
+          id: 'rev-1',
+          bookingId: 'bk-1',
+          userId: 'usr-test-123',
+          userName: 'Player #usr-t',
+          rating: 5,
+          comment: 'Amazing PS5 experience!',
+          createdAt: '2026-10-21T10:00:00Z'
+        },
+        {
+          id: 'rev-2',
+          bookingId: 'bk-2',
+          userId: 'usr-456',
+          userName: 'Dinesh S.',
+          rating: 4.5,
+          comment: 'Awesome station.',
+          createdAt: '2026-10-21T10:00:00Z'
+        }
+      ];
+      apiSpy.get.and.returnValue(of(mockApiReviews));
+
+      service.getRecentReviews().subscribe((reviews) => {
+        expect(apiSpy.get).toHaveBeenCalledWith('/reviews/recent');
+        expect(reviews.length).toBe(2);
+        expect(reviews[1].userName).toBe('Dinesh S.');
+        expect(reviews[0].featured).toBeTrue();
+        done();
+      });
+    });
+
+    it('should fallback to default seed reviews when getRecentReviews returns empty or fails', (done) => {
+      apiSpy.get.and.returnValue(throwError(() => new Error('Server down')));
+
+      service.getRecentReviews().subscribe((reviews) => {
+        expect(reviews.length).toBeGreaterThan(0);
+        expect(reviews[0].userName).toBeDefined();
         done();
       });
     });

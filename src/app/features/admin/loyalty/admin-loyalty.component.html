@@ -80,7 +80,7 @@
         <strong>Error:</strong>
         <p>{{ errorMessage() }}</p>
       </div>
-      <gc-button size="sm" variant="secondary" (btnClick)="loadAccounts()" (click)="loadAccounts()">
+      <gc-button size="sm" variant="secondary" (btnClick)="loadAccounts()">
         Retry
       </gc-button>
     </div>
@@ -116,12 +116,12 @@
           <option value="VIP">VIP Elite</option>
         </select>
 
-        <gc-button size="sm" variant="primary" (btnClick)="applyAccountFilters()" (click)="applyAccountFilters()">
+        <gc-button size="sm" variant="primary" (btnClick)="applyAccountFilters()">
           Filter
         </gc-button>
 
         @if (searchTerm() || selectedTier()) {
-          <gc-button size="sm" variant="secondary" (btnClick)="resetAccountFilters()" (click)="resetAccountFilters()">
+          <gc-button size="sm" variant="secondary" (btnClick)="resetAccountFilters()">
             Clear
           </gc-button>
         }

@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal, WritableSignal } from '@angular/core';
 import { of } from 'rxjs';
 import { CustomerLayoutComponent } from './customer-layout.component';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
+import { LoyaltyService } from '../services/loyalty.service';
 import { NotificationSocketService } from '../services/notification-socket.service';
 import { UserProfile } from '../../shared/models/user.model';
 
@@ -63,14 +65,37 @@ describe('CustomerLayoutComponent', () => {
       filteredNotifications: signal([])
     });
 
+    const loyaltyServiceMock = {
+      getBalance: jasmine.createSpy('getBalance').and.returnValue(of({
+        userId: 'usr-1',
+        pointsBalance: 1250,
+        tier: 'SILVER',
+        equivalentDiscountLkr: 1250
+      })),
+      getRules: jasmine.createSpy('getRules').and.returnValue(of({
+        silverThreshold: 1000,
+        goldThreshold: 3000,
+        silverMultiplier: 1.25,
+        goldMultiplier: 1.50
+      })),
+      userTier: signal('SILVER'),
+      userPoints: signal(1250),
+      silverThreshold: signal(1000),
+      goldThreshold: signal(3000),
+      silverMultiplier: signal(1.25),
+      goldMultiplier: signal(1.50)
+    };
+
     await TestBed.configureTestingModule({
       imports: [CustomerLayoutComponent],
       providers: [
         provideHttpClient(),
+        provideHttpClientTesting(),
         provideRouter([]),
         { provide: AuthService, useValue: authServiceSpy },
         { provide: UserService, useValue: userServiceSpy },
-        { provide: NotificationSocketService, useValue: notifSocketSpy }
+        { provide: NotificationSocketService, useValue: notifSocketSpy },
+        { provide: LoyaltyService, useValue: loyaltyServiceMock }
       ]
     }).compileComponents();
 

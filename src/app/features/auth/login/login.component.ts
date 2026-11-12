@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { LoyaltyService } from '../../../core/services/loyalty.service';
 import { ErrorMapper } from '../../../core/http/error-mapper';
 import { ApiError } from '../../../shared/models/api-response.model';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
@@ -30,6 +31,7 @@ import { sriLankanPhoneValidator } from '../../../shared/validators';
 export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   readonly authService = inject(AuthService);
+  private readonly loyaltyService = inject(LoyaltyService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -122,6 +124,17 @@ export class LoginComponent {
     login$.subscribe({
       next: () => {
         this.isSubmitting.set(false);
+        this.loyaltyService.getBalance().subscribe({
+          next: (bal) => {
+            const tierEmoji = bal.tier === 'GOLD' ? '🥇' : bal.tier === 'SILVER' ? '🥈' : '🥉';
+            this.toastService.info(
+              `Loyalty Status: ${bal.tier} Tier (${bal.pointsBalance} pts)`,
+              `Welcome ${tierEmoji}`
+            );
+          },
+          error: () => {}
+        });
+
         const returnUrl =
           this.route.snapshot.queryParamMap.get('returnUrl') ||
           this.route.snapshot.queryParams['returnUrl'];

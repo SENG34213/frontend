@@ -2,10 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { LoyaltyAdminService } from './loyalty-admin.service';
 import { ApiService } from '../../../core/services/api.service';
+import { LoyaltyService } from '../../../core/services/loyalty.service';
+import { MockDataService } from '../../../core/services/mock/mock-data.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { LoyaltyRules, AdminLoyaltyStatsResponse, PagedLoyaltyAccounts, LoyaltyTransactionDto } from '../../../shared/models';
 
 describe('LoyaltyAdminService', () => {
   let service: LoyaltyAdminService;
+  let loyaltyService: LoyaltyService;
   let apiSpy: jasmine.SpyObj<ApiService>;
 
   const mockRules: LoyaltyRules = {
@@ -24,13 +28,19 @@ describe('LoyaltyAdminService', () => {
 
   beforeEach(() => {
     apiSpy = jasmine.createSpyObj('ApiService', ['get', 'post', 'put']);
+    const mockDataSpy = jasmine.createSpyObj('MockDataService', ['getLoyaltyBalance']);
+    const authSpy = jasmine.createSpyObj('AuthService', ['getUserId']);
     TestBed.configureTestingModule({
       providers: [
         LoyaltyAdminService,
-        { provide: ApiService, useValue: apiSpy }
+        LoyaltyService,
+        { provide: ApiService, useValue: apiSpy },
+        { provide: MockDataService, useValue: mockDataSpy },
+        { provide: AuthService, useValue: authSpy }
       ]
     });
     service = TestBed.inject(LoyaltyAdminService);
+    loyaltyService = TestBed.inject(LoyaltyService);
   });
 
   it('should be created', () => {
@@ -53,6 +63,8 @@ describe('LoyaltyAdminService', () => {
     service.updateRules(mockRules).subscribe(rules => {
       expect(rules.pointValueLkr).toBe(1.0);
       expect(apiSpy.put).toHaveBeenCalledWith('/loyalty/admin/rules', mockRules);
+      expect(loyaltyService.silverThreshold()).toBe(500);
+      expect(loyaltyService.goldThreshold()).toBe(1500);
       done();
     });
   });

@@ -54,6 +54,7 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   private readonly userMap = new Map<string, { fullName: string; email: string; phoneNumber?: string }>();
+  private rawAccounts: LoyaltyAccountResponse[] = [];
 
   // ── Signals ────────────────────────────────────────────────────────────────
   readonly activeTab = signal<'accounts' | 'rules' | 'audit'>('accounts');
@@ -89,9 +90,9 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
   readonly ruleRedeemStep = signal<number>(10);
   readonly ruleMaxDiscountPercent = signal<number>(50);
   readonly ruleReservationTimeout = signal<number>(15);
-  readonly ruleSilverThreshold = signal<number>(500);
+  readonly ruleSilverThreshold = signal<number>(1000);
   readonly ruleSilverMultiplier = signal<number>(1.25);
-  readonly ruleGoldThreshold = signal<number>(1500);
+  readonly ruleGoldThreshold = signal<number>(3000);
   readonly ruleGoldMultiplier = signal<number>(1.5);
 
   // Preview adjusted balance
@@ -136,8 +137,8 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
               phoneNumber: u.phoneNumber
             });
           });
-          if (this.accounts().length > 0) {
-            this.accounts.update((accs) => this.enrichAccounts(accs));
+          if (this.rawAccounts.length > 0) {
+            this.filterAndSetAccounts();
           }
         }
       },
@@ -211,10 +212,8 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
 
     this.loyaltyService.getAccounts(filter).pipe(takeUntil(this.destroy$)).subscribe({
       next: paged => {
-        const enriched = this.enrichAccounts(paged.content || []);
-        this.accounts.set(enriched);
-        this.totalElements.set(paged.totalElements || enriched.length);
-        this.totalPages.set(paged.totalPages || 1);
+        this.rawAccounts = paged.content || [];
+        this.filterAndSetAccounts();
         this.isLoading.set(false);
       },
       error: err => {
@@ -222,6 +221,30 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
         this.isLoading.set(false);
       }
     });
+  }
+
+  private filterAndSetAccounts(): void {
+    const enriched = this.enrichAccounts(this.rawAccounts);
+    const term = (this.searchTerm() || '').trim().toLowerCase();
+    const tier = this.selectedTier();
+
+    let filtered = enriched;
+    if (term) {
+      filtered = filtered.filter(a =>
+        (a.userName && a.userName.toLowerCase().includes(term)) ||
+        (a.userEmail && a.userEmail.toLowerCase().includes(term)) ||
+        (a.phoneNumber && a.phoneNumber.toLowerCase().includes(term)) ||
+        (a.userId && a.userId.toLowerCase().includes(term)) ||
+        (a.id && a.id.toLowerCase().includes(term))
+      );
+    }
+    if (tier) {
+      filtered = filtered.filter(a => a.tier === tier);
+    }
+
+    this.accounts.set(filtered);
+    this.totalElements.set(filtered.length);
+    this.totalPages.set(Math.max(1, Math.ceil(filtered.length / this.pageSize())));
   }
 
   loadRules(): void {
@@ -268,6 +291,8 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
   applyAccountFilters(): void {
     this.page.set(0);
     this.updateQueryParams();
+    this.filterAndSetAccounts();
+    this.loadAccounts();
   }
 
   resetAccountFilters(): void {
@@ -275,6 +300,8 @@ export class AdminLoyaltyComponent implements OnInit, OnDestroy {
     this.selectedTier.set('');
     this.page.set(0);
     this.updateQueryParams();
+    this.filterAndSetAccounts();
+    this.loadAccounts();
   }
 
   // ── Manual Points Adjustment ──────────────────────────────────────────────

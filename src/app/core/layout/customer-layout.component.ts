@@ -15,7 +15,8 @@ import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { Subject, takeUntil, filter } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
-import { BadgeComponent } from '../../shared/ui/badge/badge.component';
+import { LoyaltyService } from '../services/loyalty.service';
+import { BadgeComponent, BadgeVariant } from '../../shared/ui/badge/badge.component';
 import { NotificationCenterComponent } from '../../shared/components/notification-center/notification-center.component';
 import { ProfileModalComponent } from '../../shared/components/profile-modal/profile-modal.component';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
@@ -41,6 +42,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
 export class CustomerLayoutComponent implements OnInit, OnDestroy {
   readonly authService = inject(AuthService);
   readonly userService = inject(UserService);
+  readonly loyaltyService = inject(LoyaltyService);
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService, { optional: true });
 
@@ -98,6 +100,21 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
     return this.authService.role() || 'CUSTOMER';
   });
 
+  readonly loyaltyTier = computed(() => this.loyaltyService.userTier());
+  readonly loyaltyPoints = computed(() => this.loyaltyService.userPoints());
+  readonly tierBadgeVariant = computed<BadgeVariant>(() => {
+    switch (this.loyaltyTier()) {
+      case 'GOLD':
+      case 'VIP':
+        return 'warning';
+      case 'SILVER':
+        return 'accent';
+      case 'BRONZE':
+      default:
+        return 'info';
+    }
+  });
+
   readonly avatarImageUrl = computed(() => {
     if (this.imageLoadFailed()) return null;
     const profile = this.userService.currentProfile();
@@ -109,9 +126,10 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
     // Use queueMicrotask so the skeleton renders for one frame before resolving
     queueMicrotask(() => this.authReady.set(true));
 
-    // Fetch profile once if authenticated (cached in UserService signal)
+    // Fetch profile and check loyalty points / tier if authenticated
     if (this.isUserAuthenticated()) {
       this.userService.getMyProfile().pipe(takeUntil(this.destroy$)).subscribe();
+      this.loyaltyService.getBalance().pipe(takeUntil(this.destroy$)).subscribe();
     }
 
     // Close menus on route change

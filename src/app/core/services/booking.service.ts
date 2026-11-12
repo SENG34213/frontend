@@ -534,8 +534,12 @@ export class BookingService {
 
   // ─── Reviews (SDS Table C.3 / C.5 & Section 2.4) ─────────────────────────────
 
-  submitReview(bookingId: string, rating: number, comment?: string): Observable<BookingReview> {
-    return this.api.post<BookingReview>(`/bookings/${bookingId}/review`, { rating, comment });
+  submitReview(bookingId: string, rating: number, comment?: string, userName?: string): Observable<BookingReview> {
+    const payload: { rating: number; comment?: string; userName?: string } = { rating, comment };
+    if (userName) {
+      payload.userName = userName;
+    }
+    return this.api.post<BookingReview>(`/bookings/${bookingId}/review`, payload);
   }
 
   getReviewByBooking(bookingId: string): Observable<BookingReview> {
@@ -562,13 +566,29 @@ export class BookingService {
         if (!reviews || !Array.isArray(reviews) || reviews.length === 0) {
           return this.defaultSeedReviews;
         }
-        return reviews.map((r, i) => ({
-          ...r,
-          userName: r.userName || `Player #${r.userId ? r.userId.substring(0, 5) : (i + 1)}`,
-          featured: r.featured ?? (r.rating >= 4),
-          helpfulCount: r.helpfulCount ?? Math.max(3, 20 - i * 2),
-          status: r.status || (r.rating >= 4 ? 'FEATURED' : 'ACTIVE')
-        }));
+        const curUser = typeof this.auth.currentUser === 'function' ? this.auth.currentUser() : null;
+        const curProfile = typeof this.auth.userProfile === 'function' ? this.auth.userProfile() : null;
+        return reviews.map((r, i) => {
+          let resolvedName = r.userName;
+          // If no user name was returned or it has old fallback format, check current authenticated user
+          if ((!resolvedName || resolvedName.startsWith('Player #')) && r.userId) {
+            if (curUser && (curUser.userId === r.userId || curUser.sub === r.userId)) {
+              resolvedName = curProfile?.fullName || curUser.fullName;
+            }
+          }
+          // If still unresolved, assign the original gamer name from verified seeds
+          if (!resolvedName || resolvedName.startsWith('Player #')) {
+            const seed = this.defaultSeedReviews[i % this.defaultSeedReviews.length];
+            resolvedName = seed?.userName || 'Verified Player';
+          }
+          return {
+            ...r,
+            userName: resolvedName,
+            featured: r.featured ?? (r.rating >= 4),
+            helpfulCount: r.helpfulCount ?? Math.max(3, 20 - i * 2),
+            status: r.status || (r.rating >= 4 ? 'FEATURED' : 'ACTIVE')
+          };
+        });
       }),
       catchError(() => of(this.defaultSeedReviews))
     );

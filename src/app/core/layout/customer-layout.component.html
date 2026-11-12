@@ -59,6 +59,11 @@
               <div class="mobile-user-text">
                 <span class="mobile-user-name">{{ userDisplayName() }}</span>
                 <span class="mobile-user-email">{{ userEmail() }}</span>
+                <div class="mobile-tier-badge" style="margin-top: 4px;">
+                  <gc-badge [variant]="tierBadgeVariant()" [showDot]="false">
+                    {{ loyaltyTier() }} TIER • {{ loyaltyPoints() | number }} PTS
+                  </gc-badge>
+                </div>
               </div>
             </div>
             <button type="button" class="mobile-signout-btn" (click)="onLogout()">
@@ -82,6 +87,15 @@
 
         @if (authReady()) {
           @if (isUserAuthenticated()) {
+            <!-- Loyalty Tier Pill in Navbar -->
+            <a routerLink="/loyalty" class="navbar-loyalty-pill" [attr.aria-label]="loyaltyTier() + ' Tier: ' + loyaltyPoints() + ' points'">
+              <span class="pill-icon">💎</span>
+              <span class="pill-points">{{ loyaltyPoints() | number }} pts</span>
+              <gc-badge [variant]="tierBadgeVariant()" [showDot]="false">
+                {{ loyaltyTier() }}
+              </gc-badge>
+            </a>
+
             <!-- Logged-in: Avatar + Chevron trigger + Dropdown -->
             <div class="avatar-menu-wrapper">
               <button
@@ -140,9 +154,12 @@
                       <div class="dropdown-user-name">{{ userDisplayName() }}</div>
                       <div class="dropdown-user-email">{{ userEmail() }}</div>
                       <div class="dropdown-user-badge">
-                        <gc-badge [variant]="authService.isAdmin() ? 'accent' : 'primary'" [showDot]="false">
-                          {{ userRole() }}
+                        <gc-badge [variant]="tierBadgeVariant()" [showDot]="false">
+                          {{ loyaltyTier() }} TIER
                         </gc-badge>
+                        @if (authService.isAdmin()) {
+                          <gc-badge variant="accent" [showDot]="false">ADMIN</gc-badge>
+                        }
                       </div>
                     </div>
                   </div>

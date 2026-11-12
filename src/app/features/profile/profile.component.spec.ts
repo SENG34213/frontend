@@ -34,7 +34,22 @@ describe('ProfileComponent', () => {
 
   beforeEach(async () => {
     userServiceSpy = jasmine.createSpyObj('UserService', ['getMyProfile']);
-    loyaltyServiceSpy = jasmine.createSpyObj('LoyaltyService', ['getBalance']);
+    loyaltyServiceSpy = jasmine.createSpyObj('LoyaltyService', [
+      'getBalance',
+      'refreshBalance',
+      'userTier',
+      'userPoints',
+      'silverThreshold',
+      'goldThreshold',
+      'silverMultiplier',
+      'goldMultiplier'
+    ]);
+    loyaltyServiceSpy.userTier.and.returnValue('SILVER');
+    loyaltyServiceSpy.userPoints.and.returnValue(1250);
+    loyaltyServiceSpy.silverThreshold.and.returnValue(1000);
+    loyaltyServiceSpy.goldThreshold.and.returnValue(3000);
+    loyaltyServiceSpy.silverMultiplier.and.returnValue(1.25);
+    loyaltyServiceSpy.goldMultiplier.and.returnValue(1.50);
     authServiceSpy = jasmine.createSpyObj('AuthService', ['getUserId', 'currentUser'], {
       currentUser: jasmine.createSpy('currentUser').and.returnValue({
         userId: 'usr-1',
@@ -49,6 +64,7 @@ describe('ProfileComponent', () => {
 
     userServiceSpy.getMyProfile.and.returnValue(of(mockProfile));
     loyaltyServiceSpy.getBalance.and.returnValue(of(mockLoyalty));
+    loyaltyServiceSpy.refreshBalance.and.returnValue(of(mockLoyalty));
 
     await TestBed.configureTestingModule({
       imports: [ProfileComponent],
@@ -78,15 +94,16 @@ describe('ProfileComponent', () => {
     const nameEl = fixture.nativeElement.querySelector('.user-fullname');
     expect(nameEl.textContent.trim()).toBe('Kasun Perera');
 
-    const emailEl = fixture.nativeElement.querySelector('.user-email-text');
-    expect(emailEl.textContent.trim()).toBe('player@gamingcastle.lk');
+    const emailEl = fixture.nativeElement.querySelector('.user-email') || fixture.nativeElement.querySelector('.cred-value');
+    expect(emailEl).toBeTruthy();
+    expect(emailEl.textContent).toContain('player@gamingcastle.lk');
   });
 
   it('should render uppercase initial letter when no avatar image URL is provided', () => {
     fixture.detectChanges();
     const avatarLetter = fixture.nativeElement.querySelector('.avatar-letter');
     expect(avatarLetter).toBeTruthy();
-    expect(avatarLetter.textContent.trim()).toBe('P');
+    expect(avatarLetter.textContent.trim()).toBe('K');
   });
 
   it('should render image when photo URL is present', () => {
@@ -114,7 +131,7 @@ describe('ProfileComponent', () => {
     expect(component.imageLoadFailed()).toBeTrue();
     const avatarLetter = fixture.nativeElement.querySelector('.avatar-letter');
     expect(avatarLetter).toBeTruthy();
-    expect(avatarLetter.textContent.trim()).toBe('P');
+    expect(avatarLetter.textContent.trim()).toBe('K');
   });
 
   it('should display error state when loading fails and allow retry', () => {
@@ -159,5 +176,154 @@ describe('ProfileComponent', () => {
     expect(component.profile()?.fullName).toBe('Updated Kasun');
     expect(component.imageLoadFailed()).toBeFalse();
     expect(userServiceSpy.getMyProfile).toHaveBeenCalledWith(true);
+  });
+
+  it('should calculate SILVER tier and progress to GOLD for a user with 1624 points', () => {
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 1624,
+      tier: 'SILVER',
+      equivalentDiscountLkr: 1624,
+      silverThreshold: 1000,
+      goldThreshold: 3000,
+      silverMultiplier: 1.25,
+      goldMultiplier: 1.50
+    }));
+
+    component.loadProfileData();
+    fixture.detectChanges();
+
+    expect(component.loyaltyTier()).toBe('SILVER');
+    expect(component.pointsBalance()).toBe(1624);
+    expect(component.silverThreshold()).toBe(1000);
+    expect(component.goldThreshold()).toBe(3000);
+
+    const progress = component.nextTierProgress();
+    expect(progress.nextTier).toBe('GOLD');
+    expect(progress.pointsNeeded).toBe(3001 - 1624); // 1377
+    expect(progress.percent).toBe(Math.round(((1624 - 1000) / 2000) * 100)); // 31%
+  });
+
+  it('should dynamically update milestone thresholds from backend admin settings', () => {
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 1624,
+      tier: 'BRONZE',
+      equivalentDiscountLkr: 1624,
+      silverThreshold: 2000,
+      goldThreshold: 5000,
+      silverMultiplier: 1.30,
+      goldMultiplier: 1.60
+    }));
+
+    component.loadProfileData();
+    fixture.detectChanges();
+
+    expect(component.silverThreshold()).toBe(2000);
+    expect(component.goldThreshold()).toBe(5000);
+    expect(component.silverMultiplier()).toBe(1.30);
+    expect(component.goldMultiplier()).toBe(1.60);
+
+    const progress = component.nextTierProgress();
+    expect(progress.nextTier).toBe('SILVER');
+    expect(progress.pointsNeeded).toBe(2000 - 1624); // 376
+  });
+
+  it('should compute MAX TIER when points exceed goldThreshold', () => {
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 4000,
+      tier: 'GOLD',
+      equivalentDiscountLkr: 4000,
+      silverThreshold: 1000,
+      goldThreshold: 3000
+    }));
+
+    component.loadProfileData();
+    fixture.detectChanges();
+
+    const progress = component.nextTierProgress();
+    expect(progress.nextTier).toBe('MAX TIER');
+    expect(progress.pointsNeeded).toBe(0);
+    expect(progress.percent).toBe(100);
+  });
+
+  it('should display singular point label when exactly 1 point is needed for Gold', () => {
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 3000,
+      tier: 'SILVER',
+      equivalentDiscountLkr: 3000,
+      silverThreshold: 1000,
+      goldThreshold: 3000
+    }));
+
+    component.loadProfileData();
+    fixture.detectChanges();
+
+    const progress = component.nextTierProgress();
+    expect(progress.pointsNeeded).toBe(1);
+    expect(progress.label).toBe('1 point to unlock Gold');
+  });
+
+  it('should map badge variants, glow classes, and multiplier labels correctly for all tiers', () => {
+    // SILVER
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 1500,
+      tier: 'SILVER',
+      silverMultiplier: 1.25,
+      goldMultiplier: 1.50
+    }));
+    component.loadProfileData();
+    expect(component.tierBadgeVariant()).toBe('accent');
+    expect(component.tierIcon()).toBe('🥈');
+    expect(component.tierGlowClass()).toBe('tier-silver-ring');
+    expect(component.tierMultiplierLabel()).toContain('1.25x');
+
+    // GOLD
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 3500,
+      tier: 'GOLD',
+      silverMultiplier: 1.25,
+      goldMultiplier: 1.50
+    }));
+    component.loadProfileData();
+    expect(component.tierBadgeVariant()).toBe('warning');
+    expect(component.tierIcon()).toBe('🥇');
+    expect(component.tierGlowClass()).toBe('tier-gold-ring');
+    expect(component.tierMultiplierLabel()).toContain('1.5x');
+
+    // BRONZE
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 200,
+      tier: 'BRONZE',
+      silverMultiplier: 1.25,
+      goldMultiplier: 1.50
+    }));
+    component.loadProfileData();
+    expect(component.tierBadgeVariant()).toBe('info');
+    expect(component.tierIcon()).toBe('🥉');
+    expect(component.tierGlowClass()).toBe('tier-bronze-ring');
+    expect(component.tierMultiplierLabel()).toBe('1.0x Standard Points Rate');
+  });
+
+  it('should format dates gracefully and handle missing dates', () => {
+    expect(component.formatDate(undefined)).toBe('Active Member');
+    const formatted = component.formatDate('2026-09-02T10:00:00Z');
+    expect(formatted).toContain('2026');
+  });
+
+  it('should fallback discountValue to pointsBalance when equivalentDiscountLkr is null', () => {
+    loyaltyServiceSpy.getBalance.and.returnValue(of({
+      userId: 'usr-1',
+      pointsBalance: 500,
+      tier: 'BRONZE',
+      equivalentDiscountLkr: null
+    }));
+    component.loadProfileData();
+    expect(component.discountValue()).toBe(500);
   });
 });

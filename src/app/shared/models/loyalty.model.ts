@@ -4,7 +4,12 @@ export interface LoyaltyBalanceDto {
   userId: string;
   pointsBalance: number;
   tier: LoyaltyTier;
-  equivalentDiscountLkr: number; // Conversion rate: 100 points = LKR 100 (or per rule)
+  equivalentDiscountLkr?: number | null; // Conversion rate: 100 points = LKR 100 (or per rule)
+  lifetimeEarned?: number;
+  silverThreshold?: number;
+  goldThreshold?: number;
+  silverMultiplier?: number;
+  goldMultiplier?: number;
 }
 
 export interface LoyaltyTransactionDto {
@@ -85,6 +90,10 @@ export interface LoyaltyAccountResponse {
   pointValue?: number;
   totalEarnedAllTime: number;
   totalRedeemedAllTime: number;
+  silverThreshold?: number;
+  goldThreshold?: number;
+  silverMultiplier?: number;
+  goldMultiplier?: number;
   updatedAt: string;
 }
 

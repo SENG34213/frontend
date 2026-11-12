@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
+import { LoyaltyService } from '../../../core/services/loyalty.service';
 import {
   LoyaltyRules,
   UpdateLoyaltyRulesRequest,
@@ -16,6 +17,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class LoyaltyAdminService {
   private readonly api = inject(ApiService);
+  private readonly loyaltyService = inject(LoyaltyService);
 
   private readonly adminBase = '/loyalty/admin';
 
@@ -32,7 +34,38 @@ export class LoyaltyAdminService {
    * Maps to PUT /api/loyalty/admin/rules
    */
   updateRules(rules: UpdateLoyaltyRulesRequest): Observable<LoyaltyRules> {
-    return this.api.put<LoyaltyRules>(`${this.adminBase}/rules`, rules);
+    return this.api.put<LoyaltyRules>(`${this.adminBase}/rules`, rules).pipe(
+      tap((saved) => {
+        if (saved) {
+          if (saved.silverThreshold != null) this.loyaltyService.silverThreshold.set(Number(saved.silverThreshold));
+          if (saved.goldThreshold != null) this.goldServiceSet(saved);
+          if (saved.silverMultiplier != null) this.loyaltyService.silverMultiplier.set(Number(saved.silverMultiplier));
+          if (saved.goldMultiplier != null) this.loyaltyService.goldMultiplier.set(Number(saved.goldMultiplier));
+          const cur = this.loyaltyService.currentBalance();
+          if (cur) {
+            const newTier = this.loyaltyService.calculateTier(
+              cur.pointsBalance,
+              Number(saved.silverThreshold),
+              Number(saved.goldThreshold)
+            );
+            this.loyaltyService.currentBalance.set({
+              ...cur,
+              tier: newTier,
+              silverThreshold: Number(saved.silverThreshold),
+              goldThreshold: Number(saved.goldThreshold),
+              silverMultiplier: Number(saved.silverMultiplier),
+              goldMultiplier: Number(saved.goldMultiplier)
+            });
+          }
+        }
+      })
+    );
+  }
+
+  private goldServiceSet(saved: LoyaltyRules): void {
+    if (saved.goldThreshold != null) {
+      this.loyaltyService.goldThreshold.set(Number(saved.goldThreshold));
+    }
   }
 
   /**
