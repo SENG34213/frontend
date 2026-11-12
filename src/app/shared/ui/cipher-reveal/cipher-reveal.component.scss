@@ -1,0 +1,55 @@
+:host {
+  display: inline;
+}
+
+.cipher-reveal-host {
+  display: inline;
+  position: relative;
+
+  &.interactive {
+    cursor: default;
+    outline: none;
+
+    &:focus-visible {
+      border-radius: var(--gc-radius-sm);
+      box-shadow: 0 0 0 2px var(--gc-primary);
+    }
+  }
+}
+
+.cipher-line {
+  display: inline;
+
+  &.hero-accent {
+    color: var(--gc-primary-light);
+  }
+
+  &.hero-gradient {
+    background: var(--gc-gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+.cipher-char {
+  display: inline;
+  transition: color 0.52s ease, opacity 0.12s ease;
+
+  &.scrambled {
+    color: var(--scramble-color, var(--gc-primary-light)) !important;
+    -webkit-text-fill-color: var(--scramble-color, var(--gc-primary-light)) !important;
+    opacity: var(--scramble-opacity, 0.85);
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.45);
+  }
+
+  &.resolved {
+    opacity: 1;
+  }
+}
+
+.cipher-break {
+  display: block;
+  content: "";
+}
+

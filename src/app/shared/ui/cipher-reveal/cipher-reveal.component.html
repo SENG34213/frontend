@@ -1,0 +1,28 @@
+<span
+  class="cipher-reveal-host"
+  [attr.aria-label]="fullText"
+  [class.interactive]="hover"
+  [attr.tabindex]="hover ? 0 : null"
+  role="text"
+  (mouseenter)="onMouseEnter()"
+  (focus)="onMouseEnter()"
+  (keydown.enter)="replay()">
+  @for (line of displayLines(); track $index) {
+    <span class="cipher-line" [ngClass]="line.class">
+      @for (char of line.chars; track $index) {
+        <span
+          class="cipher-char"
+          [class.scrambled]="char.isScrambled"
+          [class.resolved]="!char.isScrambled"
+          [style.--scramble-color]="char.isScrambled ? scrambleColor : null"
+          [style.--scramble-opacity]="char.isScrambled ? scrambleOpacity : null">
+          {{ char.displayChar }}
+        </span>
+      }
+    </span>
+    @if (!$last) {
+      <br class="cipher-break" />
+    }
+  }
+</span>
+

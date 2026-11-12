@@ -10,3 +10,6 @@ export * from './skeleton/skeleton.component';
 export * from './empty-state/empty-state.component';
 export * from './pagination/pagination.component';
 export * from './tabs/tabs.component';
+export * from './cipher-reveal/cipher-reveal.component';
+export * from './blinking-squares/blinking-squares.component';
+export * from './chrome-orbit/chrome-orbit.component';

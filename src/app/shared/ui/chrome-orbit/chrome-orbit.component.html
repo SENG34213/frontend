@@ -1,0 +1,44 @@
+<div
+  class="chrome-orbit-viewport"
+  [class.halo]="isHalo()"
+  [class.interactive]="interactive"
+  [style.--orbit-size.px]="size"
+  [style.--chrome-color]="chromeColor"
+  [style.--accent-color]="accentColor"
+  (click)="toggleHalo($event)">
+
+  <!-- 3D Gyroscope Stage -->
+  <div class="chrome-orbit-stage" aria-hidden="true">
+    <div class="orbit-ring ring-1">
+      <div class="ring-node node-1"></div>
+      <div class="ring-node node-2"></div>
+    </div>
+    <div class="orbit-ring ring-2">
+      <div class="ring-node node-1"></div>
+      <div class="ring-node node-2"></div>
+    </div>
+    <div class="orbit-ring ring-3">
+      <div class="ring-node node-1"></div>
+    </div>
+    @if (ringCount >= 4) {
+      <div class="orbit-ring ring-4">
+        <div class="ring-node node-1"></div>
+      </div>
+    }
+    <div class="orbit-core-glow"></div>
+  </div>
+
+  <!-- Projected Content (Center Chamber) -->
+  <div class="orbit-content">
+    <ng-content></ng-content>
+  </div>
+
+  <!-- Interactive Status Badge / Hint -->
+  @if (interactive) {
+    <div class="orbit-halo-indicator" [class.active]="isHalo()" (click)="toggleHalo()">
+      <span class="indicator-dot"></span>
+      <span>{{ isHalo() ? 'HALO ACTIVE' : 'GYROSCOPE ORBIT' }}</span>
+    </div>
+  }
+</div>
+
