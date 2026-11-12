@@ -37,10 +37,8 @@ export class ChromeOrbitComponent {
     if (event) {
       const target = event.target as HTMLElement;
       if (
-        target.closest('.hero-event-card') ||
-        target.closest('button') ||
-        target.closest('a') ||
-        target.closest('input')
+        target.closest('.orbit-content') ||
+        target.closest('.hero-event-card')
       ) {
         return;
       }

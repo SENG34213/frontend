@@ -63,7 +63,7 @@ function parseColor(color: string): { r: number; g: number; b: number } {
   return { r: 96, g: 165, b: 250 };
 }
 
-function hash2D(x: number, y: number, seed: number = 0): number {
+function hash2D(x: number, y: number, seed = 0): number {
   let h = seed ^ (x * 374761393) ^ (y * 668265263);
   h = (h ^ (h >> 13)) * 1274126177;
   return ((h ^ (h >> 16)) >>> 0) / 4294967296;
