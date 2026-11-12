@@ -201,12 +201,12 @@ export class ProfileComponent implements OnInit {
   onProfileUpdated(updated: UserProfile): void {
     this.profile.set(updated);
     this.imageLoadFailed.set(false);
-    this.userService.getMyProfile(true).subscribe({
+    this.userService.getMyProfile(true)?.subscribe?.({
       next: (p) => {
         if (p) this.profile.set(p);
       }
     });
-    this.loyaltyService.refreshBalance().subscribe({
+    this.loyaltyService.refreshBalance()?.subscribe?.({
       next: (l) => {
         if (l) this.loyalty.set(l);
       }

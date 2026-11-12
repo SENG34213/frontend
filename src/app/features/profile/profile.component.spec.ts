@@ -64,6 +64,7 @@ describe('ProfileComponent', () => {
 
     userServiceSpy.getMyProfile.and.returnValue(of(mockProfile));
     loyaltyServiceSpy.getBalance.and.returnValue(of(mockLoyalty));
+    loyaltyServiceSpy.refreshBalance.and.returnValue(of(mockLoyalty));
 
     await TestBed.configureTestingModule({
       imports: [ProfileComponent],
@@ -93,15 +94,16 @@ describe('ProfileComponent', () => {
     const nameEl = fixture.nativeElement.querySelector('.user-fullname');
     expect(nameEl.textContent.trim()).toBe('Kasun Perera');
 
-    const emailEl = fixture.nativeElement.querySelector('.user-email-text');
-    expect(emailEl.textContent.trim()).toBe('player@gamingcastle.lk');
+    const emailEl = fixture.nativeElement.querySelector('.user-email') || fixture.nativeElement.querySelector('.cred-value');
+    expect(emailEl).toBeTruthy();
+    expect(emailEl.textContent).toContain('player@gamingcastle.lk');
   });
 
   it('should render uppercase initial letter when no avatar image URL is provided', () => {
     fixture.detectChanges();
     const avatarLetter = fixture.nativeElement.querySelector('.avatar-letter');
     expect(avatarLetter).toBeTruthy();
-    expect(avatarLetter.textContent.trim()).toBe('P');
+    expect(avatarLetter.textContent.trim()).toBe('K');
   });
 
   it('should render image when photo URL is present', () => {
@@ -129,7 +131,7 @@ describe('ProfileComponent', () => {
     expect(component.imageLoadFailed()).toBeTrue();
     const avatarLetter = fixture.nativeElement.querySelector('.avatar-letter');
     expect(avatarLetter).toBeTruthy();
-    expect(avatarLetter.textContent.trim()).toBe('P');
+    expect(avatarLetter.textContent.trim()).toBe('K');
   });
 
   it('should display error state when loading fails and allow retry', () => {

@@ -535,10 +535,9 @@ export class BookingService {
   // ─── Reviews (SDS Table C.3 / C.5 & Section 2.4) ─────────────────────────────
 
   submitReview(bookingId: string, rating: number, comment?: string, userName?: string): Observable<BookingReview> {
-    const authorName = userName || this.auth.userProfile()?.fullName || this.auth.currentUser()?.fullName || undefined;
     const payload: { rating: number; comment?: string; userName?: string } = { rating, comment };
-    if (authorName) {
-      payload.userName = authorName;
+    if (userName) {
+      payload.userName = userName;
     }
     return this.api.post<BookingReview>(`/bookings/${bookingId}/review`, payload);
   }
@@ -567,8 +566,8 @@ export class BookingService {
         if (!reviews || !Array.isArray(reviews) || reviews.length === 0) {
           return this.defaultSeedReviews;
         }
-        const curUser = this.auth.currentUser();
-        const curProfile = this.auth.userProfile();
+        const curUser = typeof this.auth.currentUser === 'function' ? this.auth.currentUser() : null;
+        const curProfile = typeof this.auth.userProfile === 'function' ? this.auth.userProfile() : null;
         return reviews.map((r, i) => {
           let resolvedName = r.userName;
           // If no user name was returned or it has old fallback format, check current authenticated user

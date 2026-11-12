@@ -29,15 +29,17 @@ describe('BookingService', () => {
 
   beforeEach(() => {
     apiSpy = jasmine.createSpyObj('ApiService', ['get', 'post', 'put', 'patch', 'delete']);
-    authSpy = jasmine.createSpyObj('AuthService', ['currentUser']);
+    authSpy = jasmine.createSpyObj('AuthService', ['currentUser', 'userProfile']);
 
     authSpy.currentUser.and.returnValue({
       sub: 'usr-test-123',
       userId: 'usr-test-123',
+      fullName: 'Kasun Perera',
       role: 'CUSTOMER',
       iat: 0,
       exp: 9999999999
     });
+    authSpy.userProfile.and.returnValue(null);
 
     TestBed.configureTestingModule({
       providers: [

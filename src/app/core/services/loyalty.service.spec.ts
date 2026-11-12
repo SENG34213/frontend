@@ -275,7 +275,7 @@ describe('LoyaltyService', () => {
 
   describe('utilities', () => {
     it('should support refreshBalance and invalidateCache', () => {
-      spyOn(service, 'getBalance').and.callThrough();
+      spyOn(service, 'getBalance').and.returnValue(of(mockBalance));
       service.refreshBalance('usr-1');
       expect(service.getBalance).toHaveBeenCalledWith('usr-1');
 
