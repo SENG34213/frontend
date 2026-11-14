@@ -1,5 +1,22 @@
 <main class="home-page">
 
+  <!-- Full-Page Background: Blinking Squares -->
+  <div class="page-background-squares" aria-hidden="true">
+    <gc-blinking-squares
+      [direction]="'left'"
+      [gridSize]="72"
+      [squareSize]="0.28"
+      [fadeStart]="0.05"
+      [fadeEnd]="0.85"
+      [falloff]="1.1"
+      [minBrightness]="0.18"
+      [twinkleSpeed]="1.2"
+      [twinkleStrength]="0.92"
+      [opacity]="0.25"
+      [squareColor]="'#60a5fa'">
+    </gc-blinking-squares>
+  </div>
+
   <!-- News Ticker / Marquee Announcement Bar for upcoming tournaments -->
   <gc-tournament-ticker></gc-tournament-ticker>
 
@@ -34,9 +51,16 @@
         </div>
 
         <h1 id="hero-title" class="hero-headline">
-          THE ULTIMATE<br>
-          <span class="hero-accent">PS5</span><br>
-          <span class="hero-gradient">EXPERIENCE</span>
+          <gc-cipher-reveal
+            [lines]="[
+              { text: 'THE ULTIMATE' },
+              { text: 'PS5', class: 'hero-accent' },
+              { text: 'EXPERIENCE', class: 'hero-gradient' }
+            ]"
+            [duration]="1600"
+            [delay]="150"
+            [hover]="true">
+          </gc-cipher-reveal>
         </h1>
 
         <p class="hero-sub">
@@ -64,75 +88,78 @@
       </div>
 
       <div class="hero-right">
-        <!-- Event card overlay with real event data -->
-        @if (currentEventLoading()) {
-          <div class="hero-event-card loading">
-            <gc-skeleton shape="text" width="55%" height="12px"></gc-skeleton>
-            <gc-skeleton shape="text" width="85%" height="22px"></gc-skeleton>
-            <gc-skeleton shape="text" width="70%" height="14px"></gc-skeleton>
-          </div>
-        } @else if (currentEvent()) {
-          <div
-            class="hero-event-card interactive"
-            role="button"
-            tabindex="0"
-            (click)="onEventClick(currentEvent())"
-            (keydown.enter)="onEventClick(currentEvent())"
-            (keydown.space)="onEventClick(currentEvent()); $event.preventDefault()"
-            [attr.aria-label]="currentEvent()!.name + ' - Click to view tournament details'">
-            <div class="event-card-top">
-              <span class="event-label" [class.live]="currentEvent()!.status === 'ONGOING' || currentEvent()!.status === 'IN_PROGRESS'">
-                @if (currentEvent()!.status === 'ONGOING' || currentEvent()!.status === 'IN_PROGRESS') {
-                  <span class="live-dot"></span>
-                  LIVE EVENT
-                } @else {
-                  CURRENT EVENT
-                }
-              </span>
-              @if (currentEvent()!.gameTitle) {
-                <span class="event-game-chip">{{ currentEvent()!.gameTitle }}</span>
-              }
+        <!-- Chrome Orbit 3D Gyroscope & Halo Event Showcase -->
+        <gc-chrome-orbit [size]="420" [interactive]="true" [autoRevert]="true" [autoRevertDelay]="6000">
+          <!-- Event card overlay with real event data -->
+          @if (currentEventLoading()) {
+            <div class="hero-event-card loading">
+              <gc-skeleton shape="text" width="55%" height="12px"></gc-skeleton>
+              <gc-skeleton shape="text" width="85%" height="22px"></gc-skeleton>
+              <gc-skeleton shape="text" width="70%" height="14px"></gc-skeleton>
             </div>
-
-            <p class="event-name">{{ currentEvent()!.name }}</p>
-
-            <p class="event-time">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-              </svg>
-              {{ getEventTimeDisplay(currentEvent()!) }}
-            </p>
-
-            <div class="event-meta-footer">
-              <span class="event-fee-badge">
-                {{ currentEvent()!.entryFee === 0 ? 'FREE ENTRY' : ('LKR ' + (currentEvent()!.entryFee | number)) }}
-              </span>
-              @if (currentEvent()!.spotsLeft !== undefined) {
-                <span class="event-spots-badge">
-                  {{ currentEvent()!.spotsLeft }} {{ currentEvent()!.spotsLeft === 1 ? 'spot left' : 'spots left' }}
+          } @else if (currentEvent()) {
+            <div
+              class="hero-event-card interactive"
+              role="button"
+              tabindex="0"
+              (click)="onEventClick(currentEvent())"
+              (keydown.enter)="onEventClick(currentEvent())"
+              (keydown.space)="onEventClick(currentEvent()); $event.preventDefault()"
+              [attr.aria-label]="currentEvent()!.name + ' - Click to view tournament details'">
+              <div class="event-card-top">
+                <span class="event-label" [class.live]="currentEvent()!.status === 'ONGOING' || currentEvent()!.status === 'IN_PROGRESS'">
+                  @if (currentEvent()!.status === 'ONGOING' || currentEvent()!.status === 'IN_PROGRESS') {
+                    <span class="live-dot"></span>
+                    LIVE EVENT
+                  } @else {
+                    CURRENT EVENT
+                  }
                 </span>
-              }
+                @if (currentEvent()!.gameTitle) {
+                  <span class="event-game-chip">{{ currentEvent()!.gameTitle }}</span>
+                }
+              </div>
+
+              <p class="event-name">{{ currentEvent()!.name }}</p>
+
+              <p class="event-time">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                {{ getEventTimeDisplay(currentEvent()!) }}
+              </p>
+
+              <div class="event-meta-footer">
+                <span class="event-fee-badge">
+                  {{ currentEvent()!.entryFee === 0 ? 'FREE ENTRY' : ('LKR ' + (currentEvent()!.entryFee | number)) }}
+                </span>
+                @if (currentEvent()!.spotsLeft !== undefined) {
+                  <span class="event-spots-badge">
+                    {{ currentEvent()!.spotsLeft }} {{ currentEvent()!.spotsLeft === 1 ? 'spot left' : 'spots left' }}
+                  </span>
+                }
+              </div>
             </div>
-          </div>
-        } @else {
-          <!-- Fallback when no active tournaments exist or loading error -->
-          <div
-            class="hero-event-card interactive"
-            role="button"
-            tabindex="0"
-            (click)="joinTournament()"
-            (keydown.enter)="joinTournament()"
-            aria-label="View upcoming tournaments">
-            <span class="event-label">CURRENT EVENT</span>
-            <p class="event-name">{{ tournamentsError() ? 'TOURNAMENT SERVICE' : 'NO CURRENT TOURNAMENTS' }}</p>
-            <p class="event-time">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-              </svg>
-              {{ tournamentsError() ? 'Service temporarily unavailable' : 'No tournaments currently scheduled' }}
-            </p>
-          </div>
-        }
+          } @else {
+            <!-- Fallback when no active tournaments exist or loading error -->
+            <div
+              class="hero-event-card interactive"
+              role="button"
+              tabindex="0"
+              (click)="joinTournament()"
+              (keydown.enter)="joinTournament()"
+              aria-label="View upcoming tournaments">
+              <span class="event-label">CURRENT EVENT</span>
+              <p class="event-name">{{ tournamentsError() ? 'TOURNAMENT SERVICE' : 'NO CURRENT TOURNAMENTS' }}</p>
+              <p class="event-time">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                {{ tournamentsError() ? 'Service temporarily unavailable' : 'No tournaments currently scheduled' }}
+              </p>
+            </div>
+          }
+        </gc-chrome-orbit>
       </div>
     </div>
   </section>

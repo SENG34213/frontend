@@ -17,6 +17,9 @@ import { BadgeComponent } from '../../shared/ui/badge/badge.component';
 import { SkeletonComponent } from '../../shared/ui/skeleton/skeleton.component';
 import { StationGamePickerComponent } from '../../shared/components/station-game-picker/station-game-picker.component';
 import { TournamentTickerComponent } from '../../shared/components/tournament-ticker/tournament-ticker.component';
+import { CipherRevealComponent } from '../../shared/ui/cipher-reveal/cipher-reveal.component';
+import { BlinkingSquaresComponent } from '../../shared/ui/blinking-squares/blinking-squares.component';
+import { ChromeOrbitComponent } from '../../shared/ui/chrome-orbit/chrome-orbit.component';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 import { Game, BookingReview } from '../../shared/models';
 
@@ -30,7 +33,10 @@ import { Game, BookingReview } from '../../shared/models';
     BadgeComponent,
     SkeletonComponent,
     StationGamePickerComponent,
-    TournamentTickerComponent
+    TournamentTickerComponent,
+    CipherRevealComponent,
+    BlinkingSquaresComponent,
+    ChromeOrbitComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.component.html',
