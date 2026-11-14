@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CipherRevealComponent, CipherRevealLine } from './cipher-reveal.component';
 
 describe('CipherRevealComponent', () => {
@@ -12,6 +12,10 @@ describe('CipherRevealComponent', () => {
 
     fixture = TestBed.createComponent(CipherRevealComponent);
     component = fixture.componentInstance;
+  });
+
+  afterEach(() => {
+    fixture.destroy();
   });
 
   it('should create component successfully', () => {
@@ -77,7 +81,7 @@ describe('CipherRevealComponent', () => {
     expect(component.replay).not.toHaveBeenCalled();
   });
 
-  it('should cleanly resolve all characters after animation duration', fakeAsync(() => {
+  it('should scramble characters initially when autoStart is enabled', () => {
     component.lines = [
       { text: 'THE ULTIMATE' },
       { text: 'PS5', class: 'hero-accent' }
@@ -88,15 +92,55 @@ describe('CipherRevealComponent', () => {
 
     fixture.detectChanges();
 
-    // Advance timers
-    tick(500);
+    const lines = component.displayLines();
+    const hasScrambled = lines.some((line) =>
+      line.chars.some((char) => char.isScrambled && char.targetChar !== ' ')
+    );
+    expect(hasScrambled).toBeTrue();
+  });
+
+  it('should cleanly resolve all characters when resolveAll is called', () => {
+    component.lines = [
+      { text: 'THE ULTIMATE' },
+      { text: 'PS5', class: 'hero-accent' }
+    ];
+    component.duration = 400;
+    component.delay = 50;
+    component.autoStart = true;
+
+    fixture.detectChanges();
+
+    component.resolveAll();
 
     const lines = component.displayLines();
     const allResolved = lines.every((line) =>
       line.chars.every((char) => !char.isScrambled && char.displayChar === char.targetChar)
     );
     expect(allResolved).toBeTrue();
-  }));
+  });
+
+  it('should immediately show resolved text when reduced motion is preferred', () => {
+    spyOn(window, 'matchMedia').and.returnValue({
+      matches: true,
+      media: '(prefers-reduced-motion: reduce)',
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false
+    } as unknown as MediaQueryList);
+
+    component.lines = [{ text: 'REDUCED MOTION' }];
+    component.autoStart = true;
+    component.startAnimation();
+
+    const lines = component.displayLines();
+    const allResolved = lines.every((line) =>
+      line.chars.every((char) => !char.isScrambled && char.displayChar === char.targetChar)
+    );
+    expect(allResolved).toBeTrue();
+  });
 
   it('should clean up active animation on destroy', () => {
     component.lines = [{ text: 'TEST' }];

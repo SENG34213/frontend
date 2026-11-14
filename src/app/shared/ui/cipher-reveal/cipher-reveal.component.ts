@@ -99,6 +99,12 @@ export class CipherRevealComponent implements OnInit, OnChanges, OnDestroy {
     this.startAnimation(true);
   }
 
+  resolveAll(): void {
+    this.cleanupAnimation();
+    this.buildInitialLines(false);
+    this.cdr.markForCheck();
+  }
+
   private getRawLines(): CipherRevealLine[] {
     if (this.lines && this.lines.length > 0) {
       return this.lines.map((item) =>

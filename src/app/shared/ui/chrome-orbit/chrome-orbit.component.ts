@@ -4,6 +4,7 @@ import {
   Output,
   EventEmitter,
   ChangeDetectionStrategy,
+  OnDestroy,
   signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -16,7 +17,7 @@ import { CommonModule } from '@angular/common';
   styleUrl: './chrome-orbit.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ChromeOrbitComponent {
+export class ChromeOrbitComponent implements OnDestroy {
   @Input() size = 410; // width/height in px
   @Input() ringCount = 3; // 2, 3, or 4 rings
   @Input() interactive = true;
@@ -29,6 +30,13 @@ export class ChromeOrbitComponent {
 
   readonly isHalo = signal<boolean>(false);
   private revertTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  ngOnDestroy(): void {
+    if (this.revertTimeoutId) {
+      clearTimeout(this.revertTimeoutId);
+      this.revertTimeoutId = null;
+    }
+  }
 
   toggleHalo(event?: Event): void {
     if (!this.interactive) return;

@@ -14,6 +14,10 @@ describe('BlinkingSquaresComponent', () => {
     component = fixture.componentInstance;
   });
 
+  afterEach(() => {
+    fixture.destroy();
+  });
+
   it('should create BlinkingSquaresComponent successfully with default application theme values', () => {
     expect(component).toBeTruthy();
     expect(component.direction).toBe('left');

@@ -14,6 +14,10 @@ describe('ChromeOrbitComponent', () => {
     component = fixture.componentInstance;
   });
 
+  afterEach(() => {
+    fixture.destroy();
+  });
+
   it('should create ChromeOrbitComponent successfully', () => {
     expect(component).toBeTruthy();
     expect(component.isHalo()).toBeFalse();
@@ -56,6 +60,14 @@ describe('ChromeOrbitComponent', () => {
   it('should explicitly set halo state with setHalo', () => {
     component.setHalo(true);
     expect(component.isHalo()).toBeTrue();
+  });
+
+  it('should cleanly cancel revert timeout on destroy', () => {
+    component.autoRevert = true;
+    component.autoRevertDelay = 3000;
+    component.toggleHalo();
+
+    expect(() => component.ngOnDestroy()).not.toThrow();
   });
 });
 
