@@ -3,11 +3,22 @@
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
 .home-page {
+  position: relative;
   min-height: 100vh;
   background: var(--gc-bg-base);
   color: var(--gc-text-primary);
   overflow-x: hidden;
   width: 100%;
+}
+
+.page-background-squares {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
 }
 
 .container {
@@ -201,6 +212,11 @@
 }
 
 .hero-right {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   @media (max-width: 768px) {
     display: none;
   }
@@ -768,8 +784,10 @@
 
 .browse-section {
   position: relative;
+  z-index: 1;
   padding: 80px 0;
-  background: var(--gc-bg-surface);
+  background: rgba(14, 18, 30, 0.75);
+  backdrop-filter: blur(12px);
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   margin: 0;
@@ -1650,7 +1668,9 @@
 
 .cta-section {
   position: relative;
-  background: var(--gc-bg-surface);
+  z-index: 1;
+  background: rgba(14, 18, 30, 0.75);
+  backdrop-filter: blur(12px);
   border-top: 1px solid var(--gc-border-subtle);
   padding: 80px 0;
   width: 100%;

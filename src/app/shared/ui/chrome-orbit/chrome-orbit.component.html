@@ -1,0 +1,53 @@
+<div
+  class="chrome-orbit-viewport"
+  [class.halo]="isHalo()"
+  [class.interactive]="interactive"
+  [style.--orbit-size.px]="size"
+  [style.--chrome-color]="chromeColor"
+  [style.--accent-color]="accentColor">
+
+  <!-- 3D Gyroscope Stage -->
+  <button
+    type="button"
+    class="chrome-orbit-stage"
+    [disabled]="!interactive"
+    [attr.aria-label]="isHalo() ? 'Switch to gyroscope orbit' : 'Switch to halo formation'"
+    (click)="toggleHalo($event)">
+    <div class="orbit-ring ring-1" aria-hidden="true">
+      <div class="ring-node node-1"></div>
+      <div class="ring-node node-2"></div>
+    </div>
+    <div class="orbit-ring ring-2" aria-hidden="true">
+      <div class="ring-node node-1"></div>
+      <div class="ring-node node-2"></div>
+    </div>
+    <div class="orbit-ring ring-3" aria-hidden="true">
+      <div class="ring-node node-1"></div>
+    </div>
+    @if (ringCount >= 4) {
+      <div class="orbit-ring ring-4" aria-hidden="true">
+        <div class="ring-node node-1"></div>
+      </div>
+    }
+    <div class="orbit-core-glow" aria-hidden="true"></div>
+  </button>
+
+  <!-- Projected Content (Center Chamber) -->
+  <div class="orbit-content">
+    <ng-content></ng-content>
+  </div>
+
+  <!-- Interactive Status Badge / Hint -->
+  @if (interactive) {
+    <button
+      type="button"
+      class="orbit-halo-indicator"
+      [class.active]="isHalo()"
+      [attr.aria-label]="isHalo() ? 'Halo active - click to switch to gyroscope' : 'Gyroscope orbit - click to swing into halo'"
+      (click)="toggleHalo($event)">
+      <span class="indicator-dot" aria-hidden="true"></span>
+      <span>{{ isHalo() ? 'HALO ACTIVE' : 'GYROSCOPE ORBIT' }}</span>
+    </button>
+  }
+</div>
+
