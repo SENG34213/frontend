@@ -11,7 +11,7 @@ Client-side Single Page Application (SPA) for the **Gaming Castle** online loung
 
 ## 🚀 Live Deployment & Test Credentials
 
-- **Live Application URL**: [http://54.234.186.115:4200](http://54.234.186.115:4200)
+- **Live Application URL**: [http://100.30.201.86:4200]
 
 ### Test Credentials
 
