@@ -111,6 +111,87 @@ export class AdminPaymentsComponent implements OnInit, OnDestroy {
   readonly refundModalOpen = signal(false);
   readonly targetRefund = signal<PaymentResponse | null>(null);
 
+  // ── Enhanced SVG Chart Computations ────────────────────────────────────────
+  readonly hoveredTrendBar = signal<{ date: string; revenue: number } | null>(null);
+
+  readonly maxTrendRevenue = computed(() => {
+    const trend = this.sevenDayTrend();
+    if (!trend.length) return 1;
+    const max = Math.max(...trend.map(d => d.revenue));
+    return max > 0 ? max : 1;
+  });
+
+  readonly totalTrendRevenue = computed(() =>
+    this.sevenDayTrend().reduce((sum, d) => sum + d.revenue, 0)
+  );
+
+  readonly trendChartBars = computed(() => {
+    const trend = this.sevenDayTrend();
+    if (!trend.length) return [];
+    const max = this.maxTrendRevenue();
+    const count = trend.length;
+    const svgW = 700;
+    const baseY = 160;
+    const maxH = 130;
+    const barSpacing = svgW / count;
+    const barWidth = Math.max(14, Math.min(44, barSpacing * 0.6));
+
+    return trend.map((day, i) => {
+      const centerX = (i + 0.5) * barSpacing;
+      const ratio = day.revenue > 0 ? Math.max(0, Math.min(1, day.revenue / max)) : 0;
+      const height = day.revenue > 0 ? Math.max(8, Math.round(ratio * maxH)) : 6;
+      const y = baseY - height;
+      return {
+        ...day,
+        index: i,
+        centerX: Math.round(centerX),
+        x: Math.round(centerX - barWidth / 2),
+        y,
+        width: Math.round(barWidth),
+        height,
+        ratio,
+        hasRevenue: day.revenue > 0,
+        label: (() => {
+          const d = new Date(day.date);
+          return isNaN(d.getTime()) ? day.date : `${d.getMonth() + 1}/${d.getDate()}`;
+        })()
+      };
+    });
+  });
+
+  readonly trendSplinePath = computed(() => {
+    const bars = this.trendChartBars().filter(b => b.hasRevenue);
+    if (bars.length === 0) return '';
+    if (bars.length === 1) return `M ${bars[0].centerX},${bars[0].y}`;
+    let path = `M ${bars[0].centerX},${bars[0].y}`;
+    for (let i = 0; i < bars.length - 1; i++) {
+      const p0 = bars[i];
+      const p1 = bars[i + 1];
+      const midX = (p0.centerX + p1.centerX) / 2;
+      path += ` C ${midX},${p0.y} ${midX},${p1.y} ${p1.centerX},${p1.y}`;
+    }
+    return path;
+  });
+
+  readonly trendAreaPath = computed(() => {
+    const spline = this.trendSplinePath();
+    const bars = this.trendChartBars().filter(b => b.hasRevenue);
+    if (!spline || bars.length === 0) return '';
+    return `${spline} L ${bars[bars.length - 1].centerX},160 L ${bars[0].centerX},160 Z`;
+  });
+
+  readonly peakTrendDay = computed(() => {
+    const trend = this.sevenDayTrend();
+    if (!trend.length) return null;
+    return trend.reduce((prev, curr) => curr.revenue > prev.revenue ? curr : prev, trend[0]);
+  });
+
+  getTrendBarLeftPct(date: string): number {
+    const bar = this.trendChartBars().find(b => b.date === date);
+    if (!bar) return 50;
+    return Math.round((bar.centerX / 700) * 1000) / 10;
+  }
+
   // ── Option Arrays ──────────────────────────────────────────────────────────
   readonly statusOptions: { value: PaymentStatus | ''; label: string }[] = [
     { value: '', label: 'All Statuses' },

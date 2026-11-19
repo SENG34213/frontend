@@ -84,43 +84,158 @@
     </gc-card>
   </section>
 
-  <!-- Revenue Trend Mini Chart -->
+  <!-- Revenue Trend Mini Chart (Animated SVG) -->
   @if (sevenDayTrend().length > 0) {
-    <gc-card class="trend-card mb-xl">
+    <section class="trend-card mb-xl" aria-label="7-Day Revenue Trend">
       <div class="trend-header">
         <div class="trend-title-wrap">
-          <span class="trend-title">📈 7-Day Revenue Trend</span>
-          <span class="trend-subtitle">Daily breakdown of successful payments</span>
+          <div class="trend-badge-row">
+            <span class="trend-live-dot"></span>
+            <span class="trend-badge-label">Live Cashflow</span>
+          </div>
+          <h2 class="trend-title">7-Day Revenue Trend</h2>
+          <p class="trend-subtitle">Daily breakdown of successful payment settlements</p>
         </div>
-        <span class="trend-total font-mono">
-          Total Month: <strong class="text-success">LKR {{ (stats()?.monthRevenue ?? 0) | number:'1.2-2' }}</strong>
-        </span>
-      </div>
-
-      <div class="trend-bars-container">
-        <div class="trend-bars" aria-label="7-Day Revenue Trend Bar Chart">
-          @for (day of sevenDayTrend(); track day.date) {
-            <div class="trend-bar-col">
-              <div class="trend-bar-wrapper">
-                <div
-                  class="trend-bar"
-                  [class.has-revenue]="day.revenue > 0"
-                  [style.height.%]="getTrendBarHeight(day.revenue)"
-                  [title]="day.date + ': LKR ' + day.revenue.toFixed(2)"
-                  role="img"
-                  [attr.aria-label]="day.date + ': ' + day.revenue">
-                  <span class="trend-bar-tooltip">
-                    LKR {{ day.revenue | number:'1.0-0' }}
-                  </span>
-                </div>
+        <div class="trend-header-right">
+          @if (peakTrendDay(); as peak) {
+            <div class="trend-peak-pill">
+              <span>🚀</span>
+              <div>
+                <span class="pill-label">Peak Day</span>
+                <strong class="pill-val">LKR {{ peak.revenue | number:'1.0-0' }}</strong>
               </div>
-              <span class="trend-date">{{ day.date | date:'d/M' }}</span>
-              <span class="trend-val-label font-mono">{{ day.revenue > 0 ? (day.revenue >= 1000 ? ((day.revenue / 1000 | number:'1.1-1') + 'k') : (day.revenue | number:'1.0-0')) : '-' }}</span>
             </div>
           }
+          <div class="trend-summary-badges">
+            <div class="summary-badge">
+              <span class="sb-label">7-Day Total</span>
+              <span class="sb-val text-success">LKR {{ totalTrendRevenue() | number:'1.0-0' }}</span>
+            </div>
+            <div class="summary-badge">
+              <span class="sb-label">Month Revenue</span>
+              <span class="sb-val text-accent">LKR {{ (stats()?.monthRevenue ?? 0) | number:'1.0-0' }}</span>
+            </div>
+          </div>
         </div>
       </div>
-    </gc-card>
+
+      <!-- Animated SVG Chart -->
+      <div class="svg-trend-wrapper" (mouseleave)="hoveredTrendBar.set(null)">
+        <svg class="trend-svg-chart" viewBox="0 0 700 175" preserveAspectRatio="none"
+             role="img" aria-label="7-day revenue bar and spline chart">
+          <defs>
+            <!-- Bar gradient: cyan → blue -->
+            <linearGradient id="pmBarGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.95" />
+              <stop offset="55%" stop-color="#3b82f6" stop-opacity="0.80" />
+              <stop offset="100%" stop-color="#1e3a8a" stop-opacity="0.20" />
+            </linearGradient>
+            <!-- Bar hover gradient: pink → violet -->
+            <linearGradient id="pmBarHoverGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#f9a8d4" stop-opacity="1" />
+              <stop offset="50%" stop-color="#e879f9" stop-opacity="0.85" />
+              <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.25" />
+            </linearGradient>
+            <!-- Zero/empty bar gradient -->
+            <linearGradient id="pmBarEmptyGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#334155" stop-opacity="0.6" />
+              <stop offset="100%" stop-color="#1e293b" stop-opacity="0.3" />
+            </linearGradient>
+            <!-- Spline area fill -->
+            <linearGradient id="pmAreaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.25" />
+              <stop offset="55%" stop-color="#6366f1" stop-opacity="0.07" />
+              <stop offset="100%" stop-color="#6366f1" stop-opacity="0.0" />
+            </linearGradient>
+            <!-- Spline stroke gradient: left-to-right -->
+            <linearGradient id="pmSplineGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#22d3ee" />
+              <stop offset="50%" stop-color="#818cf8" />
+              <stop offset="100%" stop-color="#e879f9" />
+            </linearGradient>
+            <!-- Glow filter for spline -->
+            <filter id="pmGlow" x="-15%" y="-15%" width="130%" height="130%">
+              <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#22d3ee" flood-opacity="0.5" />
+            </filter>
+          </defs>
+
+          <!-- Horizontal grid guides -->
+          <line x1="0" y1="30"  x2="700" y2="30"  class="pm-grid-line" />
+          <line x1="0" y1="70"  x2="700" y2="70"  class="pm-grid-line" />
+          <line x1="0" y1="110" x2="700" y2="110" class="pm-grid-line" />
+          <line x1="0" y1="160" x2="700" y2="160" class="pm-grid-line pm-baseline" />
+
+          <!-- Spline area fill -->
+          <path [attr.d]="trendAreaPath()" fill="url(#pmAreaGrad)" class="pm-area-path" />
+
+          <!-- Animated spline line -->
+          <path
+            [attr.d]="trendSplinePath()"
+            fill="none"
+            stroke="url(#pmSplineGrad)"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            filter="url(#pmGlow)"
+            class="pm-spline-path" />
+
+          <!-- Bars + cap dots -->
+          @for (bar of trendChartBars(); track bar.date) {
+            <g
+              class="pm-bar-group"
+              [class.active]="hoveredTrendBar()?.date === bar.date"
+              [class.dimmed]="hoveredTrendBar() !== null && hoveredTrendBar()?.date !== bar.date"
+              [style.--bar-idx]="bar.index"
+              tabindex="0"
+              role="button"
+              [attr.aria-label]="bar.date + ': LKR ' + bar.revenue"
+              (mouseenter)="hoveredTrendBar.set(bar)"
+              (focus)="hoveredTrendBar.set(bar)"
+              (blur)="hoveredTrendBar.set(null)">
+              <rect
+                [attr.x]="bar.x"
+                [attr.y]="bar.y"
+                [attr.width]="bar.width"
+                [attr.height]="bar.height"
+                rx="5"
+                [attr.fill]="hoveredTrendBar()?.date === bar.date ? 'url(#pmBarHoverGrad)' : (bar.hasRevenue ? 'url(#pmBarGrad)' : 'url(#pmBarEmptyGrad)')"
+                class="pm-chart-bar" />
+              @if (bar.hasRevenue) {
+                <circle
+                  [attr.cx]="bar.centerX"
+                  [attr.cy]="bar.y"
+                  [attr.r]="hoveredTrendBar()?.date === bar.date ? 5 : 3"
+                  class="pm-cap-dot"
+                  [class.pm-cap-active]="hoveredTrendBar()?.date === bar.date" />
+              }
+            </g>
+          }
+        </svg>
+
+        <!-- Floating dynamic tooltip -->
+        @if (hoveredTrendBar(); as h) {
+          <div
+            class="pm-chart-tooltip"
+            role="tooltip"
+            [style.left.%]="getTrendBarLeftPct(h.date)">
+            <span class="pm-tip-date">📅 {{ h.date }}</span>
+            <span class="pm-tip-rev">💰 LKR {{ h.revenue | number:'1.2-2' }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- X-axis date labels -->
+      <div class="trend-axis-labels">
+        @for (bar of trendChartBars(); track bar.date) {
+          <span
+            class="axis-label"
+            [class.active]="hoveredTrendBar()?.date === bar.date"
+            (mouseenter)="hoveredTrendBar.set(bar)"
+            (mouseleave)="hoveredTrendBar.set(null)">
+            {{ bar.label }}
+          </span>
+        }
+      </div>
+    </section>
   }
 
   <!-- Filter Toolbar -->

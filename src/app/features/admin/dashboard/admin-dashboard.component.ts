@@ -81,6 +81,81 @@ export class AdminDashboardComponent implements OnInit {
     return Math.round(this.totalTrendRevenue() / trend.length);
   });
 
+  // ── Enhanced Animated Chart Computations ────────────────────────────────────
+  readonly chartSvgWidth = 600;
+  readonly chartSvgHeight = 200;
+  readonly chartBaseY = 170;
+  readonly chartMaxHeight = 135;
+
+  readonly chartBars = computed(() => {
+    const trend = this.revenueTrend();
+    if (!trend.length) return [];
+    const max = this.maxRevenue();
+    const count = trend.length;
+    const barSpacing = this.chartSvgWidth / count;
+    const barWidth = Math.max(8, Math.min(28, barSpacing * 0.65));
+
+    return trend.map((item, i) => {
+      const centerX = (i + 0.5) * barSpacing;
+      const x = centerX - barWidth / 2;
+      const ratio = Math.max(0, Math.min(1, item.revenue / max));
+      const height = Math.max(6, Math.round(ratio * this.chartMaxHeight));
+      const y = this.chartBaseY - height;
+
+      return {
+        ...item,
+        index: i,
+        centerX: Math.round(centerX),
+        x: Math.round(x),
+        y: Math.round(y),
+        width: Math.round(barWidth),
+        height,
+        ratio,
+        pct: Math.round(ratio * 100),
+        label: this.formatDate(item.date)
+      };
+    });
+  });
+
+  // Smooth spline curve traversing the tops of the bars
+  readonly trendSplinePath = computed(() => {
+    const bars = this.chartBars();
+    if (bars.length === 0) return '';
+    if (bars.length === 1) return `M ${bars[0].centerX},${bars[0].y} L ${bars[0].centerX + 1},${bars[0].y}`;
+
+    let path = `M ${bars[0].centerX},${bars[0].y}`;
+    for (let i = 0; i < bars.length - 1; i++) {
+      const p0 = bars[i];
+      const p1 = bars[i + 1];
+      const midX = (p0.centerX + p1.centerX) / 2;
+      path += ` C ${midX},${p0.y} ${midX},${p1.y} ${p1.centerX},${p1.y}`;
+    }
+    return path;
+  });
+
+  // Closed area beneath the spline curve
+  readonly trendAreaPath = computed(() => {
+    const spline = this.trendSplinePath();
+    const bars = this.chartBars();
+    if (!spline || bars.length === 0) return '';
+    const first = bars[0];
+    const last = bars[bars.length - 1];
+    return `${spline} L ${last.centerX},${this.chartBaseY} L ${first.centerX},${this.chartBaseY} Z`;
+  });
+
+  readonly peakDayItem = computed(() => {
+    const trend = this.revenueTrend();
+    if (!trend.length) return null;
+    return trend.reduce((prev, curr) => (curr.revenue > prev.revenue ? curr : prev), trend[0]);
+  });
+
+  getHoveredBarLeftPct(date: string): number {
+    const bars = this.chartBars();
+    const bar = bars.find(b => b.date === date);
+    if (!bar) return 50;
+    return Math.round((bar.centerX / this.chartSvgWidth) * 1000) / 10;
+  }
+
   readonly filteredBookings = computed(() => {
     const list = this.recentBookings();
     const filter = this.selectedBookingFilter();
