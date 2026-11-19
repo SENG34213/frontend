@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
-import { provideRouter, Router, NavigationEnd } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { PillNavComponent, PillNavItem } from './pill-nav.component';
 
 describe('PillNavComponent', () => {
