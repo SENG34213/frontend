@@ -34,44 +34,63 @@
 
   <!-- Metric Stat Cards -->
   <section class="stat-grid mb-xl" aria-label="Tournament Key Metrics">
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--tourn-total" style="--stat-idx: 0">
       <div class="stat-inner">
-        <div class="stat-icon">🏆</div>
+        <div class="stat-icon-wrap stat-icon--gold">
+          <span class="stat-icon">🏆</span>
+        </div>
         <div class="stat-meta">
-          <span class="stat-label">Total Tournaments</span>
-          <span class="stat-val font-mono" id="stat-total-tournaments">{{ totalTournaments() }}</span>
+          <span class="stat-label">Championship Circuit</span>
+          <span class="stat-val font-mono text-gold" id="stat-total-tournaments">{{ totalTournaments() }}</span>
+          <span class="stat-sub-text">Total Tournaments</span>
         </div>
       </div>
+      <div class="tourn-stat-ribbon ribbon-gold"></div>
     </gc-card>
 
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--tourn-live" style="--stat-idx: 1">
       <div class="stat-inner">
-        <div class="stat-icon live-glow">🔥</div>
+        <div class="stat-icon-wrap stat-icon--fire">
+          <span class="stat-icon live-glow">🔥</span>
+        </div>
         <div class="stat-meta">
-          <span class="stat-label">Live / Ongoing</span>
+          <div class="live-label-flex">
+            <span class="stat-label">Live Battles</span>
+            <span class="live-blaze-chip">LIVE</span>
+          </div>
           <span class="stat-val font-mono text-info" id="stat-ongoing-tournaments">{{ ongoingCount() }}</span>
+          <span class="stat-sub-text">Active Knockouts</span>
         </div>
       </div>
+      <div class="tourn-stat-ribbon ribbon-fire"></div>
     </gc-card>
 
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--tourn-open" style="--stat-idx: 2">
       <div class="stat-inner">
-        <div class="stat-icon active-glow">📝</div>
+        <div class="stat-icon-wrap stat-icon--open">
+          <span class="stat-icon active-glow">📝</span>
+        </div>
         <div class="stat-meta">
           <span class="stat-label">Registration Open</span>
           <span class="stat-val font-mono text-available" id="stat-open-tournaments">{{ openRegistrationCount() }}</span>
+          <span class="stat-sub-text">Accepting Entries</span>
         </div>
       </div>
+      <div class="tourn-stat-ribbon ribbon-emerald"></div>
     </gc-card>
 
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--tourn-players" style="--stat-idx: 3">
       <div class="stat-inner">
-        <div class="stat-icon">👥</div>
+        <div class="stat-icon-wrap stat-icon--players">
+          <span class="stat-icon">👥</span>
+        </div>
         <div class="stat-meta">
-          <span class="stat-label">Enrolled Players</span>
+          <span class="stat-label">Enrolled Champions</span>
           <span class="stat-val font-mono text-accent" id="stat-enrolled-players">{{ totalEnrolledPlayers() }}</span>
+          <span class="stat-sub-text">Roster Athletes</span>
         </div>
       </div>
+      <div class="tourn-stat-ribbon ribbon-purple"></div>
     </gc-card>
   </section>
 
@@ -317,8 +336,8 @@
 
       <!-- Tournament Cards Grid -->
       <section class="tournaments-grid" aria-label="Tournaments List">
-        @for (t of filteredTournaments(); track t.id) {
-          <gc-card class="tourn-card" [class.cancelled]="t.status === 'CANCELLED'">
+        @for (t of filteredTournaments(); track t.id; let idx = $index) {
+          <gc-card class="tourn-card" [class.cancelled]="t.status === 'CANCELLED'" [style.--card-idx]="idx">
             <div class="tourn-banner-box">
               @if (t.imageUrl) {
                 <img [src]="t.imageUrl" [alt]="t.name || t.title" class="tourn-banner-img" loading="lazy" />

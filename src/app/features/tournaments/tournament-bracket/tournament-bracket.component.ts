@@ -16,6 +16,7 @@ import { BracketResponse, MatchResponse } from '../../../shared/models';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { SkeletonComponent } from '../../../shared/ui/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.component';
+import { BlinkingSquaresComponent } from '../../../shared/ui/blinking-squares/blinking-squares.component';
 
 export interface RoundGroup {
   roundNumber: number;
@@ -31,7 +32,8 @@ export interface RoundGroup {
     RouterModule,
     ButtonComponent,
     SkeletonComponent,
-    EmptyStateComponent
+    EmptyStateComponent,
+    BlinkingSquaresComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tournament-bracket.component.html',

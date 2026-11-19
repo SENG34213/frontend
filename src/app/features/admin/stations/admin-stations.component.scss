@@ -118,28 +118,95 @@
 }
 
 .stat-card {
+  position: relative;
+  overflow: hidden;
+  animation: statCardRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--stat-idx, 0) * 0.08s);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: linear-gradient(145deg, rgba(19, 26, 44, 0.85) 0%, rgba(15, 21, 35, 0.95) 100%) !important;
+  backdrop-filter: blur(12px);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  }
+
+  &.stat-card--total:hover {
+    border-color: rgba(6, 182, 212, 0.5) !important;
+    box-shadow: 0 10px 28px rgba(6, 182, 212, 0.15);
+  }
+
+  &.stat-card--active:hover {
+    border-color: rgba(16, 185, 129, 0.5) !important;
+    box-shadow: 0 10px 28px rgba(16, 185, 129, 0.15);
+  }
+
+  &.stat-card--pc:hover {
+    border-color: rgba(99, 102, 241, 0.5) !important;
+    box-shadow: 0 10px 28px rgba(99, 102, 241, 0.15);
+  }
+
+  &.stat-card--console:hover {
+    border-color: rgba(245, 158, 11, 0.5) !important;
+    box-shadow: 0 10px 28px rgba(245, 158, 11, 0.15);
+  }
+
+  .stat-accent-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+
+    &.bar-cyan { background: linear-gradient(90deg, #06b6d4, #3b82f6); }
+    &.bar-emerald { background: linear-gradient(90deg, #10b981, #34d399); }
+    &.bar-purple { background: linear-gradient(90deg, #8b5cf6, #ec4899); }
+    &.bar-amber { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  }
+
   .stat-inner {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.15rem;
     min-height: 56px;
     width: 100%;
   }
 
-  .stat-icon {
-    font-size: 2rem;
-    width: 3rem;
-    height: 3rem;
-    flex-shrink: 0;
+  .stat-icon-wrap {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: var(--radius-md, 8px);
+    flex-shrink: 0;
+    position: relative;
+
+    &.stat-icon--total {
+      background: rgba(6, 182, 212, 0.12);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+    }
+    &.stat-icon--active {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    &.stat-icon--pc {
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+    }
+    &.stat-icon--console {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+  }
+
+  .stat-icon {
+    font-size: 1.75rem;
+    line-height: 1;
 
     &.active-glow {
-      background: rgba(34, 197, 94, 0.15);
-      box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+      filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.6));
     }
   }
 
@@ -147,22 +214,79 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .stat-label-flex {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .power-diode {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    animation: diodePulse 1.8s infinite ease-in-out;
   }
 
   .stat-label {
-    font-size: 0.8125rem;
+    font-size: 0.78rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     color: var(--color-text-muted, #94a3b8);
     line-height: 1.25;
   }
 
   .stat-val {
-    font-size: 1.75rem;
-    font-weight: 800;
-    line-height: 1.2;
+    font-size: 1.85rem;
+    font-weight: 900;
+    line-height: 1.15;
     color: var(--color-text, #ffffff);
+    margin: 2px 0;
   }
+
+  .stat-sub-badge {
+    font-size: 0.72rem;
+    color: var(--color-text-muted, #64748b);
+    letter-spacing: 0.02em;
+  }
+
+  .telemetry-progress-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 9999px;
+    margin-top: 4px;
+    overflow: hidden;
+
+    .telemetry-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #34d399);
+      border-radius: 9999px;
+      transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+  }
+}
+
+@keyframes statCardRise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes diodePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.75); }
 }
 
 .text-available { color: #22c55e !important; }
@@ -256,8 +380,11 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  animation: rigCardEnter 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--card-idx, 0) * 0.05s);
+  position: relative;
 
   ::ng-deep .gc-card {
     height: 100%;
@@ -859,5 +986,25 @@
     width: 2.5rem;
     height: 2.5rem;
     font-size: 1.6rem;
+  }
+}
+
+@keyframes rigCardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-card,
+  .station-card,
+  .power-diode {
+    animation: none !important;
+    transition: none !important;
   }
 }

@@ -35,52 +35,68 @@
 
   <!-- Stat Cards -->
   <section class="stat-grid mb-xl" aria-label="Payment Key Metrics">
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--today-rev" style="--stat-idx: 0">
       <div class="stat-inner">
-        <div class="stat-icon revenue-glow">💰</div>
+        <div class="stat-icon-wrap stat-icon--emerald">
+          <span class="stat-icon revenue-glow">💰</span>
+        </div>
         <div class="stat-meta">
           <span class="stat-label">Today's Revenue</span>
           <span class="stat-val font-mono text-success" id="stat-today-revenue">
             LKR {{ (stats()?.todayRevenue ?? 0) | number:'1.2-2' }}
           </span>
+          <span class="stat-sub-text">24h Settlement Inflow</span>
         </div>
       </div>
+      <div class="payment-stat-ribbon ribbon-emerald"></div>
     </gc-card>
 
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--month-rev" style="--stat-idx: 1">
       <div class="stat-inner">
-        <div class="stat-icon">📅</div>
+        <div class="stat-icon-wrap stat-icon--sapphire">
+          <span class="stat-icon">📅</span>
+        </div>
         <div class="stat-meta">
           <span class="stat-label">Month Revenue</span>
           <span class="stat-val font-mono text-accent" id="stat-month-revenue">
             LKR {{ (stats()?.monthRevenue ?? 0) | number:'1.2-2' }}
           </span>
+          <span class="stat-sub-text">30-Day Billing Volume</span>
         </div>
       </div>
+      <div class="payment-stat-ribbon ribbon-sapphire"></div>
     </gc-card>
 
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--success-payments" style="--stat-idx: 2">
       <div class="stat-inner">
-        <div class="stat-icon">✅</div>
+        <div class="stat-icon-wrap stat-icon--check">
+          <span class="stat-icon">✅</span>
+        </div>
         <div class="stat-meta">
           <span class="stat-label">Successful Payments</span>
           <span class="stat-val font-mono" id="stat-success-payments">
             {{ (stats()?.totalPaymentsSuccess ?? 0) | number }}
           </span>
+          <span class="stat-sub-text">Settled Transactions</span>
         </div>
       </div>
+      <div class="payment-stat-ribbon ribbon-green"></div>
     </gc-card>
 
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--failed-payments" style="--stat-idx: 3">
       <div class="stat-inner">
-        <div class="stat-icon">❌</div>
+        <div class="stat-icon-wrap stat-icon--danger">
+          <span class="stat-icon">❌</span>
+        </div>
         <div class="stat-meta">
           <span class="stat-label">Failed Payments</span>
           <span class="stat-val font-mono text-warning" id="stat-failed-payments">
             {{ (stats()?.totalPaymentsFailed ?? 0) | number }}
           </span>
+          <span class="stat-sub-text">Declines & Timeouts</span>
         </div>
       </div>
+      <div class="payment-stat-ribbon ribbon-ruby"></div>
     </gc-card>
   </section>
 
@@ -358,10 +374,11 @@
               </tr>
             </thead>
             <tbody>
-              @for (payment of payments(); track payment.id) {
+              @for (payment of payments(); track payment.id; let idx = $index) {
                 <tr class="payment-row" (click)="openDetail(payment)" tabindex="0"
                     (keydown.enter)="openDetail(payment)" role="button"
-                    [attr.aria-label]="'View payment ' + (payment.receiptNumber || payment.id)">
+                    [attr.aria-label]="'View payment ' + (payment.receiptNumber || payment.id)"
+                    [style.--row-idx]="idx">
 
                   <!-- Receipt # -->
                   <td>

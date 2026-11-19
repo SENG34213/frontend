@@ -34,44 +34,65 @@
 
   <!-- Metric Stat Cards -->
   <section class="stat-grid mb-xl" aria-label="Station Key Metrics">
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--total" style="--stat-idx: 0">
       <div class="stat-inner">
-        <div class="stat-icon">🎮</div>
+        <div class="stat-icon-wrap stat-icon--total">
+          <span class="stat-icon">🎮</span>
+        </div>
         <div class="stat-meta">
-          <span class="stat-label">Total Stations</span>
+          <span class="stat-label">Total Rigs</span>
           <span class="stat-val font-mono" id="stat-total-stations">{{ totalStations() }}</span>
+          <span class="stat-sub-badge">Hardware Pods</span>
         </div>
       </div>
+      <div class="stat-accent-bar bar-cyan"></div>
     </gc-card>
 
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--active" style="--stat-idx: 1">
       <div class="stat-inner">
-        <div class="stat-icon active-glow">⚡</div>
+        <div class="stat-icon-wrap stat-icon--active">
+          <span class="stat-icon active-glow">⚡</span>
+        </div>
         <div class="stat-meta">
-          <span class="stat-label">Active Rigs</span>
+          <div class="stat-label-flex">
+            <span class="stat-label">Active Rigs</span>
+            <span class="power-diode" title="Online Telemetry Active"></span>
+          </div>
           <span class="stat-val font-mono text-available" id="stat-active-stations">{{ activeStationsCount() }}</span>
+          <div class="telemetry-progress-track">
+            <div class="telemetry-progress-bar" [style.width.%]="totalStations() ? (activeStationsCount() / totalStations() * 100) : 0"></div>
+          </div>
         </div>
       </div>
+      <div class="stat-accent-bar bar-emerald"></div>
     </gc-card>
 
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--pc" style="--stat-idx: 2">
       <div class="stat-inner">
-        <div class="stat-icon">💻</div>
+        <div class="stat-icon-wrap stat-icon--pc">
+          <span class="stat-icon">💻</span>
+        </div>
         <div class="stat-meta">
           <span class="stat-label">PC Esports</span>
           <span class="stat-val font-mono text-primary" id="stat-pc-stations">{{ pcStationsCount() }}</span>
+          <span class="stat-sub-badge">Esports Battlestations</span>
         </div>
       </div>
+      <div class="stat-accent-bar bar-purple"></div>
     </gc-card>
 
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--console" style="--stat-idx: 3">
       <div class="stat-inner">
-        <div class="stat-icon">🕹️</div>
+        <div class="stat-icon-wrap stat-icon--console">
+          <span class="stat-icon">🕹️</span>
+        </div>
         <div class="stat-meta">
           <span class="stat-label">Consoles & Simulators</span>
           <span class="stat-val font-mono text-accent" id="stat-console-stations">{{ consoleStationsCount() }}</span>
+          <span class="stat-sub-badge">PS5 Pro / VR Simulator</span>
         </div>
       </div>
+      <div class="stat-accent-bar bar-amber"></div>
     </gc-card>
   </section>
 
@@ -175,8 +196,8 @@
 
       <!-- Stations Cards Grid -->
       <section class="stations-grid" aria-label="Gaming stations list">
-        @for (st of filteredStations(); track st.id) {
-          <gc-card class="station-card" [class.inactive]="!st.active">
+        @for (st of filteredStations(); track st.id; let idx = $index) {
+          <gc-card class="station-card" [class.inactive]="!st.active" [style.--card-idx]="idx">
             <div class="station-banner-box">
               @if (st.imageUrl) {
                 <img [src]="st.imageUrl" [alt]="st.stationCode || 'Station'" class="station-banner-img" loading="lazy" />

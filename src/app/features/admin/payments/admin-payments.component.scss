@@ -117,23 +117,96 @@
 }
 
 .stat-card {
+  position: relative;
+  overflow: hidden;
+  animation: paymentStatEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--stat-idx, 0) * 0.08s);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: linear-gradient(145deg, rgba(20, 26, 42, 0.9) 0%, rgba(12, 17, 30, 0.98) 100%) !important;
+  backdrop-filter: blur(12px);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+  }
+
+  &.stat-card--today-rev:hover {
+    border-color: rgba(16, 185, 129, 0.5) !important;
+    box-shadow: 0 10px 28px rgba(16, 185, 129, 0.2);
+  }
+
+  &.stat-card--month-rev:hover {
+    border-color: rgba(59, 130, 246, 0.5) !important;
+    box-shadow: 0 10px 28px rgba(59, 130, 246, 0.2);
+  }
+
+  &.stat-card--success-payments:hover {
+    border-color: rgba(34, 197, 94, 0.5) !important;
+    box-shadow: 0 10px 28px rgba(34, 197, 94, 0.15);
+  }
+
+  &.stat-card--failed-payments:hover {
+    border-color: rgba(239, 68, 68, 0.5) !important;
+    box-shadow: 0 10px 28px rgba(239, 68, 68, 0.18);
+  }
+
+  .payment-stat-ribbon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+
+    &.ribbon-emerald { background: linear-gradient(90deg, #10b981, #34d399); }
+    &.ribbon-sapphire { background: linear-gradient(90deg, #3b82f6, #6366f1); }
+    &.ribbon-green { background: linear-gradient(90deg, #22c55e, #10b981); }
+    &.ribbon-ruby { background: linear-gradient(90deg, #ef4444, #f59e0b); }
+  }
+
   .stat-inner {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.15rem;
     padding: 0.25rem;
     min-height: 54px;
     width: 100%;
   }
 
+  .stat-icon-wrap {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    &.stat-icon--emerald {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    &.stat-icon--sapphire {
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    &.stat-icon--check {
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+    }
+    &.stat-icon--danger {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+  }
+
   .stat-icon {
-    font-size: 2rem;
+    font-size: 1.75rem;
     min-width: 2.5rem;
     text-align: center;
     flex-shrink: 0;
 
     &.revenue-glow {
-      filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.5));
+      filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.6));
     }
   }
 
@@ -142,11 +215,13 @@
     flex-direction: column;
     justify-content: center;
     gap: 0.2rem;
+    flex: 1;
+    min-width: 0;
   }
 
   .stat-label {
-    font-size: 0.8125rem;
-    font-weight: 500;
+    font-size: 0.78rem;
+    font-weight: 700;
     color: var(--color-text-muted, #94a3b8);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -154,9 +229,26 @@
   }
 
   .stat-val {
-    font-size: 1.25rem;
-    font-weight: 800;
+    font-size: 1.45rem;
+    font-weight: 900;
     color: var(--color-text, #fff);
+    margin: 2px 0;
+  }
+
+  .stat-sub-text {
+    font-size: 0.72rem;
+    color: var(--color-text-muted, #64748b);
+  }
+}
+
+@keyframes paymentStatEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -599,10 +691,12 @@
 
 .payment-row {
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease;
+  animation: paymentRowSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--row-idx, 0) * 0.04s);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(16, 185, 129, 0.06);
   }
 
   &:focus {
@@ -958,5 +1052,24 @@
 
   .page-title {
     font-size: 1.35rem;
+  }
+}
+
+@keyframes paymentRowSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-card,
+  .payment-row {
+    animation: none !important;
+    transition: none !important;
   }
 }

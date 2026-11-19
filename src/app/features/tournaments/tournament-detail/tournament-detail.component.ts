@@ -24,6 +24,7 @@ import { LoyaltyTier } from '../../../shared/models/loyalty.model';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { SkeletonComponent } from '../../../shared/ui/skeleton/skeleton.component';
+import { BlinkingSquaresComponent } from '../../../shared/ui/blinking-squares/blinking-squares.component';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 @Component({
@@ -35,7 +36,8 @@ import { ToastService } from '../../../shared/ui/toast/toast.service';
     FormsModule,
     ButtonComponent,
     BadgeComponent,
-    SkeletonComponent
+    SkeletonComponent,
+    BlinkingSquaresComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tournament-detail.component.html',

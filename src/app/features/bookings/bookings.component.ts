@@ -21,6 +21,7 @@ import { ModalComponent } from '../../shared/ui/modal/modal.component';
 import { SkeletonComponent } from '../../shared/ui/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
 import { BadgeComponent } from '../../shared/ui/badge/badge.component';
+import { BlinkingSquaresComponent } from '../../shared/ui/blinking-squares/blinking-squares.component';
 
 import {
   DisplaySlot,
@@ -54,7 +55,8 @@ export type { DisplaySlot };
     ModalComponent,
     SkeletonComponent,
     EmptyStateComponent,
-    BadgeComponent
+    BadgeComponent,
+    BlinkingSquaresComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './bookings.component.html',

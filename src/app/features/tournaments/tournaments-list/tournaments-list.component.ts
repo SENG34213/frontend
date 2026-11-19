@@ -26,6 +26,7 @@ import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ModalComponent } from '../../../shared/ui/modal/modal.component';
 import { SkeletonComponent } from '../../../shared/ui/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.component';
+import { BlinkingSquaresComponent } from '../../../shared/ui/blinking-squares/blinking-squares.component';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 export type TournamentTab = 'all' | 'upcoming' | 'ongoing' | 'completed' | 'my-registrations';
@@ -41,7 +42,8 @@ export type TournamentTab = 'all' | 'upcoming' | 'ongoing' | 'completed' | 'my-r
     BadgeComponent,
     ModalComponent,
     SkeletonComponent,
-    EmptyStateComponent
+    EmptyStateComponent,
+    BlinkingSquaresComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tournaments-list.component.html',

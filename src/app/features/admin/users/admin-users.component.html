@@ -37,52 +37,71 @@
 
   <!-- Metric Stat Cards -->
   <section class="stat-grid mb-xl" aria-label="User Key Metrics">
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--users-total" style="--stat-idx: 0">
       <div class="stat-inner">
-        <div class="stat-icon">👥</div>
+        <div class="stat-icon-wrap stat-icon--cyan">
+          <span class="stat-icon">👥</span>
+        </div>
         <div class="stat-meta">
-          <span class="stat-label">Total Users</span>
-          <span class="stat-val font-mono" id="stat-total-users">
+          <span class="stat-label">Total Players</span>
+          <span class="stat-val font-mono text-cyan" id="stat-total-users">
             {{ (stats()?.totalUsers ?? totalElements()) | number }}
           </span>
+          <span class="stat-sub-text">Registered Accounts</span>
         </div>
       </div>
+      <div class="user-stat-ribbon ribbon-cyan"></div>
     </gc-card>
 
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--users-active" style="--stat-idx: 1">
       <div class="stat-inner">
-        <div class="stat-icon active-glow">⚡</div>
+        <div class="stat-icon-wrap stat-icon--emerald">
+          <span class="stat-icon active-glow">⚡</span>
+        </div>
         <div class="stat-meta">
-          <span class="stat-label">Active Accounts</span>
+          <div class="stat-label-flex">
+            <span class="stat-label">Active Combatants</span>
+            <span class="shield-diode"></span>
+          </div>
           <span class="stat-val font-mono text-available" id="stat-active-users">
             {{ (stats()?.activeUsers ?? totalElements()) | number }}
           </span>
+          <span class="stat-sub-text">In Good Standing</span>
         </div>
       </div>
+      <div class="user-stat-ribbon ribbon-emerald"></div>
     </gc-card>
 
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--users-deactivated" style="--stat-idx: 2">
       <div class="stat-inner">
-        <div class="stat-icon">🚫</div>
+        <div class="stat-icon-wrap stat-icon--danger">
+          <span class="stat-icon">🚫</span>
+        </div>
         <div class="stat-meta">
           <span class="stat-label">Deactivated</span>
           <span class="stat-val font-mono text-warning" id="stat-deactivated-users">
             {{ (stats()?.deactivatedUsers ?? 0) | number }}
           </span>
+          <span class="stat-sub-text">Suspended / Locked</span>
         </div>
       </div>
+      <div class="user-stat-ribbon ribbon-danger"></div>
     </gc-card>
 
-    <gc-card class="stat-card">
+    <gc-card class="stat-card stat-card--users-admin" style="--stat-idx: 3">
       <div class="stat-inner">
-        <div class="stat-icon">👑</div>
+        <div class="stat-icon-wrap stat-icon--royal">
+          <span class="stat-icon">👑</span>
+        </div>
         <div class="stat-meta">
           <span class="stat-label">Staff & Admins</span>
           <span class="stat-val font-mono text-accent" id="stat-admin-users">
             {{ (stats()?.adminCount ?? 2) | number }}
           </span>
+          <span class="stat-sub-text">Role Privileged</span>
         </div>
       </div>
+      <div class="user-stat-ribbon ribbon-gold"></div>
     </gc-card>
   </section>
 
@@ -179,10 +198,11 @@
               </tr>
             </thead>
             <tbody>
-              @for (user of users(); track user.id) {
+              @for (user of users(); track user.id; let idx = $index) {
                 <tr class="user-row" (click)="openDetail(user)" tabindex="0"
                     (keydown.enter)="openDetail(user)" role="button"
-                    [attr.aria-label]="'View user details for ' + user.fullName">
+                    [attr.aria-label]="'View user details for ' + user.fullName"
+                    [style.--row-idx]="idx">
                   <td>
                     <div class="user-meta-cell">
                       <div class="user-avatar" [class.admin]="user.role === 'ADMIN'">

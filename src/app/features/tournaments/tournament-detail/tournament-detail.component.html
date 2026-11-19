@@ -1,5 +1,22 @@
 <div class="tournament-detail-page container">
 
+  <!-- Full-Page Background: Blinking Squares -->
+  <div class="page-background-squares" aria-hidden="true">
+    <gc-blinking-squares
+      [direction]="'left'"
+      [gridSize]="72"
+      [squareSize]="0.28"
+      [fadeStart]="0.05"
+      [fadeEnd]="0.85"
+      [falloff]="1.1"
+      [minBrightness]="0.18"
+      [twinkleSpeed]="1.2"
+      [twinkleStrength]="0.92"
+      [opacity]="0.25"
+      [squareColor]="'#60a5fa'">
+    </gc-blinking-squares>
+  </div>
+
   <!-- Back Navigation Button -->
   <div class="nav-back-row">
     <button type="button" class="back-link" (click)="goBack()">

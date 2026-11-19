@@ -1,7 +1,19 @@
 .tournaments-page {
+  position: relative;
+  z-index: 1;
   padding-top: var(--gc-spacing-xl);
   padding-bottom: var(--gc-spacing-2xl);
   min-height: calc(100vh - 180px);
+}
+
+.page-background-squares {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
 }
 
 .hero-featured {
