@@ -216,28 +216,41 @@
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
-  gap: 1rem;
+  gap: 1.25rem;
 
   .kpi-card {
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 1.25rem;
+    background: linear-gradient(145deg, rgba(20, 26, 42, 0.9) 0%, rgba(12, 17, 30, 0.98) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(12px);
+    border-radius: 14px;
+    padding: 1.35rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     position: relative;
     overflow: hidden;
+    animation: reportKpiEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--stat-idx, 0) * 0.08s);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 
-    &::before {
-      content: '';
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+      border-color: rgba(56, 189, 248, 0.4) !important;
+    }
+
+    .report-kpi-ribbon {
       position: absolute;
       top: 0;
       left: 0;
-      width: 4px;
-      height: 100%;
-      background: linear-gradient(180deg, #38bdf8 0%, #818cf8 100%);
+      right: 0;
+      height: 3px;
+
+      &.ribbon-sapphire { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
+      &.ribbon-emerald { background: linear-gradient(90deg, #10b981, #34d399); }
+      &.ribbon-amber { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+      &.ribbon-purple { background: linear-gradient(90deg, #8b5cf6, #ec4899); }
     }
 
     .kpi-header {
@@ -1519,10 +1532,15 @@
 
     tbody tr {
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      transition: background 0.15s ease;
+      transition: background 0.15s ease, transform 0.15s ease;
+
+      &.report-row {
+        animation: reportRowSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+        animation-delay: calc(var(--row-idx, 0) * 0.035s);
+      }
 
       &:hover {
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(59, 130, 246, 0.06);
       }
 
       td {
@@ -1635,5 +1653,37 @@
 
   .page-title {
     font-size: 1.35rem;
+  }
+}
+
+@keyframes reportKpiEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes reportRowSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi-card,
+  .report-row,
+  .donut-segment,
+  .progress-fill {
+    animation: none !important;
+    transition: none !important;
   }
 }

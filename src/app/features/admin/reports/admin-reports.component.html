@@ -134,8 +134,8 @@
 
     <!-- 1. KPI Cards Grid -->
     <section class="kpi-grid" aria-label="Key Performance Indicators">
-      @for (kpi of data.kpis; track kpi.id) {
-        <div class="kpi-card">
+      @for (kpi of data.kpis; track kpi.id; let idx = $index) {
+        <div class="kpi-card" [style.--stat-idx]="idx">
           <div class="kpi-header">
             <span class="kpi-label">{{ kpi.label }}</span>
             @if (kpi.icon) {
@@ -156,6 +156,12 @@
               <span class="kpi-helper">{{ kpi.helper }}</span>
             }
           </div>
+          <div
+            class="report-kpi-ribbon"
+            [class.ribbon-sapphire]="idx % 4 === 0"
+            [class.ribbon-emerald]="idx % 4 === 1"
+            [class.ribbon-amber]="idx % 4 === 2"
+            [class.ribbon-purple]="idx % 4 === 3"></div>
         </div>
       }
     </section>
@@ -666,8 +672,8 @@
             </tr>
           </thead>
           <tbody>
-            @for (row of data.tableData; track $index) {
-              <tr>
+            @for (row of data.tableData; track $index; let idx = $index) {
+              <tr class="report-row" [style.--row-idx]="idx">
                 @for (col of data.tableColumns; track col.key) {
                   <td [style.text-align]="col.align || 'left'">
                     @if (col.format === 'badge') {

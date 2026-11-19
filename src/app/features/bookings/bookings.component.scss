@@ -1,4 +1,6 @@
 .booking-page-container {
+  position: relative;
+  z-index: 1;
   padding: 1.5rem 1.25rem 4.5rem;
   max-width: 1400px;
   margin: 0 auto;
@@ -7,6 +9,16 @@
   @media (max-width: 640px) {
     padding: 1rem 0.75rem 6rem;
   }
+}
+
+.page-background-squares {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
 }
 
 // ── Hero Header ─────────────────────────────────────────────────────────────

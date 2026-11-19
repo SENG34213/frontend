@@ -26,33 +26,60 @@
   <!-- Stat KPI Cards -->
   @if (stats(); as st) {
     <section class="stats-grid" aria-label="Catalog Overview Statistics">
-      <div class="stat-card">
-        <div class="stat-icon">🎮</div>
-        <div class="stat-info">
-          <span class="stat-label">Total Titles</span>
-          <span class="stat-value">{{ st.totalGames }}</span>
+      <div class="stat-card stat-card--total" style="--stat-idx: 0">
+        <div class="stat-inner">
+          <div class="stat-icon-wrap stat-icon--indigo">
+            <span class="stat-icon">🎮</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Total Titles</span>
+            <span class="stat-value font-mono">{{ st.totalGames }}</span>
+            <span class="stat-sub">Installed Catalog</span>
+          </div>
         </div>
+        <div class="game-stat-ribbon ribbon-indigo"></div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon text-success">🟢</div>
-        <div class="stat-info">
-          <span class="stat-label">Active & Playable</span>
-          <span class="stat-value">{{ st.activeGames }}</span>
+
+      <div class="stat-card stat-card--active" style="--stat-idx: 1">
+        <div class="stat-inner">
+          <div class="stat-icon-wrap stat-icon--emerald">
+            <span class="stat-icon text-success live-glow">🟢</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Active &amp; Playable</span>
+            <span class="stat-value font-mono text-success">{{ st.activeGames }}</span>
+            <span class="stat-sub">Ready on Rigs</span>
+          </div>
         </div>
+        <div class="game-stat-ribbon ribbon-emerald"></div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon text-warning">⭐</div>
-        <div class="stat-info">
-          <span class="stat-label">Featured Showcase</span>
-          <span class="stat-value">{{ st.featuredGames }}</span>
+
+      <div class="stat-card stat-card--featured" style="--stat-idx: 2">
+        <div class="stat-inner">
+          <div class="stat-icon-wrap stat-icon--amber">
+            <span class="stat-icon text-warning">⭐</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Featured Showcase</span>
+            <span class="stat-value font-mono text-warning">{{ st.featuredGames }}</span>
+            <span class="stat-sub">Lounge Highlights</span>
+          </div>
         </div>
+        <div class="game-stat-ribbon ribbon-amber"></div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon text-accent">👥</div>
-        <div class="stat-info">
-          <span class="stat-label">Multiplayer Titles</span>
-          <span class="stat-value">{{ st.multiplayerGamesCount }}</span>
+
+      <div class="stat-card stat-card--multiplayer" style="--stat-idx: 3">
+        <div class="stat-inner">
+          <div class="stat-icon-wrap stat-icon--purple">
+            <span class="stat-icon text-accent">👥</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Multiplayer Titles</span>
+            <span class="stat-value font-mono text-accent">{{ st.multiplayerGamesCount }}</span>
+            <span class="stat-sub">Co-op &amp; Versus</span>
+          </div>
         </div>
+        <div class="game-stat-ribbon ribbon-purple"></div>
       </div>
     </section>
   }
@@ -155,8 +182,8 @@
   <!-- Games Grid -->
   @if (!isLoading() && filteredGames().length > 0) {
     <div class="games-grid">
-      @for (game of filteredGames(); track game.id) {
-        <article class="game-card" [class.inactive]="!game.active">
+      @for (game of filteredGames(); track game.id; let idx = $index) {
+        <article class="game-card" [class.inactive]="!game.active" [style.--card-idx]="idx">
           <!-- Card Thumbnail / Cover -->
           <div class="card-cover">
             @if (game.coverUrl) {

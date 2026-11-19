@@ -12,6 +12,7 @@ import { SkeletonComponent } from '../../shared/ui/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { ModalComponent } from '../../shared/ui/modal/modal.component';
+import { BlinkingSquaresComponent } from '../../shared/ui/blinking-squares/blinking-squares.component';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 
 export interface MyTournamentDisplayItem {
@@ -46,7 +47,8 @@ export interface MyTournamentDisplayItem {
     SkeletonComponent,
     EmptyStateComponent,
     ButtonComponent,
-    ModalComponent
+    ModalComponent,
+    BlinkingSquaresComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './my-tournaments.component.html',

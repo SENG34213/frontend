@@ -30,6 +30,73 @@
     </div>
   }
 
+  <!-- Stat Cards -->
+  <section class="stat-grid mb-xl" aria-label="Bookings Key Metrics">
+    <gc-card class="stat-card stat-card--total" style="--stat-idx: 0">
+      <div class="stat-inner">
+        <div class="stat-icon-wrap stat-icon--cyan">
+          <span class="stat-icon">📅</span>
+        </div>
+        <div class="stat-meta">
+          <span class="stat-label">Total Reservations</span>
+          <span class="stat-val font-mono" id="stat-total-bookings">
+            {{ totalElements() | number }}
+          </span>
+          <span class="stat-sub-text">All Scheduled Slots</span>
+        </div>
+      </div>
+      <div class="booking-stat-ribbon ribbon-cyan"></div>
+    </gc-card>
+
+    <gc-card class="stat-card stat-card--confirmed" style="--stat-idx: 1">
+      <div class="stat-inner">
+        <div class="stat-icon-wrap stat-icon--emerald">
+          <span class="stat-icon live-glow">⚡</span>
+        </div>
+        <div class="stat-meta">
+          <span class="stat-label">Active &amp; Confirmed</span>
+          <span class="stat-val font-mono text-success" id="stat-confirmed-bookings">
+            {{ confirmedCount() | number }}
+          </span>
+          <span class="stat-sub-text">In Current Page Feed</span>
+        </div>
+      </div>
+      <div class="booking-stat-ribbon ribbon-emerald"></div>
+    </gc-card>
+
+    <gc-card class="stat-card stat-card--walkin" style="--stat-idx: 2">
+      <div class="stat-inner">
+        <div class="stat-icon-wrap stat-icon--purple">
+          <span class="stat-icon">🏃</span>
+        </div>
+        <div class="stat-meta">
+          <span class="stat-label">Walk-In Bookings</span>
+          <span class="stat-val font-mono text-accent" id="stat-walkin-bookings">
+            {{ walkInCount() | number }}
+          </span>
+          <span class="stat-sub-text">Counter Allocations</span>
+        </div>
+      </div>
+      <div class="booking-stat-ribbon ribbon-purple"></div>
+    </gc-card>
+
+    <gc-card class="stat-card stat-card--pending" style="--stat-idx: 3">
+      <div class="stat-inner">
+        <div class="stat-icon-wrap stat-icon--amber">
+          <span class="stat-icon">⏳</span>
+        </div>
+        <div class="stat-meta">
+          <span class="stat-label">Pending Payment</span>
+          <span class="stat-val font-mono text-warning" id="stat-pending-bookings">
+            {{ pendingCount() | number }}
+          </span>
+          <span class="stat-sub-text">Awaiting Checkout</span>
+        </div>
+      </div>
+      <div class="booking-stat-ribbon ribbon-amber"></div>
+    </gc-card>
+  </section>
+
   <!-- Filter Toolbar -->
   <gc-card class="filter-card mb-lg">
     <div class="filter-grid">
@@ -127,10 +194,11 @@
               </tr>
             </thead>
             <tbody>
-              @for (booking of rows(); track booking.id) {
+              @for (booking of rows(); track booking.id; let idx = $index) {
                 <tr class="booking-row" (click)="openDetail(booking)" tabindex="0"
                     (keydown.enter)="openDetail(booking)" role="button"
-                    [attr.aria-label]="'View booking ' + booking.id">
+                    [attr.aria-label]="'View booking ' + booking.id"
+                    [style.--row-idx]="idx">
                   <td>
                     <div class="id-cell">
                       <span class="booking-id font-mono">{{ booking.id.slice(0, 8) }}…</span>

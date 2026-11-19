@@ -76,7 +76,7 @@
     <!-- 4 KPI Metrics Widgets Grid -->
     <section class="kpi-grid mb-xl" aria-label="Key Performance Indicators">
       <!-- 1. Revenue Card -->
-      <gc-card title="Revenue & Cashflow" subtitle="Payment Gateway & Cash Counter" glow="blue">
+      <gc-card class="dashboard-kpi-card kpi-card--revenue" style="--stat-idx: 0" title="Revenue & Cashflow" subtitle="Payment Gateway & Cash Counter" glow="blue">
         <div class="kpi-body">
           <div class="kpi-main">
             <span class="currency-tag">LKR</span>
@@ -94,10 +94,11 @@
             <span class="stat-item">Failed: <strong>{{ paymentStats()?.totalPaymentsFailed || 0 }}</strong></span>
           </div>
         </div>
+        <div class="dashboard-kpi-ribbon ribbon-emerald"></div>
       </gc-card>
 
       <!-- 2. Active Sessions & Booking Card -->
-      <gc-card title="Lounge Sessions & Bookings" subtitle="Live Station Occupancy" glow="blue">
+      <gc-card class="dashboard-kpi-card kpi-card--sessions" style="--stat-idx: 1" title="Lounge Sessions & Bookings" subtitle="Live Station Occupancy" glow="blue">
         <div class="kpi-body">
           <div class="kpi-main">
             <span class="live-dot" aria-hidden="true"></span>
@@ -116,10 +117,11 @@
             <span class="stat-item">Month total: <strong>{{ bookingStats()?.monthTotalBookings || 0 }}</strong></span>
           </div>
         </div>
+        <div class="dashboard-kpi-ribbon ribbon-blue"></div>
       </gc-card>
 
       <!-- 3. Player Base & Users Card -->
-      <gc-card title="Players & User Accounts" subtitle="Registered Gaming Community" glow="purple">
+      <gc-card class="dashboard-kpi-card kpi-card--users" style="--stat-idx: 2" title="Players & User Accounts" subtitle="Registered Gaming Community" glow="purple">
         <div class="kpi-body">
           <div class="kpi-main">
             <span class="kpi-icon">👥</span>
@@ -138,10 +140,11 @@
             <span class="stat-item">Month: <strong>+{{ userStats()?.newUsersThisMonth || 0 }}</strong></span>
           </div>
         </div>
+        <div class="dashboard-kpi-ribbon ribbon-purple"></div>
       </gc-card>
 
       <!-- 4. Tournament Arena Card -->
-      <gc-card title="Tournament Arena" subtitle="Esports Knockout Series" glow="purple">
+      <gc-card class="dashboard-kpi-card kpi-card--tournaments" style="--stat-idx: 3" title="Tournament Arena" subtitle="Esports Knockout Series" glow="purple">
         <div class="kpi-body">
           <div class="kpi-main">
             <span class="kpi-icon">🏆</span>
@@ -160,6 +163,7 @@
             <span class="stat-item">Total hosted: <strong>{{ tournamentStats()?.totalTournaments || 0 }}</strong></span>
           </div>
         </div>
+        <div class="dashboard-kpi-ribbon ribbon-amber"></div>
       </gc-card>
     </section>
 
@@ -337,7 +341,7 @@
       <div class="operations-container">
         <gc-card title="Quick Operations Hub" subtitle="Rapid Admin Workflows" glow="none">
           <div class="operations-menu">
-            <a routerLink="/admin/bookings" [queryParams]="{tab: 'walkin'}" class="op-item">
+            <a routerLink="/admin/bookings" [queryParams]="{tab: 'walkin'}" class="op-item" style="--op-idx: 0">
               <div class="op-icon bg-blue">🎮</div>
               <div class="op-info">
                 <span class="op-title">New Walk-In Booking</span>
@@ -346,7 +350,7 @@
               <span class="op-arrow">➔</span>
             </a>
 
-            <a routerLink="/admin/payments" [queryParams]="{action: 'cash'}" class="op-item">
+            <a routerLink="/admin/payments" [queryParams]="{action: 'cash'}" class="op-item" style="--op-idx: 1">
               <div class="op-icon bg-green">💵</div>
               <div class="op-info">
                 <span class="op-title">Record Cash Payment</span>
@@ -355,7 +359,7 @@
               <span class="op-arrow">➔</span>
             </a>
 
-            <a routerLink="/admin/tournaments" [queryParams]="{action: 'create'}" class="op-item">
+            <a routerLink="/admin/tournaments" [queryParams]="{action: 'create'}" class="op-item" style="--op-idx: 2">
               <div class="op-icon bg-purple">🏆</div>
               <div class="op-info">
                 <span class="op-title">Create Tournament</span>
@@ -364,7 +368,7 @@
               <span class="op-arrow">➔</span>
             </a>
 
-            <a routerLink="/admin/stations" class="op-item">
+            <a routerLink="/admin/stations" class="op-item" style="--op-idx: 3">
               <div class="op-icon bg-cyan">🖥️</div>
               <div class="op-info">
                 <span class="op-title">Console Stations</span>
@@ -373,7 +377,7 @@
               <span class="op-arrow">➔</span>
             </a>
 
-            <a routerLink="/admin/reports" class="op-item">
+            <a routerLink="/admin/reports" class="op-item" style="--op-idx: 4">
               <div class="op-icon bg-amber">📊</div>
               <div class="op-info">
                 <span class="op-title">Reports & Audits</span>
@@ -382,7 +386,7 @@
               <span class="op-arrow">➔</span>
             </a>
 
-            <a routerLink="/admin/games" class="op-item">
+            <a routerLink="/admin/games" class="op-item" style="--op-idx: 5">
               <div class="op-icon bg-purple">🎯</div>
               <div class="op-info">
                 <span class="op-title">Game Titles Catalog</span>
@@ -391,7 +395,7 @@
               <span class="op-arrow">➔</span>
             </a>
 
-            <a routerLink="/admin/loyalty" class="op-item">
+            <a routerLink="/admin/loyalty" class="op-item" style="--op-idx: 6">
               <div class="op-icon bg-emerald">🎁</div>
               <div class="op-info">
                 <span class="op-title">Loyalty Program</span>
@@ -476,8 +480,8 @@
                 </tr>
               </thead>
               <tbody>
-                @for (booking of filteredBookings(); track booking.id) {
-                  <tr>
+                @for (booking of filteredBookings(); track booking.id; let idx = $index) {
+                  <tr class="session-row" [style.--row-idx]="idx">
                     <td>
                       <div class="station-cell">
                         <span class="station-code">{{ booking.stationCode || 'Station' }}</span>

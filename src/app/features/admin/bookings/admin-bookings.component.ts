@@ -163,6 +163,15 @@ export class AdminBookingsComponent implements OnInit {
   readonly rows = computed(() => this.pagedResult()?.content ?? []);
   readonly totalPages = computed(() => this.pagedResult()?.totalPages ?? 1);
   readonly totalElements = computed(() => this.pagedResult()?.totalElements ?? 0);
+  readonly confirmedCount = computed(() =>
+    this.rows().filter(r => r.status === 'CONFIRMED' || r.status === 'IN_PROGRESS' || r.status === 'COMPLETED').length
+  );
+  readonly walkInCount = computed(() =>
+    this.rows().filter(r => r.source === 'WALK_IN').length
+  );
+  readonly pendingCount = computed(() =>
+    this.rows().filter(r => r.status === 'PENDING').length
+  );
 
   readonly sortLabel = computed(() =>
     `${this.sortField()},${this.sortDir()}`
