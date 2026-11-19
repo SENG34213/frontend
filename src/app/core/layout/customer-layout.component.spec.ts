@@ -349,5 +349,75 @@ describe('CustomerLayoutComponent', () => {
         queryParams: { returnUrl: '/tournaments' }
       });
     });
+
+    it('should intercept non-tournament protected nav clicks like /bookings and redirect to /login', () => {
+      const dummyEvent = new MouseEvent('click');
+      spyOn(dummyEvent, 'preventDefault');
+
+      component.onNavClick('/bookings', dummyEvent);
+      expect(dummyEvent.preventDefault).toHaveBeenCalled();
+      expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+        queryParams: { returnUrl: '/bookings' }
+      });
+    });
+
+    it('should redirect to /login when unauthenticated user clicks profile', () => {
+      component.handleProfileClick();
+      expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+        queryParams: { returnUrl: '/profile' }
+      });
+    });
+  });
+
+  describe('PillNav and Navigation Actions (Authenticated)', () => {
+    it('should delegate onPillNavItemClick to onNavClick when href is present', () => {
+      spyOn(component, 'onNavClick');
+      const dummyEvent = new MouseEvent('click');
+
+      component.onPillNavItemClick({
+        item: { label: 'Bookings', href: '/bookings' },
+        index: 1,
+        event: dummyEvent
+      });
+
+      expect(component.onNavClick).toHaveBeenCalledWith('/bookings', dummyEvent);
+    });
+
+    it('should ignore onPillNavItemClick when item has no href', () => {
+      spyOn(component, 'onNavClick');
+      const dummyEvent = new MouseEvent('click');
+
+      component.onPillNavItemClick({
+        item: { label: 'Button without href' },
+        index: 0,
+        event: dummyEvent
+      });
+
+      expect(component.onNavClick).not.toHaveBeenCalled();
+    });
+
+    it('should update currentUrl and close mobile menu on onNavClick when authenticated', () => {
+      component.mobileMenuOpen.set(true);
+      const dummyEvent = new MouseEvent('click');
+
+      component.onNavClick('/bookings', dummyEvent);
+
+      expect(component.mobileMenuOpen()).toBeFalse();
+      expect(component.currentUrl()).toBe('/bookings');
+    });
+
+    it('should open profile modal on handleProfileClick when authenticated', () => {
+      component.handleProfileClick();
+      expect(component.profileModalOpen()).toBeTrue();
+
+      component.closeProfileModal();
+      expect(component.profileModalOpen()).toBeFalse();
+    });
+
+    it('should close dropdown without focusing avatar button when returnFocus is false', () => {
+      component.dropdownOpen.set(true);
+      component.closeDropdown(false);
+      expect(component.dropdownOpen()).toBeFalse();
+    });
   });
 });
