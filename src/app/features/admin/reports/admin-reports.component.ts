@@ -10,8 +10,7 @@ import {
   ReportType,
   DateRangePreset,
   ReportFilter,
-  AdminReportResponse,
-  ReportDataPoint
+  AdminReportResponse
 } from '../../../shared/models';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
