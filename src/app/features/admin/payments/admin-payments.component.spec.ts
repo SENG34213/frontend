@@ -263,4 +263,98 @@ describe('AdminPaymentsComponent', () => {
       expect(result).toContain('2026');
     });
   });
+
+  describe('SVG chart computed signals and helpers', () => {
+    it('should compute maxTrendRevenue from sevenDayTrend', () => {
+      expect(component.maxTrendRevenue()).toBe(22000);
+    });
+
+    it('should return 1 for maxTrendRevenue when stats is null', () => {
+      component.stats.set(null);
+      expect(component.maxTrendRevenue()).toBe(1);
+    });
+
+    it('should compute totalTrendRevenue as sum of 7-day trend', () => {
+      expect(component.totalTrendRevenue()).toBe(12000 + 18000 + 9500 + 22000 + 15000);
+    });
+
+    it('should return 0 for totalTrendRevenue when stats is null', () => {
+      component.stats.set(null);
+      expect(component.totalTrendRevenue()).toBe(0);
+    });
+
+    it('should compute trendChartBars with geometry for each trend day', () => {
+      const bars = component.trendChartBars();
+      expect(bars.length).toBeGreaterThan(0);
+      bars.forEach(b => {
+        expect(b.centerX).toBeGreaterThan(0);
+        expect(b.width).toBeGreaterThan(0);
+        expect(b.index).toBeGreaterThanOrEqual(0);
+      });
+    });
+
+    it('should mark days with revenue as hasRevenue=true', () => {
+      const bars = component.trendChartBars();
+      const withRevenue = bars.filter(b => b.hasRevenue);
+      expect(withRevenue.length).toBeGreaterThan(0);
+    });
+
+    it('should return empty trendChartBars when stats is null', () => {
+      component.stats.set(null);
+      expect(component.trendChartBars()).toEqual([]);
+    });
+
+    it('should return empty trendSplinePath when stats is null', () => {
+      component.stats.set(null);
+      expect(component.trendSplinePath()).toBe('');
+    });
+
+    it('should return non-empty trendSplinePath when trend has revenue data', () => {
+      expect(component.trendSplinePath()).toContain('M ');
+    });
+
+    it('should return empty trendAreaPath when stats is null', () => {
+      component.stats.set(null);
+      expect(component.trendAreaPath()).toBe('');
+    });
+
+    it('should return closed trendAreaPath with Z when data present', () => {
+      expect(component.trendAreaPath()).toContain('Z');
+    });
+
+    it('should identify peakTrendDay correctly', () => {
+      const peak = component.peakTrendDay();
+      expect(peak).not.toBeNull();
+      expect(peak!.revenue).toBe(22000);
+    });
+
+    it('should return null peakTrendDay when stats is null', () => {
+      component.stats.set(null);
+      expect(component.peakTrendDay()).toBeNull();
+    });
+
+    it('should return 50 from getTrendBarLeftPct for an unknown date', () => {
+      expect(component.getTrendBarLeftPct('1900-01-01')).toBe(50);
+    });
+
+    it('should return a valid percentage from getTrendBarLeftPct for a known date', () => {
+      const bars = component.trendChartBars();
+      if (bars.length > 0) {
+        const pct = component.getTrendBarLeftPct(bars[0].date);
+        expect(pct).toBeGreaterThan(0);
+        expect(pct).toBeLessThanOrEqual(100);
+      }
+    });
+
+    it('should set and clear hoveredTrendBar signal', () => {
+      const trend = component.sevenDayTrend();
+      expect(component.hoveredTrendBar()).toBeNull();
+      if (trend.length > 0) {
+        component.hoveredTrendBar.set(trend[0]);
+        expect(component.hoveredTrendBar()?.date).toBe(trend[0].date);
+      }
+      component.hoveredTrendBar.set(null);
+      expect(component.hoveredTrendBar()).toBeNull();
+    });
+  });
 });

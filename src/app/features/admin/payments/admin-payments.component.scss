@@ -165,150 +165,324 @@
 .text-warning { color: #f59e0b; }
 .text-muted   { color: var(--color-text-muted, #94a3b8); }
 
-/* ── Revenue Trend Card ─────────────────────────────────────────────────── */
+/* ── Revenue Trend Card (Animated SVG) ──────────────────────────────────── */
 .trend-card {
   margin-bottom: 1.75rem;
-  display: block;
-
-  ::ng-deep .gc-card-body {
-    padding: 1.25rem 1.5rem;
-  }
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
 
   .trend-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 1.25rem;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 1rem;
   }
 
   .trend-title-wrap {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 4px;
+  }
+
+  .trend-badge-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+  }
+
+  .trend-live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22d3ee;
+    box-shadow: 0 0 8px #22d3ee;
+    animation: pmPulseDot 2s infinite ease-in-out;
+  }
+
+  .trend-badge-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
   }
 
   .trend-title {
-    font-size: 1rem;
+    font-size: 1.125rem;
     font-weight: 700;
-    color: var(--color-text, #fff);
+    color: #fff;
+    margin: 0;
+    letter-spacing: -0.01em;
   }
 
   .trend-subtitle {
-    font-size: 0.8rem;
-    color: var(--color-text-muted, #94a3b8);
+    font-size: 0.8125rem;
+    color: #94a3b8;
+    line-height: 1.4;
+    margin: 0;
   }
 
-  .trend-total {
-    font-size: 0.875rem;
-    color: var(--color-text-muted, #94a3b8);
-  }
-
-  .trend-bars-container {
-    width: 100%;
-    background: rgba(8, 11, 17, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: var(--gc-radius-sm, 6px);
-    padding: 1rem 1rem 0.5rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .trend-bars {
-    display: flex;
-    align-items: stretch;
-    gap: 0.75rem;
-    height: 120px;
-    width: 100%;
-
-    @media (max-width: 600px) {
-      min-width: 380px;
-    }
-  }
-
-  .trend-bar-col {
+  .trend-header-right {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    flex: 1;
-    height: 100%;
-    min-width: 0;
-  }
-
-  .trend-bar-wrapper {
-    flex: 1 1 auto;
-    width: 100%;
-    height: 100%;
-    display: flex;
     align-items: flex-end;
-    justify-content: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 2px;
+    gap: 0.75rem;
+
+    @media (max-width: 640px) {
+      align-items: flex-start;
+    }
   }
 
-  .trend-bar {
-    width: 32px;
-    max-width: 80%;
-    min-height: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px 4px 0 0;
-    transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease, transform 0.2s ease;
-    cursor: pointer;
-    position: relative;
+  .trend-peak-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(34, 211, 238, 0.1);
+    border: 1px solid rgba(34, 211, 238, 0.28);
+    border-radius: 8px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
 
-    &.has-revenue {
-      background: linear-gradient(to top, var(--gc-primary, #2563eb), var(--gc-accent, #8b5cf6));
-      box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
+    .pill-label {
+      display: block;
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
     }
 
-    &:hover {
-      filter: brightness(1.25);
-      transform: scaleY(1.02);
+    .pill-val {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #22d3ee;
+      font-family: var(--gc-font-mono, monospace);
+    }
+  }
 
-      .trend-bar-tooltip {
-        opacity: 1;
-        visibility: visible;
-        transform: translateX(-50%) translateY(-4px);
+  .trend-summary-badges {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    .summary-badge {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+
+      .sb-label {
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        font-weight: 600;
+      }
+
+      .sb-val {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        font-family: var(--gc-font-mono, monospace);
       }
     }
   }
+}
 
-  .trend-bar-tooltip {
+/* ── SVG Chart Wrapper ───────────────────────────────────────────────────── */
+.svg-trend-wrapper {
+  position: relative;
+  background: rgba(8, 11, 20, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 12px 8px 8px;
+  overflow: visible;
+
+  .trend-svg-chart {
+    width: 100%;
+    height: 185px;
+    display: block;
+    overflow: visible;
+
+    @media (max-width: 600px) {
+      min-width: 420px;
+    }
+  }
+
+  /* Grid lines */
+  .pm-grid-line {
+    stroke: rgba(255, 255, 255, 0.05);
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+
+    &.pm-baseline {
+      stroke: rgba(255, 255, 255, 0.14);
+      stroke-dasharray: none;
+    }
+  }
+
+  /* Spline curve */
+  .pm-spline-path {
+    stroke-dasharray: 800;
+    stroke-dashoffset: 800;
+    animation: pmPathDraw 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Area shimmer */
+  .pm-area-path {
+    animation: pmAreaFade 1s ease-out forwards;
+  }
+
+  /* Bar groups */
+  .pm-bar-group {
+    cursor: pointer;
+    outline: none;
+    transition: opacity 0.2s ease, filter 0.2s ease;
+
+    &.dimmed { opacity: 0.42; }
+
+    &.active,
+    &:hover,
+    &:focus {
+      opacity: 1;
+      filter: drop-shadow(0 0 10px rgba(232, 121, 249, 0.55));
+    }
+  }
+
+  /* Individual bars */
+  .pm-chart-bar {
+    transform-origin: bottom;
+    animation: pmBarRise 0.65s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation-delay: calc(var(--bar-idx, 0) * 0.06s);
+    transition: fill 0.2s ease;
+  }
+
+  /* Cap dots on bar tops */
+  .pm-cap-dot {
+    fill: #22d3ee;
+    transition: r 0.2s ease, fill 0.2s ease;
+
+    &.pm-cap-active {
+      fill: #e879f9;
+      filter: drop-shadow(0 0 6px #e879f9);
+    }
+  }
+
+  /* Floating tooltip */
+  .pm-chart-tooltip {
     position: absolute;
-    bottom: calc(100% + 4px);
-    left: 50%;
+    top: 8px;
     transform: translateX(-50%);
-    background: #0f1523;
-    border: 1px solid var(--gc-border-default, #263554);
-    color: #fff;
-    padding: 3px 7px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    border-radius: 4px;
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
+    background: rgba(10, 15, 30, 0.97);
+    border: 1px solid rgba(232, 121, 249, 0.5);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 14px rgba(232, 121, 249, 0.3);
+    border-radius: 8px;
+    padding: 0.45rem 0.75rem;
     pointer-events: none;
-    transition: opacity 0.15s ease, transform 0.15s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    z-index: 10;
-  }
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    white-space: nowrap;
+    backdrop-filter: blur(8px);
+    animation: pmTipPop 0.18s ease-out forwards;
+    transition: left 0.1s ease-out;
 
-  .trend-date {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--color-text-muted, #94a3b8);
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%) rotate(45deg);
+      width: 8px;
+      height: 8px;
+      background: rgba(10, 15, 30, 0.97);
+      border-right: 1px solid rgba(232, 121, 249, 0.5);
+      border-bottom: 1px solid rgba(232, 121, 249, 0.5);
+    }
+
+    .pm-tip-date {
+      font-size: 0.6875rem;
+      color: #94a3b8;
+      font-family: var(--gc-font-mono, monospace);
+    }
+
+    .pm-tip-rev {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #e879f9;
+      font-family: var(--gc-font-mono, monospace);
+    }
+  }
+}
+
+/* ── X-axis date labels ──────────────────────────────────────────────────── */
+.trend-axis-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 4px 0;
+  overflow-x: auto;
+
+  .axis-label {
+    flex: 1;
+    text-align: center;
+    font-size: 0.6875rem;
+    color: #64748b;
     font-family: var(--gc-font-mono, monospace);
-    margin-top: 0.4rem;
     white-space: nowrap;
-  }
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s ease, font-weight 0.15s ease;
 
-  .trend-val-label {
-    font-size: 0.68rem;
-    color: var(--gc-text-muted, #64748b);
-    white-space: nowrap;
-    margin-top: 0.15rem;
+    &.active,
+    &:hover {
+      color: #22d3ee;
+      font-weight: 700;
+    }
+  }
+}
+
+/* ── Trend keyframes ─────────────────────────────────────────────────────── */
+@keyframes pmPulseDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.4); opacity: 0.5; }
+}
+
+@keyframes pmBarRise {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+@keyframes pmPathDraw {
+  from { stroke-dashoffset: 800; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes pmAreaFade {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pmTipPop {
+  from { opacity: 0; transform: translateX(-50%) scale(0.9); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-chart-bar,
+  .pm-spline-path,
+  .pm-area-path,
+  .trend-live-dot,
+  .pm-chart-tooltip {
+    animation: none !important;
+    transition: none !important;
+    stroke-dashoffset: 0 !important;
   }
 }
 

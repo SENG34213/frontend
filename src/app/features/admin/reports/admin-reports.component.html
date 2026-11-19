@@ -160,62 +160,493 @@
       }
     </section>
 
-    <!-- 2. Interactive Trend Visualization -->
-    <section class="chart-section">
-      <div class="section-header">
-        <div>
-          <h2 class="section-title">Timeline Performance Trend</h2>
-          <p class="section-subtitle">Proportional distribution across the active time window</p>
-        </div>
-        <div class="chart-legend">
-          <span class="legend-item"><span class="legend-dot primary"></span> Primary Metric</span>
-          <span class="legend-item"><span class="legend-dot secondary"></span> Secondary Channel</span>
-        </div>
-      </div>
+    <!-- 2. Distinct Animated Trend Visualizations for 4 Categories -->
 
-      <div class="trend-bars-container">
-        @for (pt of data.trend; track pt.date) {
-          <div class="bar-col" [title]="pt.date + ': ' + pt.primaryValue">
-            <div class="bar-track">
-              <div
-                class="bar-fill primary"
-                [style.height.%]="getBarHeightPct(pt.primaryValue)">
-                <span class="bar-tooltip">{{ pt.primaryValue }}</span>
-              </div>
-            </div>
-            <span class="bar-label">{{ pt.label }}</span>
+    <!-- ───────────────────────── SECTION A: REVENUE & FINANCE ───────────────────────── -->
+    @if (activeType() === 'revenue') {
+      <section class="chart-section chart-revenue" aria-label="Revenue Growth Wave">
+        <div class="section-header">
+          <div>
+            <div class="chart-badge-tag"><span class="pulse-dot emerald"></span> Financial Inflow Trajectory</div>
+            <h2 class="section-title">Revenue & Cash Flow Wave</h2>
+            <p class="section-subtitle">Real-time monetary velocity across online gateway settlements and cash walk-ins</p>
           </div>
-        }
-      </div>
-    </section>
+          <div class="header-chart-meta">
+            @if (peakPoint(); as peak) {
+              <div class="peak-pill">
+                <span class="peak-icon">🚀</span>
+                <div>
+                  <span class="peak-title">Peak Intake</span>
+                  <strong class="peak-val">LKR {{ peak.primaryValue | number }} ({{ peak.label }})</strong>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
 
-    <!-- 3. Category Breakdown & Segment Analysis -->
-    @if (data.breakdowns.length > 0) {
-      <section class="breakdown-section">
-        <h2 class="section-title">Segment Breakdown</h2>
-        <div class="breakdown-grid">
-          @for (item of data.breakdowns; track item.category) {
-            <div class="breakdown-card">
-              <div class="breakdown-header">
-                <span class="category-name">{{ item.category }}</span>
-                <span class="category-val">{{ item.formattedValue }}</span>
+        <div class="svg-chart-wrapper">
+          <svg class="responsive-svg-chart" viewBox="0 0 1000 240" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="revenueAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#10b981" stop-opacity="0.38"/>
+                <stop offset="65%" stop-color="#06b6d4" stop-opacity="0.12"/>
+                <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.0"/>
+              </linearGradient>
+              <linearGradient id="revenueStrokeGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#10b981"/>
+                <stop offset="50%" stop-color="#38bdf8"/>
+                <stop offset="100%" stop-color="#818cf8"/>
+              </linearGradient>
+              <filter id="revenueGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#10b981" flood-opacity="0.45"/>
+              </filter>
+            </defs>
+
+            <!-- Horizontal Grid Guides -->
+            <line x1="40" y1="40" x2="960" y2="40" class="chart-grid-line" />
+            <line x1="40" y1="95" x2="960" y2="95" class="chart-grid-line" />
+            <line x1="40" y1="150" x2="960" y2="150" class="chart-grid-line" />
+            <line x1="40" y1="212" x2="960" y2="212" class="chart-grid-line baseline" />
+
+            <!-- Filled Gradient Wave Area -->
+            <path [attr.d]="revenueAreaPath()" fill="url(#revenueAreaGrad)" class="animated-area-path"/>
+
+            <!-- Animated Glowing Spline Line -->
+            <path
+              [attr.d]="revenueLinePath()"
+              fill="none"
+              stroke="url(#revenueStrokeGrad)"
+              stroke-width="3.5"
+              stroke-linecap="round"
+              filter="url(#revenueGlow)"
+              class="animated-stroke-path"/>
+
+            <!-- Interactive Hover Hotspots -->
+            @for (pt of trendChartPoints(); track pt.date; let idx = $index) {
+              <g
+                class="svg-point-group"
+                [class.active]="hoveredPointIndex() === idx"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="pt.date + ': LKR ' + (pt.primaryValue | number)"
+                (mouseenter)="hoveredPointIndex.set(idx)"
+                (mouseleave)="hoveredPointIndex.set(null)"
+                (focus)="hoveredPointIndex.set(idx)"
+                (blur)="hoveredPointIndex.set(null)">
+                <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="8" class="outer-point-glow" />
+                <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4.5" class="inner-point emerald-point" />
+              </g>
+            }
+          </svg>
+
+          <!-- Floating Interactive Tooltip -->
+          @if (hoveredPointIndex() !== null && trendChartPoints()[hoveredPointIndex()!]; as activePt) {
+            <div
+              class="floating-chart-tooltip"
+              [style.left.%]="(activePt.x / 1000) * 100"
+              [style.top.px]="activePt.y - 48">
+              <span class="tooltip-date">📅 {{ activePt.date }}</span>
+              <span class="tooltip-val">💰 LKR {{ activePt.primaryValue | number }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- X-Axis Timeline Labels -->
+        <div class="chart-axis-labels">
+          @for (pt of trendChartPoints(); track pt.date) {
+            <span class="axis-tick-label">{{ pt.label }}</span>
+          }
+        </div>
+      </section>
+
+      <!-- Revenue Breakdown with Animated Donut Chart -->
+      @if (data.breakdowns.length > 0) {
+        <section class="breakdown-section revenue-breakdown-section">
+          <h2 class="section-title">Payment Settlement Channels</h2>
+          <div class="donut-and-cards-layout">
+            <div class="donut-visualizer-card">
+              <div class="donut-wrapper">
+                <svg class="donut-svg" viewBox="0 0 160 160">
+                  <circle cx="80" cy="80" r="65" class="donut-bg-ring"/>
+                  @for (seg of donutSegments(); track seg.category) {
+                    <circle
+                      cx="80"
+                      cy="80"
+                      r="65"
+                      class="donut-segment"
+                      [style.stroke]="seg.color"
+                      [attr.stroke-dasharray]="seg.dashArray"
+                      [attr.stroke-dashoffset]="seg.dashOffset"/>
+                  }
+                </svg>
+                <div class="donut-center-info">
+                  <span class="donut-center-icon">💳</span>
+                  <span class="donut-center-label">Inflow Channels</span>
+                  <strong class="donut-center-val">{{ data.breakdowns.length }} Methods</strong>
+                </div>
               </div>
-              <div class="progress-track">
-                <div
-                  class="progress-fill"
-                  [style.width.%]="item.percentage"
-                  [style.background-color]="item.color || '#3b82f6'"></div>
-              </div>
-              <div class="breakdown-footer">
-                <span>{{ item.percentage }}% of total</span>
-                @if (item.count !== undefined) {
-                  <span>{{ item.count }} events</span>
+              <div class="donut-legend-chips">
+                @for (seg of donutSegments(); track seg.category) {
+                  <div class="legend-chip">
+                    <span class="legend-chip-dot" [style.background-color]="seg.color"></span>
+                    <span class="legend-chip-text">{{ seg.category }}: <strong>{{ seg.percentage }}%</strong></span>
+                  </div>
                 }
               </div>
+            </div>
+
+            <div class="breakdown-cards-col">
+              @for (item of data.breakdowns; track item.category) {
+                <div class="breakdown-card payment-method-card">
+                  <div class="breakdown-header">
+                    <span class="category-name">{{ item.category }}</span>
+                    <span class="category-val">{{ item.formattedValue }}</span>
+                  </div>
+                  <div class="progress-track">
+                    <div
+                      class="progress-fill animated-fill"
+                      [style.width.%]="item.percentage"
+                      [style.background-color]="item.color || '#10b981'"></div>
+                  </div>
+                  <div class="breakdown-footer">
+                    <span>{{ item.percentage }}% of total revenue</span>
+                    @if (item.count !== undefined) {
+                      <span class="badge-pill">{{ item.count }} transactions</span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </section>
+      }
+    }
+
+    <!-- ───────────────────────── SECTION B: STATION UTILIZATION ───────────────────────── -->
+    @if (activeType() === 'utilization') {
+      <section class="chart-section chart-utilization" aria-label="Station Occupancy Matrix">
+        <div class="section-header">
+          <div>
+            <div class="chart-badge-tag"><span class="pulse-dot cyan"></span> Console Load & Occupancy</div>
+            <h2 class="section-title">Gaming Floor Capacity Gauge</h2>
+            <p class="section-subtitle">Real-time telemetry measuring active station hours, load density, and rig utilization</p>
+          </div>
+          <div class="utilization-kpi-badge">
+            <span class="live-status-pill">● LIVE TELEMETRY</span>
+          </div>
+        </div>
+
+        <div class="utilization-overview-grid">
+          <!-- Master Radial Gauge -->
+          <div class="master-radial-gauge-card">
+            <div class="gauge-ring-container">
+              <svg class="radial-gauge-svg" viewBox="0 0 180 180">
+                <circle cx="90" cy="90" r="72" class="gauge-bg-circle"/>
+                <circle
+                  cx="90"
+                  cy="90"
+                  r="72"
+                  class="gauge-progress-circle"
+                  [style.stroke-dasharray]="452.4"
+                  [style.stroke-dashoffset]="452.4 - (averageUtilization() / 100) * 452.4"/>
+              </svg>
+              <div class="gauge-text-center">
+                <span class="gauge-number">{{ averageUtilization() }}%</span>
+                <span class="gauge-sublabel">Floor Occupancy</span>
+              </div>
+            </div>
+
+            <div class="gauge-footer-stats">
+              <div class="gauge-stat-item">
+                <span class="stat-label">Efficiency</span>
+                <span class="stat-val text-cyan">{{ averageUtilization() >= 75 ? 'Peak Load' : 'Optimal' }}</span>
+              </div>
+              <div class="gauge-stat-divider"></div>
+              <div class="gauge-stat-item">
+                <span class="stat-label">Floor Status</span>
+                <span class="stat-val text-emerald">Active Rigs</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hardware Rigs Utilization Matrix -->
+          <div class="station-rigs-matrix">
+            <div class="matrix-header">
+              <span class="matrix-title">Station Hardware Telemetry</span>
+              <span class="matrix-count">{{ stationOccupancyList().length }} Stations Tracked</span>
+            </div>
+            <div class="rigs-grid">
+              @for (rig of stationOccupancyList(); track rig.station) {
+                <div class="rig-card" [class.high-demand]="rig.occupancy >= 80">
+                  <div class="rig-top">
+                    <span class="rig-code">{{ rig.station }}</span>
+                    <span
+                      class="rig-status-chip"
+                      [class.peak]="rig.occupancy >= 80"
+                      [class.optimal]="rig.occupancy >= 50 && rig.occupancy < 80"
+                      [class.nominal]="rig.occupancy < 50">
+                      {{ rig.occupancy }}% LOAD
+                    </span>
+                  </div>
+                  <div class="rig-type-badge">{{ rig.type }}</div>
+                  <div class="rig-progress-bar">
+                    <div
+                      class="rig-fill"
+                      [style.width.%]="rig.occupancy"
+                      [class.fill-peak]="rig.occupancy >= 80"
+                      [class.fill-optimal]="rig.occupancy >= 50 && rig.occupancy < 80"
+                      [class.fill-nominal]="rig.occupancy < 50"></div>
+                  </div>
+                  <div class="rig-stats-row">
+                    <span>⏱ {{ rig.hours }} hrs booked</span>
+                    <span>💰 LKR {{ rig.revenue | number }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Category Breakdown for Station Types -->
+      @if (data.breakdowns.length > 0) {
+        <section class="breakdown-section">
+          <h2 class="section-title">Hardware Platform Distribution</h2>
+          <div class="breakdown-grid">
+            @for (item of data.breakdowns; track item.category) {
+              <div class="breakdown-card">
+                <div class="breakdown-header">
+                  <span class="category-name">{{ item.category }}</span>
+                  <span class="category-val">{{ item.formattedValue }}</span>
+                </div>
+                <div class="progress-track">
+                  <div
+                    class="progress-fill animated-fill"
+                    [style.width.%]="item.percentage"
+                    [style.background-color]="item.color || '#06b6d4'"></div>
+                </div>
+                <div class="breakdown-footer">
+                  <span>{{ item.percentage }}% of total rig fleet</span>
+                  @if (item.count !== undefined) {
+                    <span>{{ item.count }} units configured</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
+    }
+
+    <!-- ───────────────────────── SECTION C: BOOKINGS & MANIFEST ───────────────────────── -->
+    @if (activeType() === 'bookings') {
+      <section class="chart-section chart-bookings" aria-label="Bookings Timeline Histogram">
+        <div class="section-header">
+          <div>
+            <div class="chart-badge-tag"><span class="pulse-dot blue"></span> Channel Manifest</div>
+            <h2 class="section-title">Booking Inflow & Source Distribution</h2>
+            <p class="section-subtitle">Comparison of reservations generated through Online Web Portal vs Walk-in Front Desk</p>
+          </div>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-dot primary-blue"></span> Online Bookings</span>
+            <span class="legend-item"><span class="legend-dot secondary-emerald"></span> Walk-In Desk</span>
+          </div>
+        </div>
+
+        <!-- Channel Split Ratio Banner -->
+        <div class="channel-split-banner">
+          <div class="channel-split-item left">
+            <span class="split-icon">🌐</span>
+            <span class="split-label">Online Portal: <strong>{{ bookingsRatio().online }}%</strong></span>
+          </div>
+          <div class="split-meter-bar">
+            <div class="split-meter-fill online" [style.width.%]="bookingsRatio().online"></div>
+            <div class="split-meter-fill walkin" [style.width.%]="bookingsRatio().walkin"></div>
+          </div>
+          <div class="channel-split-item right">
+            <span class="split-label">Walk-In Desk: <strong>{{ bookingsRatio().walkin }}%</strong></span>
+            <span class="split-icon">🏃</span>
+          </div>
+        </div>
+
+        <!-- 3D Dual-Channel Histogram -->
+        <div class="dual-histogram-container">
+          @for (pt of trendChartPoints(); track pt.date; let idx = $index) {
+            <div
+              class="histogram-col"
+              tabindex="0"
+              [attr.aria-label]="pt.date + ': Total ' + pt.primaryValue + ' (Walk-in: ' + (pt.secondaryValue || 0) + ')'"
+              [style.--col-index]="idx">
+              <div class="histogram-bars-pair">
+                <!-- Online Bar -->
+                <div
+                  class="h-bar bar-online"
+                  [style.height.%]="pt.pctHeight"
+                  [title]="'Online: ' + (pt.primaryValue - (pt.secondaryValue || 0))">
+                  <span class="bar-badge">{{ pt.primaryValue }}</span>
+                </div>
+                <!-- Walk-In Bar -->
+                @if (pt.secondaryValue) {
+                  <div
+                    class="h-bar bar-walkin"
+                    [style.height.%]="getBarHeightPct(pt.secondaryValue)"
+                    [title]="'Walk-in: ' + pt.secondaryValue">
+                  </div>
+                }
+              </div>
+              <span class="histogram-label">{{ pt.label }}</span>
             </div>
           }
         </div>
       </section>
+
+      <!-- Category Breakdown for Bookings -->
+      @if (data.breakdowns.length > 0) {
+        <section class="breakdown-section">
+          <h2 class="section-title">Channel Volume Summary</h2>
+          <div class="breakdown-grid">
+            @for (item of data.breakdowns; track item.category) {
+              <div class="breakdown-card">
+                <div class="breakdown-header">
+                  <span class="category-name">{{ item.category }}</span>
+                  <span class="category-val">{{ item.formattedValue }}</span>
+                </div>
+                <div class="progress-track">
+                  <div
+                    class="progress-fill animated-fill"
+                    [style.width.%]="item.percentage"
+                    [style.background-color]="item.color || '#3b82f6'"></div>
+                </div>
+                <div class="breakdown-footer">
+                  <span>{{ item.percentage }}% of all bookings</span>
+                  @if (item.count !== undefined) {
+                    <span>{{ item.count }} reservations</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
+    }
+
+    <!-- ───────────────────────── SECTION D: GAMER GROWTH ───────────────────────── -->
+    @if (activeType() === 'users') {
+      <section class="chart-section chart-growth" aria-label="Gamer Growth Trajectory">
+        <div class="section-header">
+          <div>
+            <div class="chart-badge-tag"><span class="pulse-dot purple"></span> Community Velocity</div>
+            <h2 class="section-title">Player Acquisition Trajectory</h2>
+            <p class="section-subtitle">Account registration timeline and customer community expansion velocity</p>
+          </div>
+          <div class="growth-community-stats">
+            <span class="growth-chip">⚡ Vibrant Community</span>
+          </div>
+        </div>
+
+        <div class="svg-chart-wrapper">
+          <svg class="responsive-svg-chart" viewBox="0 0 1000 240" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="growthAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.42"/>
+                <stop offset="65%" stop-color="#ec4899" stop-opacity="0.14"/>
+                <stop offset="100%" stop-color="#ec4899" stop-opacity="0.0"/>
+              </linearGradient>
+              <linearGradient id="growthStrokeGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#8b5cf6"/>
+                <stop offset="50%" stop-color="#ec4899"/>
+                <stop offset="100%" stop-color="#f43f5e"/>
+              </linearGradient>
+              <filter id="growthGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#8b5cf6" flood-opacity="0.45"/>
+              </filter>
+            </defs>
+
+            <!-- Stepped Grid Lines -->
+            <line x1="40" y1="40" x2="960" y2="40" class="chart-grid-line" />
+            <line x1="40" y1="95" x2="960" y2="95" class="chart-grid-line" />
+            <line x1="40" y1="150" x2="960" y2="150" class="chart-grid-line" />
+            <line x1="40" y1="212" x2="960" y2="212" class="chart-grid-line baseline" />
+
+            <!-- Filled Stepped Growth Area -->
+            <path [attr.d]="userGrowthAreaPath()" fill="url(#growthAreaGrad)" class="animated-area-path"/>
+
+            <!-- Stepped Stroke Line -->
+            <path
+              [attr.d]="userGrowthLinePath()"
+              fill="none"
+              stroke="url(#growthStrokeGrad)"
+              stroke-width="3.5"
+              stroke-linecap="round"
+              filter="url(#growthGlow)"
+              class="animated-stroke-path"/>
+
+            <!-- Data Point Beads -->
+            @for (pt of trendChartPoints(); track pt.date; let idx = $index) {
+              <g
+                class="svg-point-group"
+                [class.active]="hoveredPointIndex() === idx"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="pt.date + ': ' + pt.primaryValue + ' new gamers'"
+                (mouseenter)="hoveredPointIndex.set(idx)"
+                (mouseleave)="hoveredPointIndex.set(null)"
+                (focus)="hoveredPointIndex.set(idx)"
+                (blur)="hoveredPointIndex.set(null)">
+                <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="8" class="outer-point-glow purple-glow" />
+                <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4.5" class="inner-point purple-point" />
+              </g>
+            }
+          </svg>
+
+          <!-- Floating Tooltip for Growth -->
+          @if (hoveredPointIndex() !== null && trendChartPoints()[hoveredPointIndex()!]; as activePt) {
+            <div
+              class="floating-chart-tooltip purple-theme"
+              [style.left.%]="(activePt.x / 1000) * 100"
+              [style.top.px]="activePt.y - 48">
+              <span class="tooltip-date">📅 {{ activePt.date }}</span>
+              <span class="tooltip-val">👥 +{{ activePt.primaryValue }} New Registrations</span>
+            </div>
+          }
+        </div>
+
+        <div class="chart-axis-labels">
+          @for (pt of trendChartPoints(); track pt.date) {
+            <span class="axis-tick-label">{{ pt.label }}</span>
+          }
+        </div>
+      </section>
+
+      <!-- Community Demographic Breakdown -->
+      @if (data.breakdowns.length > 0) {
+        <section class="breakdown-section">
+          <h2 class="section-title">Account Demographics & Role Distribution</h2>
+          <div class="breakdown-grid user-demographics-grid">
+            @for (item of data.breakdowns; track item.category) {
+              <div class="breakdown-card demographic-card">
+                <div class="breakdown-header">
+                  <div class="demographic-badge">
+                    <span class="demo-icon">{{ item.category.toLowerCase().includes('customer') ? '🎮' : '🛡️' }}</span>
+                    <span class="category-name">{{ item.category }}</span>
+                  </div>
+                  <span class="category-val text-purple">{{ item.formattedValue }}</span>
+                </div>
+                <div class="progress-track">
+                  <div
+                    class="progress-fill animated-fill"
+                    [style.width.%]="item.percentage"
+                    [style.background-color]="item.color || '#8b5cf6'"></div>
+                </div>
+                <div class="breakdown-footer">
+                  <span>{{ item.percentage }}% share of player base</span>
+                  <span class="health-badge">● Active Status</span>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
     }
 
     <!-- 4. Detailed Tabular Audit Records -->

@@ -236,4 +236,69 @@ describe('AdminDashboardComponent', () => {
     expect(component.formatDate('2026-10-15')).toBe('10/15');
     expect(component.formatDate('')).toBe('');
   });
+
+  describe('SVG chart computed signals and helpers', () => {
+    it('should compute chartBars with length matching revenueTrend', () => {
+      const bars = component.chartBars();
+      expect(bars.length).toBe(component.revenueTrend().length);
+    });
+
+    it('should compute chartBars with valid SVG geometry', () => {
+      const bars = component.chartBars();
+      bars.forEach(b => {
+        expect(b.centerX).toBeGreaterThan(0);
+        expect(b.width).toBeGreaterThan(0);
+        expect(b.height).toBeGreaterThan(0);
+        expect(b.pct).toBeGreaterThanOrEqual(0);
+        expect(b.pct).toBeLessThanOrEqual(100);
+      });
+    });
+
+    it('should return empty chartBars when paymentStats is null', () => {
+      component.paymentStats.set(null);
+      expect(component.chartBars()).toEqual([]);
+    });
+
+    it('should return non-empty trendSplinePath when chartBars has data', () => {
+      expect(component.trendSplinePath()).toContain('M ');
+    });
+
+    it('should return empty trendSplinePath when paymentStats is null', () => {
+      component.paymentStats.set(null);
+      expect(component.trendSplinePath()).toBe('');
+    });
+
+    it('should return closed trendAreaPath containing Z', () => {
+      expect(component.trendAreaPath()).toContain('Z');
+    });
+
+    it('should return empty trendAreaPath when paymentStats is null', () => {
+      component.paymentStats.set(null);
+      expect(component.trendAreaPath()).toBe('');
+    });
+
+    it('should compute peakDayItem as the day with max revenue', () => {
+      const peak = component.peakDayItem();
+      expect(peak).not.toBeNull();
+      expect(peak!.revenue).toBe(component.maxRevenue());
+    });
+
+    it('should return null peakDayItem when paymentStats is null', () => {
+      component.paymentStats.set(null);
+      expect(component.peakDayItem()).toBeNull();
+    });
+
+    it('should return 50 from getHoveredBarLeftPct for an unknown date', () => {
+      expect(component.getHoveredBarLeftPct('1900-01-01')).toBe(50);
+    });
+
+    it('should return a valid percentage from getHoveredBarLeftPct for a known date', () => {
+      const bars = component.chartBars();
+      if (bars.length > 0) {
+        const pct = component.getHoveredBarLeftPct(bars[0].date);
+        expect(pct).toBeGreaterThan(0);
+        expect(pct).toBeLessThanOrEqual(100);
+      }
+    });
+  });
 });
