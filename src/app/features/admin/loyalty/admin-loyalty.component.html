@@ -16,33 +16,60 @@
   <!-- Top KPI Stats -->
   @if (stats(); as st) {
     <section class="stats-grid" aria-label="Loyalty Program High-Level KPIs">
-      <div class="stat-card">
-        <div class="stat-icon">👥</div>
-        <div class="stat-info">
-          <span class="stat-label">Loyalty Members</span>
-          <span class="stat-value">{{ (st.totalAccounts || 0) | number:'1.0-0' }}</span>
+      <div class="stat-card stat-card--members" style="--stat-idx: 0">
+        <div class="stat-inner">
+          <div class="stat-icon-wrap stat-icon--sapphire">
+            <span class="stat-icon">👥</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Loyalty Members</span>
+            <span class="stat-value font-mono">{{ (st.totalAccounts || 0) | number:'1.0-0' }}</span>
+            <span class="stat-sub">Enrolled Players</span>
+          </div>
         </div>
+        <div class="loyalty-stat-ribbon ribbon-sapphire"></div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon text-accent">💎</div>
-        <div class="stat-info">
-          <span class="stat-label">Points in Circulation</span>
-          <span class="stat-value">{{ (st.totalPointsInCirculation || 0) | number:'1.0-0' }}</span>
+
+      <div class="stat-card stat-card--circulation" style="--stat-idx: 1">
+        <div class="stat-inner">
+          <div class="stat-icon-wrap stat-icon--purple">
+            <span class="stat-icon text-accent live-glow">💎</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Points in Circulation</span>
+            <span class="stat-value font-mono text-accent">{{ (st.totalPointsInCirculation || 0) | number:'1.0-0' }}</span>
+            <span class="stat-sub">Active Wallet Balances</span>
+          </div>
         </div>
+        <div class="loyalty-stat-ribbon ribbon-purple"></div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon text-success">🎁</div>
-        <div class="stat-info">
-          <span class="stat-label">All-Time Awarded</span>
-          <span class="stat-value">{{ (st.totalPointsAwardedAllTime || 0) | number:'1.0-0' }}</span>
+
+      <div class="stat-card stat-card--awarded" style="--stat-idx: 2">
+        <div class="stat-inner">
+          <div class="stat-icon-wrap stat-icon--emerald">
+            <span class="stat-icon text-success">🎁</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">All-Time Awarded</span>
+            <span class="stat-value font-mono text-success">{{ (st.totalPointsAwardedAllTime || 0) | number:'1.0-0' }}</span>
+            <span class="stat-sub">Cumulative Accruals</span>
+          </div>
         </div>
+        <div class="loyalty-stat-ribbon ribbon-emerald"></div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon text-warning">🏷️</div>
-        <div class="stat-info">
-          <span class="stat-label">All-Time Redeemed</span>
-          <span class="stat-value">{{ (st.totalPointsRedeemedAllTime || 0) | number:'1.0-0' }}</span>
+
+      <div class="stat-card stat-card--redeemed" style="--stat-idx: 3">
+        <div class="stat-inner">
+          <div class="stat-icon-wrap stat-icon--amber">
+            <span class="stat-icon text-warning">🏷️</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">All-Time Redeemed</span>
+            <span class="stat-value font-mono text-warning">{{ (st.totalPointsRedeemedAllTime || 0) | number:'1.0-0' }}</span>
+            <span class="stat-sub">Converted Discounts</span>
+          </div>
         </div>
+        <div class="loyalty-stat-ribbon ribbon-amber"></div>
       </div>
     </section>
   }
@@ -152,8 +179,8 @@
             </tr>
           </thead>
           <tbody>
-            @for (acc of accounts(); track (acc.id || acc.userId)) {
-              <tr>
+            @for (acc of accounts(); track (acc.id || acc.userId); let idx = $index) {
+              <tr class="account-row" [style.--row-idx]="idx">
                 <td>
                   <div class="user-cell">
                     <span class="user-name">{{ acc.userName || ('Player ' + (acc.userId ? acc.userId.slice(0, 8) : '')) }}</span>
@@ -219,7 +246,7 @@
 
     <div class="rules-editor-container">
 
-      <section class="rules-card">
+      <section class="rules-card" style="--card-idx: 0">
         <h2 class="card-title">Point Earning & Conversion Formula</h2>
         <p class="card-subtitle">Define spending-to-points accrual and cash discount equivalence.</p>
 
@@ -257,7 +284,7 @@
         </div>
       </section>
 
-      <section class="rules-card">
+      <section class="rules-card" style="--card-idx: 1">
         <h2 class="card-title">Redemption Bounds & Safeguards</h2>
         <p class="card-subtitle">Enforce minimum thresholds and cap maximum transaction percentage.</p>
 
@@ -320,7 +347,7 @@
         </div>
       </section>
 
-      <section class="rules-card">
+      <section class="rules-card" style="--card-idx: 2">
         <h2 class="card-title">Tier Progression & Multipliers</h2>
         <p class="card-subtitle">Reward loyal players with bonus points on every gaming session.</p>
 
@@ -434,8 +461,8 @@
             </tr>
           </thead>
           <tbody>
-            @for (tx of transactions(); track tx.id) {
-              <tr>
+            @for (tx of transactions(); track tx.id; let idx = $index) {
+              <tr class="audit-row" [style.--row-idx]="idx">
                 <td>{{ tx.createdAt | date:'medium' }}</td>
                 <td><strong>{{ tx.userName || tx.userId }}</strong></td>
                 <td>

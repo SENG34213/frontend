@@ -25,7 +25,7 @@
 
   <!-- Executive KPI Metrics Grid -->
   <section class="kpi-grid" aria-label="Review key performance indicators">
-    <div class="kpi-card">
+    <div class="kpi-card kpi-card--gold" style="--stat-idx: 0">
       <div class="kpi-header">
         <span class="kpi-label">AVERAGE RATING</span>
         <span class="kpi-icon rating-star-glow">★</span>
@@ -38,9 +38,10 @@
         <span class="kpi-badge positive">Excellent Experience</span>
         <span class="kpi-subtext">Across all console stations</span>
       </div>
+      <div class="review-kpi-ribbon ribbon-gold"></div>
     </div>
 
-    <div class="kpi-card">
+    <div class="kpi-card kpi-card--sapphire" style="--stat-idx: 1">
       <div class="kpi-header">
         <span class="kpi-label">TOTAL REVIEWS</span>
         <span class="kpi-icon">📝</span>
@@ -52,9 +53,10 @@
         <span class="kpi-badge info">100% Verified</span>
         <span class="kpi-subtext">From real player bookings</span>
       </div>
+      <div class="review-kpi-ribbon ribbon-sapphire"></div>
     </div>
 
-    <div class="kpi-card">
+    <div class="kpi-card kpi-card--accent" style="--stat-idx: 2">
       <div class="kpi-header">
         <span class="kpi-label">5-STAR RATIO</span>
         <span class="kpi-icon">🏆</span>
@@ -66,9 +68,10 @@
         <span class="kpi-badge positive">Dominant Grade</span>
         <span class="kpi-subtext">Maximum satisfaction tier</span>
       </div>
+      <div class="review-kpi-ribbon ribbon-accent"></div>
     </div>
 
-    <div class="kpi-card">
+    <div class="kpi-card kpi-card--cyan" style="--stat-idx: 3">
       <div class="kpi-header">
         <span class="kpi-label">POSITIVE SENTIMENT</span>
         <span class="kpi-icon">👍</span>
@@ -80,6 +83,7 @@
         <span class="kpi-badge positive">4★ &amp; 5★ Reviews</span>
         <span class="kpi-subtext">High customer retention</span>
       </div>
+      <div class="review-kpi-ribbon ribbon-cyan"></div>
     </div>
   </section>
 
@@ -301,8 +305,8 @@
               </tr>
             </thead>
             <tbody>
-              @for (review of pagedReviews(); track review.id) {
-                <tr [class.featured-row]="review.featured">
+              @for (review of pagedReviews(); track review.id; let idx = $index) {
+                <tr class="review-table-row" [class.featured-row]="review.featured" [style.--row-idx]="idx">
                   <!-- Customer Column -->
                   <td class="td-customer">
                     <div class="customer-cell">
@@ -406,8 +410,8 @@
       <!-- CARDS VIEW -->
       @if (viewMode() === 'cards') {
         <div class="cards-grid">
-          @for (review of pagedReviews(); track review.id) {
-            <div class="admin-review-card" [class.featured-card]="review.featured">
+          @for (review of pagedReviews(); track review.id; let idx = $index) {
+            <div class="admin-review-card" [class.featured-card]="review.featured" [style.--card-idx]="idx">
               <div class="admin-card-header">
                 <div class="card-author">
                   <div class="cell-avatar">{{ getInitials(review.userName) }}</div>
