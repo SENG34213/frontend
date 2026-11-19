@@ -55,8 +55,15 @@
 
 // ─── Center Nav Links ────────────────────────────────────────────────────────
 
-.nav-links {
+.desktop-pill-nav {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.nav-links {
+  display: none;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
@@ -609,6 +616,10 @@
 // ─── Mobile Breakpoint ────────────────────────────────────────────────────────
 
 @media (max-width: 768px) {
+  .desktop-pill-nav {
+    display: none;
+  }
+
   .mobile-toggle {
     display: flex;
     align-items: center;
