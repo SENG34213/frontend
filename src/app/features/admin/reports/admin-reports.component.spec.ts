@@ -149,4 +149,111 @@ describe('AdminReportsComponent', () => {
     expect(mockToastService.success).toHaveBeenCalledWith('Report Exported', jasmine.any(String));
     expect(component.isExporting()).toBeFalse();
   });
+
+  describe('SVG chart computed signals and helpers', () => {
+    it('should compute trendChartPoints with SVG coordinates', () => {
+      const pts = component.trendChartPoints();
+      expect(pts.length).toBe(2);
+      pts.forEach(p => {
+        expect(p.x).toBeGreaterThanOrEqual(0);
+        expect(p.y).toBeGreaterThanOrEqual(0);
+        expect(p.pctHeight).toBeGreaterThanOrEqual(6);
+      });
+    });
+
+    it('should return empty trendChartPoints when reportData is null', () => {
+      component.reportData.set(null);
+      expect(component.trendChartPoints()).toEqual([]);
+    });
+
+    it('should compute revenueLinePath starting with M', () => {
+      expect(component.revenueLinePath()).toContain('M ');
+    });
+
+    it('should return empty revenueLinePath when reportData is null', () => {
+      component.reportData.set(null);
+      expect(component.revenueLinePath()).toBe('');
+    });
+
+    it('should compute revenueAreaPath as a closed path with Z', () => {
+      expect(component.revenueAreaPath()).toContain('Z');
+    });
+
+    it('should return empty revenueAreaPath when reportData is null', () => {
+      component.reportData.set(null);
+      expect(component.revenueAreaPath()).toBe('');
+    });
+
+    it('should identify peakPoint as the entry with max primaryValue', () => {
+      const peak = component.peakPoint();
+      expect(peak).not.toBeNull();
+      expect(peak!.primaryValue).toBe(35000);
+    });
+
+    it('should return null peakPoint when reportData is null', () => {
+      component.reportData.set(null);
+      expect(component.peakPoint()).toBeNull();
+    });
+
+    it('should compute donutSegments from breakdowns', () => {
+      const segs = component.donutSegments();
+      expect(segs.length).toBe(1);
+      expect(segs[0].dashArray).toBeTruthy();
+      expect(segs[0].category).toBe('Cards');
+    });
+
+    it('should return empty donutSegments when reportData is null', () => {
+      component.reportData.set(null);
+      expect(component.donutSegments()).toEqual([]);
+    });
+
+    it('should return fallback averageUtilization of 68 when no kpi-avg-util kpi exists', () => {
+      expect(component.averageUtilization()).toBe(68);
+    });
+
+    it('should extract utilization from a numeric kpi value', () => {
+      component.reportData.update(d => d ? {
+        ...d,
+        kpis: [...d.kpis, { id: 'kpi-avg-util', label: 'Avg Util', value: '75%', numericValue: 75, helper: '' }]
+      } : null);
+      expect(component.averageUtilization()).toBe(75);
+    });
+
+    it('should return empty stationOccupancyList for a non-utilization report', () => {
+      expect(component.stationOccupancyList()).toEqual([]);
+    });
+
+    it('should return default bookingsRatio for a non-bookings report', () => {
+      const ratio = component.bookingsRatio();
+      expect(ratio.online).toBe(70);
+      expect(ratio.walkin).toBe(30);
+    });
+
+    it('should compute userGrowthLinePath with M and L commands', () => {
+      expect(component.userGrowthLinePath()).toContain('M ');
+      expect(component.userGrowthLinePath()).toContain('L ');
+    });
+
+    it('should return empty userGrowthLinePath when reportData is null', () => {
+      component.reportData.set(null);
+      expect(component.userGrowthLinePath()).toBe('');
+    });
+
+    it('should compute closed userGrowthAreaPath with Z', () => {
+      expect(component.userGrowthAreaPath()).toContain('Z');
+    });
+
+    it('should return empty userGrowthAreaPath when reportData is null', () => {
+      component.reportData.set(null);
+      expect(component.userGrowthAreaPath()).toBe('');
+    });
+
+    it('should set and clear hoveredPointIndex', () => {
+      expect(component.hoveredPointIndex()).toBeNull();
+      component.hoveredPointIndex.set(0);
+      expect(component.hoveredPointIndex()).toBe(0);
+      component.hoveredPointIndex.set(null);
+      expect(component.hoveredPointIndex()).toBeNull();
+    });
+  });
 });
