@@ -91,6 +91,7 @@
   flex: 1;
   align-items: center;
   justify-content: flex-end;
+  gap: 0.75rem;
 }
 
 .navbar-loyalty-pill {
@@ -98,7 +99,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.35rem 0.75rem;
-  margin-right: 0.85rem;
+  margin-right: 0.25rem;
   background: rgba(19, 26, 44, 0.75);
   border: 1px solid var(--gc-border-default);
   border-radius: var(--gc-radius-full);

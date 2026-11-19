@@ -1,21 +1,19 @@
 .floating-notification-anchor {
-  position: fixed;
-  bottom: 1.75rem;
-  right: 1.75rem;
-  z-index: 90;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 210;
 }
 
 // ── Trigger Button ───────────────────────────────────────────────────────────
 .notification-trigger-btn {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  border: 2px solid var(--gc-border-default, #263554);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(37, 99, 235, 0.25);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--gc-text-secondary, #94a3b8);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -23,20 +21,31 @@
   position: relative;
   transition: all var(--gc-transition-fast, 150ms ease);
   outline: none;
+  padding: 0;
 
   &:hover {
-    transform: scale(1.08);
-    border-color: var(--gc-primary, #2563eb);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 24px rgba(37, 99, 235, 0.5);
+    color: var(--gc-text-primary, #ffffff);
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), 0 0 12px rgba(59, 130, 246, 0.2);
   }
 
   &:active {
-    transform: scale(0.96);
+    transform: translateY(0);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gc-primary-light, #60a5fa);
+    outline-offset: 2px;
   }
 
   .bell-icon {
-    font-size: 1.55rem;
-    transition: transform 0.2s ease;
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    fill: none;
+    transition: transform 0.2s ease, stroke 0.2s ease;
 
     &.ringing {
       animation: bellShake 3s infinite ease-in-out;
@@ -49,38 +58,50 @@
     right: -4px;
     background: #ef4444;
     color: #ffffff;
-    font-size: 0.72rem;
-    font-weight: 800;
-    min-width: 22px;
-    height: 22px;
-    padding: 0 5px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
     border-radius: 9999px;
     display: flex;
     align-items: center;
     justify-content: center;
     border: 2px solid #0f172a;
-    box-shadow: 0 0 10px rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
   }
 }
 
 // ── Panel Window ─────────────────────────────────────────────────────────────
 .notification-panel {
   position: absolute;
-  bottom: 70px;
+  top: calc(100% + 10px);
   right: 0;
   width: 390px;
   max-width: calc(100vw - 2rem);
-  max-height: 560px;
-  background: rgba(15, 23, 42, 0.94);
+  max-height: calc(100vh - 90px);
+  background: rgba(15, 23, 42, 0.96);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 20px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.65), 0 0 20px rgba(37, 99, 235, 0.15);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   animation: panelSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top right;
+  z-index: 1000;
+
+  @media (max-width: 768px) {
+    position: fixed;
+    top: calc(var(--customer-header-height, 70px) + 8px);
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100vh - 90px);
+  }
 }
 
 .panel-header {
@@ -497,7 +518,7 @@
 @keyframes panelSlideUp {
   from {
     opacity: 0;
-    transform: translateY(16px) scale(0.96);
+    transform: translateY(-8px) scale(0.97);
   }
   to {
     opacity: 1;
