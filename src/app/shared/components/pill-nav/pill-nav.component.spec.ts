@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { SimpleChange } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { PillNavComponent, PillNavItem } from './pill-nav.component';
 
@@ -73,7 +74,7 @@ describe('PillNavComponent', () => {
 
   it('should toggle menu open and closed', () => {
     component.collapse = 'always';
-    component.ngOnChanges({ collapse: {} as any });
+    component.ngOnChanges({ collapse: new SimpleChange(undefined, 'always', false) });
     fixture.detectChanges();
 
     expect(component.collapsed()).toBeTrue();

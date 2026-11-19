@@ -410,8 +410,11 @@ export class PillNavComponent implements AfterViewInit, OnDestroy, OnChanges {
     this.renderPhysics();
     this.wakePhysics();
 
-    if (typeof document !== 'undefined' && (document as any).fonts?.ready) {
-      (document as any).fonts.ready.then(() => {
+    const docFonts = typeof document !== 'undefined'
+      ? (document as Document & { fonts?: FontFaceSet }).fonts
+      : undefined;
+    if (docFonts?.ready) {
+      docFonts.ready.then(() => {
         this.measureSlots();
         this.syncSlots();
         this.wakePhysics();
