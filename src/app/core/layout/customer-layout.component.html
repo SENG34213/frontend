@@ -96,6 +96,9 @@
               </gc-badge>
             </a>
 
+            <!-- Real-Time Notification Bell in Navbar -->
+            <gc-notification-center [mode]="'customer'"></gc-notification-center>
+
             <!-- Logged-in: Avatar + Chevron trigger + Dropdown -->
             <div class="avatar-menu-wrapper">
               <button
@@ -261,10 +264,7 @@
     </div>
   </footer>
 
-  <!-- Real-time Customer Notifications Center (Drawer & Launcher) only for logged-in users -->
   @if (isUserAuthenticated()) {
-    <gc-notification-center [mode]="'customer'"></gc-notification-center>
-
     <!-- Customer Profile & Avatar Modal -->
     <gc-profile-modal
       [isOpen]="profileModalOpen()"

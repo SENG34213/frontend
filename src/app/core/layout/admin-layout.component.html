@@ -182,6 +182,9 @@
       </div>
 
       <div class="topbar-right">
+        <!-- Real-time Admin Notifications Center in Topbar -->
+        <gc-notification-center [mode]="'admin'"></gc-notification-center>
+
         <button
           type="button"
           class="admin-profile-btn"
@@ -212,9 +215,6 @@
       <router-outlet></router-outlet>
     </main>
   </div>
-
-  <!-- Real-time Admin Notifications Center (Bottom-Right) -->
-  <gc-notification-center [mode]="'admin'"></gc-notification-center>
 
   <!-- My Profile Modal -->
   <gc-profile-modal
