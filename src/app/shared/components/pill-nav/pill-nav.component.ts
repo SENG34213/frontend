@@ -168,17 +168,94 @@ export class PillNavComponent implements AfterViewInit, OnDestroy, OnChanges {
   }
 
   @Input() defaultActiveIndex = 0;
-  @Input() theme: PillNavTheme = 'dark';
+
+  readonly styleVersion = signal(0);
+
+  private _theme: PillNavTheme = 'dark';
+  @Input() set theme(val: PillNavTheme) {
+    this._theme = val;
+    this.styleVersion.update(v => v + 1);
+  }
+  get theme(): PillNavTheme {
+    return this._theme;
+  }
+
   @Input() layout: PillNavLayout = 'split';
-  @Input() size: PillNavSize = 'md';
-  @Input() surface: PillNavSurface = 'glass';
+
+  private _size: PillNavSize = 'md';
+  @Input() set size(val: PillNavSize) {
+    this._size = val;
+    this.styleVersion.update(v => v + 1);
+  }
+  get size(): PillNavSize {
+    return this._size;
+  }
+
+  private _surface: PillNavSurface = 'glass';
+  @Input() set surface(val: PillNavSurface) {
+    this._surface = val;
+    this.styleVersion.update(v => v + 1);
+  }
+  get surface(): PillNavSurface {
+    return this._surface;
+  }
+
   @Input() itemStyle: PillNavItemStyle = 'plain';
-  @Input() hoverEffect: PillNavHoverEffect = 'glide';
-  @Input() indicator: PillNavIndicator = 'dot';
-  @Input() highlightColor?: string;
-  @Input() highlightTextColor?: string;
-  @Input() barColor?: string;
-  @Input() textColor?: string;
+
+  private _hoverEffect: PillNavHoverEffect = 'glide';
+  @Input() set hoverEffect(val: PillNavHoverEffect) {
+    this._hoverEffect = val;
+    this.styleVersion.update(v => v + 1);
+  }
+  get hoverEffect(): PillNavHoverEffect {
+    return this._hoverEffect;
+  }
+
+  private _indicator: PillNavIndicator = 'dot';
+  @Input() set indicator(val: PillNavIndicator) {
+    this._indicator = val;
+    this.styleVersion.update(v => v + 1);
+  }
+  get indicator(): PillNavIndicator {
+    return this._indicator;
+  }
+
+  private _highlightColor?: string;
+  @Input() set highlightColor(val: string | undefined) {
+    this._highlightColor = val;
+    this.styleVersion.update(v => v + 1);
+  }
+  get highlightColor(): string | undefined {
+    return this._highlightColor;
+  }
+
+  private _highlightTextColor?: string;
+  @Input() set highlightTextColor(val: string | undefined) {
+    this._highlightTextColor = val;
+    this.styleVersion.update(v => v + 1);
+  }
+  get highlightTextColor(): string | undefined {
+    return this._highlightTextColor;
+  }
+
+  private _barColor?: string;
+  @Input() set barColor(val: string | undefined) {
+    this._barColor = val;
+    this.styleVersion.update(v => v + 1);
+  }
+  get barColor(): string | undefined {
+    return this._barColor;
+  }
+
+  private _textColor?: string;
+  @Input() set textColor(val: string | undefined) {
+    this._textColor = val;
+    this.styleVersion.update(v => v + 1);
+  }
+  get textColor(): string | undefined {
+    return this._textColor;
+  }
+
   @Input() bounce = 0.29;
   @Input() stretch = 0.45;
   @Input() intro = true;
@@ -261,11 +338,13 @@ export class PillNavComponent implements AfterViewInit, OnDestroy, OnChanges {
   });
 
   readonly isGlide = computed(() => {
+    this.styleVersion();
     const fill = this.hoverEffect === 'fill';
     return !fill && (this.hoverEffect === 'glide' || this.indicator === 'pill');
   });
 
   readonly computedStyleVars = computed(() => {
+    this.styleVersion();
     const palette = THEMES[this.theme] ?? THEMES['dark'];
     const vars: Record<string, string> = {
       ...palette,
@@ -335,6 +414,7 @@ export class PillNavComponent implements AfterViewInit, OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    this.styleVersion.update(v => v + 1);
     if (changes['defaultActiveIndex'] && this.activeHref === undefined) {
       this.selected.set(this.defaultActiveIndex);
     }

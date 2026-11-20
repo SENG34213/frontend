@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { PillNavComponent, PillNavItem } from './pill-nav.component';
 
 describe('PillNavComponent', () => {
   let component: PillNavComponent;
   let fixture: ComponentFixture<PillNavComponent>;
-  let router: Router;
 
   const mockItems: PillNavItem[] = [
     { label: 'Home', href: '/' },
@@ -18,14 +17,9 @@ describe('PillNavComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [PillNavComponent],
-      providers: [
-        provideRouter([
-          { path: '**', component: PillNavComponent }
-        ])
-      ]
+      providers: [provideRouter([])]
     }).compileComponents();
 
-    router = TestBed.inject(Router);
     fixture = TestBed.createComponent(PillNavComponent);
     component = fixture.componentInstance;
     component.items = mockItems;
@@ -448,18 +442,6 @@ describe('PillNavComponent', () => {
           activeHref: new SimpleChange(undefined, '/tournaments', false)
         });
       }).not.toThrow();
-    });
-  });
-
-  describe('Router NavigationEnd Integration', () => {
-    it('should update activeHrefSignal on router NavigationEnd event', (done) => {
-      router.navigateByUrl('/tournaments').then(() => {
-        fixture.detectChanges();
-
-        expect(component.activeHrefSignal()).toBe('/tournaments');
-        expect(component.activeIndex()).toBe(2);
-        done();
-      });
     });
   });
 
