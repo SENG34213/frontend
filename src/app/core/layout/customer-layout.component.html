@@ -21,7 +21,23 @@
         </svg>
       </button>
 
-      <!-- Navigation Links -->
+      <!-- Center Navigation: PillNav from React Bits -->
+      <gc-pill-nav
+        class="desktop-pill-nav"
+        [items]="pillNavItems()"
+        [activeHref]="currentUrl()"
+        itemStyle="plain"
+        hoverEffect="glide"
+        indicator="dot"
+        [bounce]="0.29"
+        [stretch]="0.45"
+        theme="dark"
+        surface="glass"
+        [collapse]="'never'"
+        (itemClick)="onPillNavItemClick($event)">
+      </gc-pill-nav>
+
+      <!-- Mobile Navigation Drawer -->
       <nav class="nav-links" [class.mobile-open]="mobileMenuOpen()">
         <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">HOME</a>
         <a routerLink="/bookings" routerLinkActive="active" (click)="onNavClick('/bookings', $event)">BOOKINGS</a>

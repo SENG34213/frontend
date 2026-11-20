@@ -8,7 +8,8 @@ import {
   OnDestroy,
   ElementRef,
   ViewChild,
-  HostListener
+  HostListener,
+  ChangeDetectorRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
@@ -19,6 +20,7 @@ import { LoyaltyService } from '../services/loyalty.service';
 import { BadgeComponent, BadgeVariant } from '../../shared/ui/badge/badge.component';
 import { NotificationCenterComponent } from '../../shared/components/notification-center/notification-center.component';
 import { ProfileModalComponent } from '../../shared/components/profile-modal/profile-modal.component';
+import { PillNavComponent, PillNavItem } from '../../shared/components/pill-nav/pill-nav.component';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { ModalComponent } from '../../shared/ui/modal/modal.component';
 import { ToastService } from '../../shared/ui/toast/toast.service';
@@ -32,6 +34,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
     BadgeComponent,
     NotificationCenterComponent,
     ProfileModalComponent,
+    PillNavComponent,
     ButtonComponent,
     ModalComponent
   ],
@@ -45,6 +48,7 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
   readonly loyaltyService = inject(LoyaltyService);
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService, { optional: true });
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly profileModalOpen = signal(false);
   readonly showLogoutModal = signal(false);
@@ -54,6 +58,20 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
   readonly mobileMenuOpen = signal<boolean>(false);
   readonly dropdownOpen = signal<boolean>(false);
   readonly imageLoadFailed = signal<boolean>(false);
+  readonly currentUrl = signal<string>(this.router.url || '/');
+
+  readonly pillNavItems = computed<PillNavItem[]>(() => {
+    const isAuth = this.isUserAuthenticated();
+    const items: PillNavItem[] = [
+      { label: 'HOME', href: '/' },
+      { label: 'BOOKINGS', href: '/bookings' },
+      { label: 'TOURNAMENTS', href: '/tournaments' }
+    ];
+    if (isAuth) {
+      items.push({ label: 'PROFILE', href: '/profile' });
+    }
+    return items;
+  });
 
   /**
    * authReady: true once we know whether the user is logged in or not.
@@ -132,13 +150,15 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
       this.loyaltyService.getBalance().pipe(takeUntil(this.destroy$)).subscribe();
     }
 
-    // Close menus on route change
+    // Close menus on route change & track active URL for PillNav
     this.router.events
       .pipe(
-        filter((event) => event instanceof NavigationEnd),
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
         takeUntil(this.destroy$)
       )
-      .subscribe(() => {
+      .subscribe((event) => {
+        this.currentUrl.set(event.urlAfterRedirects || event.url);
+        this.cdr.markForCheck();
         this.closeDropdown(false);
         this.closeMobileMenu();
       });
@@ -147,6 +167,12 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  onPillNavItemClick(payload: { item: PillNavItem; index: number; event: Event }): void {
+    if (payload.item.href) {
+      this.onNavClick(payload.item.href, payload.event);
+    }
   }
 
   closeMobileMenu(): void {
@@ -170,7 +196,10 @@ export class CustomerLayoutComponent implements OnInit, OnDestroy {
       const label = path.includes('tournament') ? 'tournaments' : 'bookings';
       this.toastService?.info(`Please sign in to view ${label}.`, 'Sign In Required');
       this.router.navigate(['/login'], { queryParams: { returnUrl: path } });
+      return;
     }
+    this.currentUrl.set(path);
+    this.cdr.markForCheck();
   }
 
   handleProfileClick(): void {

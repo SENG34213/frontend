@@ -1,0 +1,135 @@
+<nav
+  #rootEl
+  [class]="rootClasses()"
+  [attr.data-layout]="layout"
+  [attr.data-items]="itemStyle"
+  [attr.data-collapsed]="collapsed() ? '' : null"
+  [attr.data-open]="open() ? '' : null"
+  [attr.data-panel]="panelShown() ? '' : null"
+  [style]="computedStyleVars()"
+  [attr.aria-label]="ariaLabel">
+
+  @if (logo) {
+    <span #logoEl [class]="logoClasses()">
+      <a
+        [routerLink]="logoHref"
+        class="pill-nav__logo-link"
+        [attr.aria-label]="logoAlt"
+        (pointerenter)="spin($event)">
+        <span #markEl class="pill-nav__mark">
+          <img [src]="logo" [alt]="logoAlt" draggable="false" />
+        </span>
+      </a>
+      @if (layout !== 'joined') {
+        <span class="pill-nav__rim"></span>
+      }
+    </span>
+  }
+
+  @if (!collapsed()) {
+    <div #barEl [class]="barClasses()">
+      <div #trackEl class="pill-nav__track" (pointerleave)="onTrackLeave()">
+        <ul class="pill-nav__list">
+          @for (item of items; track trackByItem(item, $index); let idx = $index) {
+            <li
+              #slotEl
+              class="pill-nav__slot"
+              [attr.data-on]="hoverEffect === 'fill' && indicator === 'pill' && idx === activeIndex() ? '' : null"
+              (pointerenter)="onSlotPointerEnter(idx, $event)"
+              (pointerdown)="onSlotPointerDown($event)"
+              (focusin)="onSlotFocus(idx, $event)"
+              (focusout)="onSlotBlur()">
+              
+              <a
+                [routerLink]="item.href"
+                class="pill-nav__item"
+                [attr.aria-current]="idx === activeIndex() ? 'page' : null"
+                [attr.aria-label]="item.ariaLabel"
+                (click)="onItemClicked(item, idx, $event)">
+                @if (hoverEffect === 'fill') {
+                  <span class="pill-nav__fill" aria-hidden="true"></span>
+                }
+                <span class="pill-nav__face">
+                  {{ item.label }}
+                </span>
+                @if (hoverEffect === 'fill') {
+                  <span class="pill-nav__face-alt" aria-hidden="true">
+                    {{ item.label }}
+                  </span>
+                }
+              </a>
+            </li>
+          }
+        </ul>
+
+        @if (isGlide()) {
+          <span #glideEl class="pill-nav__glide" aria-hidden="true"></span>
+          <div #inkEl class="pill-nav__ink" aria-hidden="true">
+            @for (item of items; track trackByItem(item, $index)) {
+              <span class="pill-nav__ink-item">{{ item.label }}</span>
+            }
+          </div>
+        }
+
+        @if (indicator === 'dot') {
+          <span #dotEl class="pill-nav__dot" aria-hidden="true"></span>
+        }
+      </div>
+
+      @if (layout !== 'joined') {
+        <span class="pill-nav__rim"></span>
+      }
+    </div>
+  }
+
+  @if (collapsed()) {
+    <button
+      #toggleEl
+      type="button"
+      [class]="toggleClasses()"
+      [attr.aria-expanded]="open()"
+      [attr.aria-controls]="panelId"
+      [attr.aria-label]="open() ? 'Close menu' : 'Open menu'"
+      (click)="toggleMenu()">
+      <span class="pill-nav__burger" aria-hidden="true">
+        <span class="pill-nav__line pill-nav__line--top"></span>
+        <span class="pill-nav__line pill-nav__line--bottom"></span>
+      </span>
+      @if (layout !== 'joined') {
+        <span class="pill-nav__rim"></span>
+      }
+    </button>
+  }
+
+  @if (collapsed() && panelShown()) {
+    <div #panelEl [id]="panelId" class="pill-nav__panel pill-nav__surface">
+      <ul class="pill-nav__menu">
+        @for (item of items; track trackByItem(item, $index); let idx = $index) {
+          <li>
+            <a
+              [routerLink]="item.href"
+              class="pill-nav__row"
+              [attr.aria-current]="idx === activeIndex() ? 'page' : null"
+              [tabIndex]="open() ? 0 : -1"
+              (click)="onPanelItemClicked(item, idx, $event)">
+              {{ item.label }}
+            </a>
+          </li>
+        }
+      </ul>
+      <span class="pill-nav__rim"></span>
+    </div>
+  }
+
+  <div #measureEl class="pill-nav__measure" aria-hidden="true">
+    <div #measureListEl class="pill-nav__list">
+      @for (item of items; track trackByItem(item, $index)) {
+        <span class="pill-nav__ink-item">{{ item.label }}</span>
+      }
+    </div>
+  </div>
+
+  @if (layout === 'joined') {
+    <span class="pill-nav__rim pill-nav__rim--root"></span>
+  }
+</nav>
