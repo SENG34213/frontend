@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { PillNavComponent, PillNavItem } from './pill-nav.component';
@@ -18,13 +18,18 @@ describe('PillNavComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [PillNavComponent],
-      providers: [provideRouter([])]
+      providers: [
+        provideRouter([
+          { path: '**', component: PillNavComponent }
+        ])
+      ]
     }).compileComponents();
 
     router = TestBed.inject(Router);
     fixture = TestBed.createComponent(PillNavComponent);
     component = fixture.componentInstance;
     component.items = mockItems;
+    component.collapse = 'never';
     fixture.detectChanges();
   });
 
@@ -413,10 +418,11 @@ describe('PillNavComponent', () => {
   describe('ngOnChanges lifecycle', () => {
     it('should respond to defaultActiveIndex changes when activeHref is undefined', () => {
       component.activeHref = undefined;
+      component.defaultActiveIndex = 2;
       component.ngOnChanges({
         defaultActiveIndex: new SimpleChange(0, 2, false)
       });
-      expect(component.selected()).toBe(0);
+      expect(component.selected()).toBe(2);
     });
 
     it('should respond to collapse changes with always and never', () => {
@@ -444,13 +450,14 @@ describe('PillNavComponent', () => {
   });
 
   describe('Router NavigationEnd Integration', () => {
-    it('should update activeHrefSignal on router NavigationEnd event', () => {
+    it('should update activeHrefSignal on router NavigationEnd event', fakeAsync(() => {
       router.navigateByUrl('/tournaments');
+      tick();
       fixture.detectChanges();
 
       expect(component.activeHrefSignal()).toBe('/tournaments');
       expect(component.activeIndex()).toBe(2);
-    });
+    }));
   });
 
   describe('Cleanup on ngOnDestroy', () => {

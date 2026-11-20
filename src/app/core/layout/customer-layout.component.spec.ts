@@ -370,6 +370,11 @@ describe('CustomerLayoutComponent', () => {
   });
 
   describe('PillNav and Navigation Actions (Authenticated)', () => {
+    beforeEach(() => {
+      (authServiceSpy.isAuthenticated as WritableSignal<boolean>).set(true);
+      fixture.detectChanges();
+    });
+
     it('should delegate onPillNavItemClick to onNavClick when href is present', () => {
       spyOn(component, 'onNavClick');
       const dummyEvent = new MouseEvent('click');
