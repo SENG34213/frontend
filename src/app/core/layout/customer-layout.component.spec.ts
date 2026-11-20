@@ -424,5 +424,32 @@ describe('CustomerLayoutComponent', () => {
       component.closeDropdown(false);
       expect(component.dropdownOpen()).toBeFalse();
     });
+
+    it('should compute tierBadgeVariant for GOLD, VIP, and BRONZE tiers', () => {
+      const loyaltyService = TestBed.inject(LoyaltyService);
+      (loyaltyService.userTier as unknown as WritableSignal<string>).set('GOLD');
+      expect(component.tierBadgeVariant()).toBe('warning');
+
+      (loyaltyService.userTier as unknown as WritableSignal<string>).set('VIP');
+      expect(component.tierBadgeVariant()).toBe('warning');
+
+      (loyaltyService.userTier as unknown as WritableSignal<string>).set('BRONZE');
+      expect(component.tierBadgeVariant()).toBe('info');
+    });
+
+    it('should fallback userDisplayName, userEmail, and userRole when profile fields are missing', () => {
+      (userServiceSpy.currentProfile as unknown as WritableSignal<UserProfile | null>).set(null);
+      expect(component.userDisplayName()).toBe('Kasun Perera');
+      expect(component.userEmail()).toBe('player@gamingcastle.lk');
+      expect(component.userRole()).toBe('CUSTOMER');
+    });
+
+    it('should toggle mobile menu open and closed', () => {
+      expect(component.mobileMenuOpen()).toBeFalse();
+      component.toggleMobileMenu();
+      expect(component.mobileMenuOpen()).toBeTrue();
+      component.closeMobileMenu();
+      expect(component.mobileMenuOpen()).toBeFalse();
+    });
   });
 });

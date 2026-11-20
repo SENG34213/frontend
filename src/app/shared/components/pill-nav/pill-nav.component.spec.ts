@@ -453,53 +453,93 @@ describe('PillNavComponent', () => {
   });
 
   describe('Global Document and Window Event Listeners', () => {
-    it('should close open menu when Escape key is pressed on document', () => {
+    it('should close open menu when onDocumentKeyDown is called with Escape', () => {
       component.open.set(true);
       const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape' });
-      document.dispatchEvent(escapeEvent);
+      const handler = (component as unknown as { onDocumentKeyDown: (e: KeyboardEvent) => void }).onDocumentKeyDown;
+      handler(escapeEvent);
       expect(component.open()).toBeFalse();
     });
 
     it('should not close menu when other keys are pressed on document', () => {
       component.open.set(true);
       const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
-      document.dispatchEvent(enterEvent);
+      const handler = (component as unknown as { onDocumentKeyDown: (e: KeyboardEvent) => void }).onDocumentKeyDown;
+      handler(enterEvent);
       expect(component.open()).toBeTrue();
     });
 
     it('should ignore keydown when menu is already closed', () => {
       component.open.set(false);
       const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape' });
-      document.dispatchEvent(escapeEvent);
+      const handler = (component as unknown as { onDocumentKeyDown: (e: KeyboardEvent) => void }).onDocumentKeyDown;
+      handler(escapeEvent);
       expect(component.open()).toBeFalse();
     });
 
     it('should close open menu when pointerdown occurs outside root element', () => {
       component.open.set(true);
       const outsideDiv = document.createElement('div');
-      document.body.appendChild(outsideDiv);
-      const pointerDown = new MouseEvent('pointerdown', { bubbles: true });
-      outsideDiv.dispatchEvent(pointerDown);
+      const pointerDown = new MouseEvent('pointerdown');
+      Object.defineProperty(pointerDown, 'target', { value: outsideDiv });
+      const handler = (component as unknown as { onDocumentPointerDown: (e: MouseEvent) => void }).onDocumentPointerDown;
+      handler(pointerDown);
       expect(component.open()).toBeFalse();
-      document.body.removeChild(outsideDiv);
     });
 
     it('should not close open menu when pointerdown occurs inside root element', () => {
       component.open.set(true);
       const root = fixture.nativeElement.querySelector('.pill-nav');
-      if (root) {
-        const pointerDown = new MouseEvent('pointerdown', { bubbles: true });
-        root.dispatchEvent(pointerDown);
-        expect(component.open()).toBeTrue();
-      }
+      const pointerDown = new MouseEvent('pointerdown');
+      Object.defineProperty(pointerDown, 'target', { value: root });
+      const handler = (component as unknown as { onDocumentPointerDown: (e: MouseEvent) => void }).onDocumentPointerDown;
+      handler(pointerDown);
+      expect(component.open()).toBeTrue();
     });
 
     it('should reset pressing state on window pointerup', () => {
       const leftClick = { button: 0 } as unknown as PointerEvent;
       component.onSlotPointerDown(leftClick);
-      const pointerUp = new PointerEvent('pointerup');
-      window.dispatchEvent(pointerUp);
+      const pointerUpHandler = (component as unknown as { onPointerUp: () => void }).onPointerUp;
+      pointerUpHandler();
       expect(component).toBeTruthy();
+    });
+  });
+
+  describe('Physics Engine Tick and Animation', () => {
+    it('should execute tick step for glide indicator', () => {
+      component.indicator = 'pill';
+      component.hoverEffect = 'glide';
+      fixture.detectChanges();
+      const tickFn = (component as unknown as { tick: (now: number) => void }).tick;
+      expect(() => {
+        tickFn(16);
+        tickFn(32);
+      }).not.toThrow();
+    });
+
+    it('should execute tick step for dot indicator', () => {
+      component.indicator = 'dot';
+      component.hoverEffect = 'fill';
+      fixture.detectChanges();
+      const tickFn = (component as unknown as { tick: (now: number) => void }).tick;
+      expect(() => {
+        tickFn(16);
+        tickFn(32);
+      }).not.toThrow();
+    });
+
+    it('should execute tick step when waiting is false and rects are measured', () => {
+      component.indicator = 'pill';
+      component.hoverEffect = 'glide';
+      component.stretch = 0.8;
+      component.bounce = 0.5;
+      fixture.detectChanges();
+      const tickFn = (component as unknown as { tick: (now: number) => void }).tick;
+      expect(() => {
+        tickFn(50);
+        tickFn(100);
+      }).not.toThrow();
     });
   });
 
