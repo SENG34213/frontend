@@ -415,7 +415,7 @@ export class PillNavComponent implements AfterViewInit, OnDestroy, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     this.styleVersion.update(v => v + 1);
-    if (changes['defaultActiveIndex'] && this.activeHref === undefined) {
+    if (changes['defaultActiveIndex']) {
       this.selected.set(this.defaultActiveIndex);
     }
     if (changes['collapse']) {
