@@ -15,6 +15,7 @@ import {
   signal,
   computed,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -139,11 +140,35 @@ let uniqueIdSeq = 0;
 export class PillNavComponent implements AfterViewInit, OnDestroy, OnChanges {
   private readonly ngZone = inject(NgZone);
   private readonly router = inject(Router, { optional: true });
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
 
-  @Input() logo?: string | null = null;
-  @Input() logoAlt = 'Logo';
-  @Input() logoHref = '/';
+  private _logo?: string | null = null;
+  @Input() set logo(val: string | null | undefined) {
+    this._logo = val;
+    this.cdr.markForCheck();
+  }
+  get logo(): string | null | undefined {
+    return this._logo;
+  }
+
+  private _logoAlt = 'Logo';
+  @Input() set logoAlt(val: string) {
+    this._logoAlt = val;
+    this.cdr.markForCheck();
+  }
+  get logoAlt(): string {
+    return this._logoAlt;
+  }
+
+  private _logoHref = '/';
+  @Input() set logoHref(val: string) {
+    this._logoHref = val;
+    this.cdr.markForCheck();
+  }
+  get logoHref(): string {
+    return this._logoHref;
+  }
 
   readonly itemsSignal = signal<PillNavItem[]>([]);
   @Input() set items(val: PillNavItem[]) {
@@ -180,7 +205,14 @@ export class PillNavComponent implements AfterViewInit, OnDestroy, OnChanges {
     return this._theme;
   }
 
-  @Input() layout: PillNavLayout = 'split';
+  private _layout: PillNavLayout = 'split';
+  @Input() set layout(val: PillNavLayout) {
+    this._layout = val;
+    this.cdr.markForCheck();
+  }
+  get layout(): PillNavLayout {
+    return this._layout;
+  }
 
   private _size: PillNavSize = 'md';
   @Input() set size(val: PillNavSize) {

@@ -545,9 +545,9 @@ describe('PillNavComponent', () => {
 
   describe('Logo rendering and properties', () => {
     it('should render logo image and link when logo is provided', () => {
-      component.logo = 'assets/logo.png';
-      component.logoAlt = 'Custom Logo Alt';
-      component.logoHref = '/custom-home';
+      fixture.componentRef.setInput('logo', 'assets/logo.png');
+      fixture.componentRef.setInput('logoAlt', 'Custom Logo Alt');
+      fixture.componentRef.setInput('logoHref', '/custom-home');
       fixture.detectChanges();
 
       const logoImg = fixture.nativeElement.querySelector('.pill-nav__mark img');
