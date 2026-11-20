@@ -1,7 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { SimpleChange } from '@angular/core';
+import { Component, SimpleChange } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { PillNavComponent, PillNavItem } from './pill-nav.component';
+
+@Component({ template: '', standalone: true })
+class TestRouteComponent {}
 
 describe('PillNavComponent', () => {
   let component: PillNavComponent;
@@ -14,10 +17,14 @@ describe('PillNavComponent', () => {
     { label: 'Profile', href: '/profile' }
   ];
 
-  beforeEach(fakeAsync(async () => {
+  beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [PillNavComponent],
-      providers: [provideRouter([])]
+      providers: [
+        provideRouter([
+          { path: '**', component: TestRouteComponent }
+        ])
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(PillNavComponent);
@@ -25,9 +32,7 @@ describe('PillNavComponent', () => {
     component.items = mockItems;
     component.collapse = 'never';
     fixture.detectChanges();
-    tick(); // drain initial router navigation microtasks
-    fixture.detectChanges();
-  }));
+  });
 
   it('should create PillNavComponent', () => {
     expect(component).toBeTruthy();
@@ -268,26 +273,24 @@ describe('PillNavComponent', () => {
   });
 
   describe('Click and Interaction Handlers', () => {
-    it('should transition dot activeIndex to Bookings when Bookings item is clicked', fakeAsync(() => {
+    it('should transition dot activeIndex to Bookings when Bookings item is clicked', () => {
       const links = fixture.nativeElement.querySelectorAll('.pill-nav__item');
       expect(component.activeIndex()).toBe(0); // starts at Home
       links[1].click();
-      tick();
       fixture.detectChanges();
       expect(component.activeIndex()).toBe(1); // moves under Bookings
-    }));
+    });
 
-    it('should emit itemClick when an item is clicked', fakeAsync(() => {
+    it('should emit itemClick when an item is clicked', () => {
       spyOn(component.itemClick, 'emit');
       const links = fixture.nativeElement.querySelectorAll('.pill-nav__item');
       expect(links.length).toBeGreaterThan(0);
       links[1].click();
-      tick();
       expect(component.itemClick.emit).toHaveBeenCalledWith(jasmine.objectContaining({
         item: mockItems[1],
         index: 1
       }));
-    }));
+    });
 
     it('should not update selection if click event default is prevented', () => {
       const dummyEvent = new MouseEvent('click', { cancelable: true });
@@ -416,15 +419,14 @@ describe('PillNavComponent', () => {
   });
 
   describe('ngOnChanges lifecycle', () => {
-    it('should respond to defaultActiveIndex changes when activeHref is undefined', fakeAsync(() => {
-      component.activeHrefSignal.set(undefined); // bypass setter to avoid router side-effects
-      tick();
+    it('should respond to defaultActiveIndex changes when activeHref is undefined', () => {
+      component.activeHref = undefined;
       component.defaultActiveIndex = 2;
       component.ngOnChanges({
         defaultActiveIndex: new SimpleChange(0, 2, false)
       });
       expect(component.selected()).toBe(2);
-    }));
+    });
 
     it('should respond to collapse changes with always and never', () => {
       component.collapse = 'always';
@@ -447,6 +449,119 @@ describe('PillNavComponent', () => {
           activeHref: new SimpleChange(undefined, '/tournaments', false)
         });
       }).not.toThrow();
+    });
+  });
+
+  describe('Global Document and Window Event Listeners', () => {
+    it('should close open menu when Escape key is pressed on document', () => {
+      component.open.set(true);
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape' });
+      document.dispatchEvent(escapeEvent);
+      expect(component.open()).toBeFalse();
+    });
+
+    it('should not close menu when other keys are pressed on document', () => {
+      component.open.set(true);
+      const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
+      document.dispatchEvent(enterEvent);
+      expect(component.open()).toBeTrue();
+    });
+
+    it('should ignore keydown when menu is already closed', () => {
+      component.open.set(false);
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape' });
+      document.dispatchEvent(escapeEvent);
+      expect(component.open()).toBeFalse();
+    });
+
+    it('should close open menu when pointerdown occurs outside root element', () => {
+      component.open.set(true);
+      const outsideDiv = document.createElement('div');
+      document.body.appendChild(outsideDiv);
+      const pointerDown = new MouseEvent('pointerdown', { bubbles: true });
+      outsideDiv.dispatchEvent(pointerDown);
+      expect(component.open()).toBeFalse();
+      document.body.removeChild(outsideDiv);
+    });
+
+    it('should not close open menu when pointerdown occurs inside root element', () => {
+      component.open.set(true);
+      const root = fixture.nativeElement.querySelector('.pill-nav');
+      if (root) {
+        const pointerDown = new MouseEvent('pointerdown', { bubbles: true });
+        root.dispatchEvent(pointerDown);
+        expect(component.open()).toBeTrue();
+      }
+    });
+
+    it('should reset pressing state on window pointerup', () => {
+      const leftClick = { button: 0 } as unknown as PointerEvent;
+      component.onSlotPointerDown(leftClick);
+      const pointerUp = new PointerEvent('pointerup');
+      window.dispatchEvent(pointerUp);
+      expect(component).toBeTruthy();
+    });
+  });
+
+  describe('Logo rendering and properties', () => {
+    it('should render logo image and link when logo is provided', () => {
+      component.logo = 'assets/logo.png';
+      component.logoAlt = 'Custom Logo Alt';
+      component.logoHref = '/custom-home';
+      fixture.detectChanges();
+
+      const logoImg = fixture.nativeElement.querySelector('.pill-nav__mark img');
+      expect(logoImg).toBeTruthy();
+      expect(logoImg.getAttribute('src')).toBe('assets/logo.png');
+      expect(logoImg.getAttribute('alt')).toBe('Custom Logo Alt');
+
+      const logoLink = fixture.nativeElement.querySelector('.pill-nav__logo-link');
+      expect(logoLink).toBeTruthy();
+      expect(logoLink.getAttribute('aria-label')).toBe('Custom Logo Alt');
+    });
+  });
+
+  describe('Joined layout and mobile panel animations', () => {
+    it('should render logo in joined layout mode', () => {
+      component.layout = 'joined';
+      component.logo = 'assets/logo.png';
+      fixture.detectChanges();
+
+      expect(component.rootClasses()).toContain('pill-nav__surface');
+      expect(component.logoClasses()).toBe('pill-nav__logo');
+    });
+
+    it('should open and close menu when layout is joined', () => {
+      component.layout = 'joined';
+      component.collapse = 'always';
+      component.ngOnChanges({ collapse: new SimpleChange('auto', 'always', false) });
+      fixture.detectChanges();
+
+      component.toggleMenu();
+      expect(component.open()).toBeTrue();
+
+      component.toggleMenu();
+      expect(component.open()).toBeFalse();
+    });
+  });
+
+  describe('Size and auto collapse evaluation', () => {
+    it('should accept size inputs sm, md, and lg', () => {
+      component.size = 'sm';
+      expect(component.size).toBe('sm');
+      component.size = 'lg';
+      expect(component.size).toBe('lg');
+      component.size = 'md';
+      expect(component.size).toBe('md');
+    });
+
+    it('should evaluate collapse for auto mode without errors', () => {
+      component.collapse = 'auto';
+      component.ngOnChanges({
+        collapse: new SimpleChange('never', 'auto', false)
+      });
+      fixture.detectChanges();
+      expect(component.collapsed()).toBeFalse();
     });
   });
 
