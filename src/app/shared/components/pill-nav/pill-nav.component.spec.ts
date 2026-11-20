@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { PillNavComponent, PillNavItem } from './pill-nav.component';
@@ -14,7 +14,7 @@ describe('PillNavComponent', () => {
     { label: 'Profile', href: '/profile' }
   ];
 
-  beforeEach(async () => {
+  beforeEach(fakeAsync(async () => {
     await TestBed.configureTestingModule({
       imports: [PillNavComponent],
       providers: [provideRouter([])]
@@ -25,7 +25,9 @@ describe('PillNavComponent', () => {
     component.items = mockItems;
     component.collapse = 'never';
     fixture.detectChanges();
-  });
+    tick(); // drain initial router navigation microtasks
+    fixture.detectChanges();
+  }));
 
   it('should create PillNavComponent', () => {
     expect(component).toBeTruthy();
@@ -266,24 +268,26 @@ describe('PillNavComponent', () => {
   });
 
   describe('Click and Interaction Handlers', () => {
-    it('should transition dot activeIndex to Bookings when Bookings item is clicked', () => {
+    it('should transition dot activeIndex to Bookings when Bookings item is clicked', fakeAsync(() => {
       const links = fixture.nativeElement.querySelectorAll('.pill-nav__item');
       expect(component.activeIndex()).toBe(0); // starts at Home
       links[1].click();
+      tick();
       fixture.detectChanges();
       expect(component.activeIndex()).toBe(1); // moves under Bookings
-    });
+    }));
 
-    it('should emit itemClick when an item is clicked', () => {
+    it('should emit itemClick when an item is clicked', fakeAsync(() => {
       spyOn(component.itemClick, 'emit');
       const links = fixture.nativeElement.querySelectorAll('.pill-nav__item');
       expect(links.length).toBeGreaterThan(0);
       links[1].click();
+      tick();
       expect(component.itemClick.emit).toHaveBeenCalledWith(jasmine.objectContaining({
         item: mockItems[1],
         index: 1
       }));
-    });
+    }));
 
     it('should not update selection if click event default is prevented', () => {
       const dummyEvent = new MouseEvent('click', { cancelable: true });
@@ -412,14 +416,15 @@ describe('PillNavComponent', () => {
   });
 
   describe('ngOnChanges lifecycle', () => {
-    it('should respond to defaultActiveIndex changes when activeHref is undefined', () => {
-      component.activeHref = undefined;
+    it('should respond to defaultActiveIndex changes when activeHref is undefined', fakeAsync(() => {
+      component.activeHrefSignal.set(undefined); // bypass setter to avoid router side-effects
+      tick();
       component.defaultActiveIndex = 2;
       component.ngOnChanges({
         defaultActiveIndex: new SimpleChange(0, 2, false)
       });
       expect(component.selected()).toBe(2);
-    });
+    }));
 
     it('should respond to collapse changes with always and never', () => {
       component.collapse = 'always';
