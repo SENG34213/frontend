@@ -315,8 +315,9 @@ describe('AdminBookingsComponent', () => {
     component.chooseCustomerType('existing');
     expect(component.walkInStep()).toBe('booking');
 
-    // Select date and station
-    component.walkInDate.set('2026-11-20'); // future date so all slots are not past
+    // Select date and station (future date so all slots are not past)
+    const futureDate = new Date(Date.now() + 86400000 * 30).toISOString().split('T')[0];
+    component.walkInDate.set(futureDate);
     component.onStationChange('st-01');
 
     expect(component.walkInSlots().length).toBeGreaterThan(0);
