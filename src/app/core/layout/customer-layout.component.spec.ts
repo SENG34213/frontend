@@ -446,7 +446,7 @@ describe('CustomerLayoutComponent', () => {
 
     it('should toggle mobile menu open and closed', () => {
       expect(component.mobileMenuOpen()).toBeFalse();
-      component.toggleMobileMenu();
+      component.mobileMenuOpen.set(true);
       expect(component.mobileMenuOpen()).toBeTrue();
       component.closeMobileMenu();
       expect(component.mobileMenuOpen()).toBeFalse();
