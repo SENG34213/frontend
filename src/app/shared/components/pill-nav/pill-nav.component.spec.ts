@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { PillNavComponent, PillNavItem } from './pill-nav.component';
@@ -359,24 +359,25 @@ describe('PillNavComponent', () => {
   describe('Pointer, Focus & Keyboard Events', () => {
     it('should ignore touch pointer events on slot enter', () => {
       const touchEvent = { pointerType: 'touch' } as unknown as PointerEvent;
-      component.onSlotPointerEnter(1, touchEvent);
-      // No errors and physics hover not set
+      expect(() => component.onSlotPointerEnter(1, touchEvent)).not.toThrow();
     });
 
     it('should update hover on mouse pointer enter on slot', () => {
       const mouseEvent = { pointerType: 'mouse' } as unknown as PointerEvent;
-      component.onSlotPointerEnter(2, mouseEvent);
-      fixture.detectChanges();
+      expect(() => {
+        component.onSlotPointerEnter(2, mouseEvent);
+        fixture.detectChanges();
+      }).not.toThrow();
     });
 
     it('should ignore secondary mouse clicks on slot pointer down', () => {
       const rightClick = { button: 2 } as unknown as PointerEvent;
-      component.onSlotPointerDown(rightClick);
+      expect(() => component.onSlotPointerDown(rightClick)).not.toThrow();
     });
 
     it('should register primary click on slot pointer down', () => {
       const leftClick = { button: 0 } as unknown as PointerEvent;
-      component.onSlotPointerDown(leftClick);
+      expect(() => component.onSlotPointerDown(leftClick)).not.toThrow();
     });
 
     it('should handle slot focus with focus-visible', () => {
@@ -384,8 +385,7 @@ describe('PillNavComponent', () => {
         matches: (selector: string) => selector === ':focus-visible'
       } as unknown as Element;
       const focusEvent = { target: matchTarget } as unknown as FocusEvent;
-
-      component.onSlotFocus(1, focusEvent);
+      expect(() => component.onSlotFocus(1, focusEvent)).not.toThrow();
     });
 
     it('should handle slot focus without focus-visible', () => {
@@ -393,21 +393,23 @@ describe('PillNavComponent', () => {
         matches: () => false
       } as unknown as Element;
       const focusEvent = { target: noMatchTarget } as unknown as FocusEvent;
-
-      component.onSlotFocus(1, focusEvent);
+      expect(() => component.onSlotFocus(1, focusEvent)).not.toThrow();
     });
 
     it('should handle slot blur and track leave', () => {
-      component.onSlotBlur();
-      component.onTrackLeave();
+      expect(() => {
+        component.onSlotBlur();
+        component.onTrackLeave();
+      }).not.toThrow();
     });
 
     it('should handle spin for logo', () => {
       const mouseEvent = { pointerType: 'mouse' } as unknown as PointerEvent;
-      component.spin(mouseEvent);
-
       const touchEvent = { pointerType: 'touch' } as unknown as PointerEvent;
-      component.spin(touchEvent);
+      expect(() => {
+        component.spin(mouseEvent);
+        component.spin(touchEvent);
+      }).not.toThrow();
     });
 
     it('should call refreshEngine without errors', () => {
@@ -450,14 +452,15 @@ describe('PillNavComponent', () => {
   });
 
   describe('Router NavigationEnd Integration', () => {
-    it('should update activeHrefSignal on router NavigationEnd event', fakeAsync(() => {
-      router.navigateByUrl('/tournaments');
-      tick();
-      fixture.detectChanges();
+    it('should update activeHrefSignal on router NavigationEnd event', (done) => {
+      router.navigateByUrl('/tournaments').then(() => {
+        fixture.detectChanges();
 
-      expect(component.activeHrefSignal()).toBe('/tournaments');
-      expect(component.activeIndex()).toBe(2);
-    }));
+        expect(component.activeHrefSignal()).toBe('/tournaments');
+        expect(component.activeIndex()).toBe(2);
+        done();
+      });
+    });
   });
 
   describe('Cleanup on ngOnDestroy', () => {
