@@ -38,3 +38,15 @@ jobs:
           tags: |
             ghcr.io/seng34213/frontend:${{ github.ref_name }}
             ghcr.io/seng34213/frontend:sha-${{ github.sha }}
+            ghcr.io/seng34213/frontend:latest
+
+      - name: Build and publish notification-socket-server
+        uses: docker/build-push-action@v6
+        with:
+          context: ./notification-socket-server
+          file: ./notification-socket-server/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/seng34213/notification-socket-server:${{ github.ref_name }}
+            ghcr.io/seng34213/notification-socket-server:sha-${{ github.sha }}
+            ghcr.io/seng34213/notification-socket-server:latest

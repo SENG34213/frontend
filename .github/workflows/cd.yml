@@ -1,0 +1,49 @@
+name: Frontend Continuous Deployment (CD to AWS EC2)
+
+on:
+  workflow_run:
+    workflows: ["Publish Frontend Docker Image"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch: # Allows manual one-click deployment trigger from GitHub Actions
+
+concurrency:
+  group: production-frontend-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Frontend to AWS EC2
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Deploy Frontend to AWS EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            echo "🚀 [Frontend CD] Starting deployment on AWS EC2..."
+
+            # Navigate to docker-compose infra directory on EC2
+            cd /home/ubuntu/gaming-castle/infra
+
+            # Log in to GitHub Container Registry (ghcr.io)
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Pull the latest frontend and socket-server images
+            echo "📦 Pulling latest frontend and notification-socket-server images..."
+            docker compose pull frontend notification-socket-server
+
+            # Recreate and update frontend services without restarting backend services
+            echo "🔄 Updating frontend containers..."
+            docker compose up -d --no-deps frontend notification-socket-server
+
+            # Clean up old unused images to save disk space on EC2
+            docker image prune -f
+
+            echo "✅ [Frontend CD] Frontend successfully deployed to AWS EC2!"
